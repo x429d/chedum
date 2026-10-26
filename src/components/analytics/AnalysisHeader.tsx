@@ -1,0 +1,85 @@
+import { Show } from "solid-js";
+
+import type { Game, GameAnalysis } from "../../types/models";
+import { formatDate, timeClassLabel } from "../../utils/format";
+import { Icon } from "../ui/Icon";
+
+export function AnalysisHeader(props: {
+  game: Game;
+  analysis: GameAnalysis | null;
+  analyzing: boolean;
+  busy: boolean;
+  onAnalyze: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <header class="analysis-header">
+      <button type="button" class="back-btn" title="Назад в библиотеку" onClick={props.onBack}>
+        <Icon name="chevron-left" size={16} />
+      </button>
+      <div style={{ "min-width": "0", flex: "1" }}>
+        <div class="players-line">
+          <span class="player-name">
+            {props.game.whiteUsername}
+            <span class="player-elo"> {props.game.whiteElo ?? ""}</span>
+          </span>
+          <span class="dim" style={{ "font-size": "11px" }}>
+            vs
+          </span>
+          <span class="player-name">
+            {props.game.blackUsername}
+            <span class="player-elo"> {props.game.blackElo ?? ""}</span>
+          </span>
+          <span class="result-pill">{props.game.result}</span>
+          <Show when={props.game.userColor !== "none"}>
+            <span class="chip accent">
+              вы — {props.game.userColor === "white" ? "белые" : "чёрные"}
+            </span>
+          </Show>
+        </div>
+        <div class="analysis-meta">
+          <span>{formatDate(props.game.playedAt)}</span>
+          <span>·</span>
+          <span>{timeClassLabel(props.game.timeClass)}</span>
+          <span>·</span>
+          <span>{props.game.timeControl ?? "—"}</span>
+          <Show when={props.game.eco}>
+            <span>·</span>
+            <span class="eco-code">{props.game.eco}</span>
+            <span class="opening-name" style={{ "max-width": "320px" }}>
+              {props.game.openingName}
+            </span>
+          </Show>
+          <Show when={props.analysis}>
+            {(value) => (
+              <span class="chip" style={{ height: "22px", "font-size": "10px" }}>
+                {value().engineName} · depth {value().depth}
+              </span>
+            )}
+          </Show>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button
+          type="button"
+          class="btn btn-primary"
+          disabled={props.analyzing || props.busy}
+          onClick={props.onAnalyze}
+        >
+          <Show when={props.analyzing} fallback={<Icon name="sparkles" size={14} />}>
+            <span class="spinner" style={{ width: "13px", height: "13px" }} />
+          </Show>
+          {props.analysis ? "Переанализировать" : "Анализировать"}
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost icon-btn"
+          title="Библиотека"
+          onClick={props.onBack}
+        >
+          <Icon name="library" size={15} />
+        </button>
+      </div>
+    </header>
+  );
+}

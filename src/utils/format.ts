@@ -1,0 +1,128 @@
+import type { Color, TimeClass, UserColor } from "../types/models";
+
+export function formatDate(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatDateTime(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+export function formatClock(seconds: number | null): string {
+  if (seconds === null || !Number.isFinite(seconds)) return "—";
+  const total = Math.max(0, Math.round(seconds));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  }
+  return `${minutes}:${String(secs).padStart(2, "0")}`;
+}
+
+export function formatNumber(value: number | null, digits = 1): string {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return value.toFixed(digits);
+}
+
+export function formatPercent(value: number | null, digits = 1): string {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return `${value.toFixed(digits)}%`;
+}
+
+export function formatEval(cp: number | null, mate: number | null): string {
+  if (mate !== null && mate !== undefined) {
+    return mate > 0 ? `M${mate}` : `-M${Math.abs(mate)}`;
+  }
+  if (cp === null || cp === undefined) return "0.00";
+  const pawns = cp / 100;
+  return `${pawns >= 0 ? "+" : ""}${pawns.toFixed(2)}`;
+}
+
+export function formatEvalPawns(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "—";
+  return `${value >= 0 ? "+" : ""}${value.toFixed(2)}`;
+}
+
+export function userOutcome(result: string, color: UserColor): "win" | "loss" | "draw" | "unknown" {
+  if (result === "1/2-1/2") return "draw";
+  if (color === "white") return result === "1-0" ? "win" : result === "0-1" ? "loss" : "unknown";
+  if (color === "black") return result === "0-1" ? "win" : result === "1-0" ? "loss" : "unknown";
+  return "unknown";
+}
+
+export function outcomeLabel(result: string, color: UserColor): string {
+  switch (userOutcome(result, color)) {
+    case "win":
+      return "Победа";
+    case "loss":
+      return "Поражение";
+    case "draw":
+      return "Ничья";
+    default:
+      return result;
+  }
+}
+
+export function outcomeClass(result: string, color: UserColor): string {
+  switch (userOutcome(result, color)) {
+    case "win":
+      return "outcome-win";
+    case "loss":
+      return "outcome-loss";
+    case "draw":
+      return "outcome-draw";
+    default:
+      return "outcome-unknown";
+  }
+}
+
+export function timeClassLabel(value: TimeClass | null): string {
+  switch (value) {
+    case "bullet":
+      return "Пуля";
+    case "blitz":
+      return "Блиц";
+    case "rapid":
+      return "Рапид";
+    case "classical":
+      return "Классика";
+    default:
+      return "—";
+  }
+}
+
+export function sideLabel(color: Color | UserColor): string {
+  if (color === "white") return "белые";
+  if (color === "black") return "чёрные";
+  return "—";
+}
+
+export function pluralRu(count: number, one: string, few: string, many: string): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few;
+  return many;
+}
+
+export function toErrorMessage(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.length > 0) return message;
+  }
+  return "Неизвестная ошибка";
+}

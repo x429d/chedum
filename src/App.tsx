@@ -1,0 +1,40 @@
+import { onMount, Show } from "solid-js";
+
+import { Sidebar } from "./components/layout/Sidebar";
+import { Toasts } from "./components/layout/Toasts";
+import { libraryStore } from "./stores/libraryStore";
+import { settingsStore } from "./stores/settingsStore";
+import { ui } from "./stores/uiStore";
+import { AnalysisView } from "./views/AnalysisView";
+import { HubView } from "./views/HubView";
+import { LibraryView } from "./views/LibraryView";
+import { SettingsView } from "./views/SettingsView";
+
+export default function App() {
+  onMount(() => {
+    void settingsStore.load();
+    void libraryStore.load();
+  });
+
+  return (
+    <div class="app-shell">
+      <Sidebar />
+      <main class="main">
+        <div class="drag-strip" data-tauri-drag-region />
+        <Show when={ui.view() === "library"}>
+          <LibraryView />
+        </Show>
+        <Show when={ui.view() === "analysis"}>
+          <AnalysisView />
+        </Show>
+        <Show when={ui.view() === "hub"}>
+          <HubView />
+        </Show>
+        <Show when={ui.view() === "settings"}>
+          <SettingsView />
+        </Show>
+      </main>
+      <Toasts />
+    </div>
+  );
+}
