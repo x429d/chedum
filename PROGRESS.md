@@ -1,0 +1,85 @@
+# Chenal — progress log
+
+## Stage 1 — Initialization, disk profile, database, ECO
+
+- [x] Tauri v2 + SolidJS + TypeScript + Tailwind v4 project initialized.
+- [x] Rust disk diet in `src-tauri/Cargo.toml` (`debug = 0`, `strip`, thin LTO, `opt-level = "s"`).
+- [x] Clippy denies for `unwrap_used`, `expect_used`, `panic`, `todo`, `unimplemented`.
+- [x] Stockfish 19 arm64 binary prepared (thin slice) at
+      `src-tauri/binaries/stockfish-aarch64-apple-darwin` and made executable.
+- [x] SQLite WAL migrations for `synced_archives`, `games`, `game_analyses`, `move_evaluations`,
+      `app_settings` plus all required indexes.
+- [x] Embedded ECO dictionary: 3,865 openings with ECO code, name and PGN line.
+- [x] macOS app icon generated and Tauri bundle configuration prepared.
+- **Gate 1:** `cargo test` and `cargo clippy --all-targets -- -D warnings` pass.
+
+## Stage 2 — Math core, PGN/clocks, UCI manager, classifier
+
+- [x] Win probability logistic formula, mate probability and white-relative normalization.
+- [x] CAPS accuracy formula, weighted accuracy, ACPL cap at 300 cp, performance Elo.
+- [x] Priority classifier for all 11 categories with critical-move detection.
+- [x] Opening / middlegame / endgame detector using material and developed pieces.
+- [x] Time-management flags (`time_trouble`, `impulsive_error`, `overthink`).
+- [x] Streaming `pgn-reader` parser, `[%clk]` / `[%emt]` extraction, PGN writer.
+- [x] Async Stockfish manager (`Arc<tokio::sync::Mutex<EngineProcess>>`), UCI parser, 75 ms
+      throttled updates, cancellation and guaranteed kill.
+- [x] Move Coach explanations in Russian and deterministic game summary.
+- **Gate 2:** 72 Rust unit tests pass, including all 11 categories, accuracy, clocks and eval
+      normalization.
+
+## Stage 3 — Chess.com PubAPI and local storage
+
+- [x] PubAPI client with required `User-Agent`, 1 request/second limiter, `429`/`Retry-After`
+      backoff, archive games import.
+- [x] Incremental archive planning: finished months skipped, current month refreshed.
+- [x] Deduplication by external id and transactional batch inserts.
+- [x] PGN import (files/text), export, notes, favorites, move comments.
+- [x] Four rich demo games with real Stockfish depth-14 analysis embedded for first launch.
+- **Gate 3:** sync mock tests, dedupe tests, repository and SQL aggregation tests pass.
+
+## Stage 4 — SVG board, variation tree, live analysis
+
+- [x] Original vector SVG pieces (pawn, rook, knight, bishop, queen, king).
+- [x] Custom board with three themes, coordinates, last move, check, legal destinations,
+      click-to-move, pointer drag-and-drop, flip and fullscreen.
+- [x] Category badges on destination squares.
+- [x] Multi-arrow layer: MultiPV 1, MultiPV 2, played error and opponent threat.
+- [x] Eval bar with animated white share and exact eval (`+1.45` / `M3`).
+- [x] Chessops variation exploration and animated main-line preview.
+- [x] Live Stockfish panel with throttled MultiPV updates.
+- **Gate 4:** `npx tsc --noEmit` passes with strict TypeScript and no `any`.
+
+## Stage 5 — Visual analytics, Move Coach, Retry Mistake
+
+- [x] Dual-layer chart: Win% area, phase separators, error/brilliant markers, time histogram with
+      time-trouble/impulsive highlighting, click-to-ply.
+- [x] Game report: summary, ECO, accuracy rings, performance Elo, ACPL, 11-category table with
+      filters, phase bars, time-management summary.
+- [x] Move Coach card with delta, time, explanation, MultiPV lines and main-line playback.
+- [x] Two-column move list, category filtering and user notes.
+- [x] Key moments and interactive Retry Mistake trainer with instant verification and solution.
+- **Gate 5:** `npm run build` passes.
+
+## Stage 6 — Library, Player Hub, final audit
+
+- [x] Library filters, selection, batch queue with progress/cancel, PGN import/export, sync panel.
+- [x] Player Analytics Hub: KPI cards, color splits, opening matrix, phase weaknesses, accuracy
+      trend, time-management stats.
+- [x] Settings: profile, analysis depth/MultiPV, board theme, arrows, engine diagnostics.
+- [x] Headless Playwright smoke test of all views with mocked IPC: no console errors.
+- [x] Native macOS `.app` bundle built successfully (105.4 MiB, Stockfish resource executable):
+      `src-tauri/target/release/bundle/macos/Chenal.app`.
+
+### Final Gate 6 audit
+
+- [x] No file over 300 lines (`find ... wc -l`).
+- [x] No `any`, `as any`, `@ts-ignore`, `@ts-expect-error` in `src/`.
+- [x] No `todo!`, `unimplemented!` or `TODO` in `src-tauri/src/`.
+- [x] `cargo test` — 72 passed.
+- [x] `cargo clippy --all-targets -- -D warnings` — clean.
+- [x] `npx tsc --noEmit` — clean.
+- [x] `npm run build` — clean.
+- [x] `npm run tauri build -- --bundles app` — clean.
+- [x] `cargo fmt --check` — clean.
+
+All gates are green. The app is ready to run from the bundle above.
