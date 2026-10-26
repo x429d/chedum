@@ -1,0 +1,22 @@
+[Event "Chenal Demo Rapid"]
+[Site "Chenal Studio Demo"]
+[Date "2026.09.18"]
+[Round "1"]
+[White "chenal_player"]
+[Black "tactics_hunter"]
+[Result "1-0"]
+[WhiteElo "1842"]
+[BlackElo "1810"]
+[TimeControl "600+0"]
+[Termination "Normal"]
+[ECO "C41"]
+[Opening "Philidor Defense"]
+[UTCDate "2026-09-18"]
+[UTCTime "18:42:11"]
+
+1. e4 {[%clk 0:09:54.3]} e5 {[%clk 0:09:49.2]} 2. Nf3 {[%clk 0:09:48.1]} d6 {[%clk 0:09:40.3]} 3. d4 {[%clk 0:09:40.1]} Bg4 {[%clk 0:09:31.8]}
+4. dxe5 {[%clk 0:09:34.4]} Bxf3 {[%clk 0:09:26.1]} 5. Qxf3 {[%clk 0:09:32.8]} dxe5 {[%clk 0:09:21.4]} 6. Bc4 {[%clk 0:09:21.2]} Nf6 {[%clk 0:09:06.8]}
+7. Qb3 {[%clk 0:09:19.6]} Qe7 {[%clk 0:08:57.7]} 8. Nc3 {[%clk 0:09:08.7]} c6 {[%clk 0:08:47]} 9. Bg5 {[%clk 0:08:56.8]} b5 {[%clk 0:08:35.8]}
+10. Nxb5 {[%clk 0:08:43.5]} cxb5 {[%clk 0:08:27]} 11. Bxb5+ {[%clk 0:08:36.3]} Nbd7 {[%clk 0:08:13.2]} 12. O-O-O {[%clk 0:08:24.1]} Rd8 {[%clk 0:07:54.9]}
+13. Rxd7 {[%clk 0:08:14.4]} Rxd7 {[%clk 0:07:30.2]} 14. Rd1 {[%clk 0:07:56.2]} Qe6 {[%clk 0:07:10.7]} 15. Bxd7+ {[%clk 0:07:39.4]} Nxd7 {[%clk 0:06:49.2]}
+16. Qb8+ {[%clk 0:07:30.3]} Nxb8 {[%clk 0:06:30]} 17. Rd8# {[%clk 0:07:09.10]} 1-0

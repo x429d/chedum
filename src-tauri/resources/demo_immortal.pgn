@@ -1,0 +1,24 @@
+[Event "Chenal Demo Blitz"]
+[Site "Chenal Studio Demo"]
+[Date "2026.10.02"]
+[Round "1"]
+[White "king_hunt"]
+[Black "chenal_player"]
+[Result "1-0"]
+[WhiteElo "1875"]
+[BlackElo "1832"]
+[TimeControl "300+0"]
+[Termination "Normal"]
+[ECO "C33"]
+[Opening "King's Gambit Accepted"]
+[UTCDate "2026-10-02"]
+[UTCTime "20:15:03"]
+
+1. e4 {[%clk 0:04:54.1]} e5 {[%clk 0:04:50.6]} 2. f4 {[%clk 0:04:48.1]} exf4 {[%clk 0:04:38.8]} 3. Bc4 {[%clk 0:04:42.4]} Qh4+ {[%clk 0:04:31.2]}
+4. Kf1 {[%clk 0:04:39.5]} b5 {[%clk 0:04:20.9]} 5. Bxb5 {[%clk 0:04:34.8]} Nf6 {[%clk 0:04:19.3]} 6. Nf3 {[%clk 0:04:27.3]} Qh6 {[%clk 0:04:02.8]}
+7. d3 {[%clk 0:04:19.2]} Nh5 {[%clk 0:04:01.2]} 8. Nh4 {[%clk 0:04:13.6]} Qg5 {[%clk 0:03:48.1]} 9. Nf5 {[%clk 0:04:07.7]} c6 {[%clk 0:03:37.8]}
+10. g4 {[%clk 0:04:00.1]} Nf6 {[%clk 0:03:22.6]} 11. Rg1 {[%clk 0:03:53.10]} cxb5 {[%clk 0:03:04.3]} 12. h4 {[%clk 0:03:46.3]} Qg6 {[%clk 0:02:47.6]}
+13. h5 {[%clk 0:03:41.4]} Qg5 {[%clk 0:02:32.8]} 14. Qf3 {[%clk 0:03:36.2]} Ng8 {[%clk 0:02:15.4]} 15. Bxf4 {[%clk 0:03:26.9]} Qf6 {[%clk 0:02:03.10]}
+16. Nc3 {[%clk 0:03:16.8]} Bc5 {[%clk 0:01:48.5]} 17. Nd5 {[%clk 0:03:05.10]} Qxb2 {[%clk 0:01:30.6]} 18. Bd6 {[%clk 0:02:53.2]} Bxg1 {[%clk 0:01:04.2]}
+19. e5 {[%clk 0:02:43.7]} Qxa1+ {[%clk 0:00:48.5]} 20. Ke2 {[%clk 0:02:36.9]} Na6 {[%clk 0:00:34.1]} 21. Nxg7+ {[%clk 0:02:23.6]} Kd8 {[%clk 0:00:20.1]}
+22. Qf6+ {[%clk 0:02:12.1]} Nxf6 {[%clk 0:00:06.10]} 23. Be7# {[%clk 0:02:00]} 1-0

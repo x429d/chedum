@@ -1,0 +1,24 @@
+[Event "Chenal Demo Rapid"]
+[Site "Chenal Studio Demo"]
+[Date "2026.09.29"]
+[Round "1"]
+[White "chenal_player"]
+[Black "berlin_wall"]
+[Result "1-0"]
+[WhiteElo "1901"]
+[BlackElo "1888"]
+[TimeControl "600+0"]
+[Termination "Normal"]
+[ECO "C52"]
+[Opening "Evans Gambit"]
+[UTCDate "2026-09-29"]
+[UTCTime "19:05:47"]
+
+1. e4 {[%clk 0:09:54.8]} e5 {[%clk 0:09:52.3]} 2. Nf3 {[%clk 0:09:51.7]} Nc6 {[%clk 0:09:45.9]} 3. Bc4 {[%clk 0:09:46.7]} Bc5 {[%clk 0:09:39.1]}
+4. b4 {[%clk 0:09:40.9]} Bxb4 {[%clk 0:09:32.6]} 5. c3 {[%clk 0:09:39.3]} Ba5 {[%clk 0:09:28.9]} 6. d4 {[%clk 0:09:30.9]} exd4 {[%clk 0:09:17.5]}
+7. O-O {[%clk 0:09:29.3]} d3 {[%clk 0:09:09.1]} 8. Qb3 {[%clk 0:09:21.9]} Qf6 {[%clk 0:08:58.7]} 9. e5 {[%clk 0:09:13.4]} Qg6 {[%clk 0:08:52.1]}
+10. Re1 {[%clk 0:09:07.8]} Nge7 {[%clk 0:08:39.6]} 11. Ba3 {[%clk 0:08:58.3]} b5 {[%clk 0:08:24.8]} 12. Qxb5 {[%clk 0:08:49.3]} Rb8 {[%clk 0:08:17.6]}
+13. Qa4 {[%clk 0:08:42.5]} Bb6 {[%clk 0:08:05.8]} 14. Nbd2 {[%clk 0:08:34.10]} Bb7 {[%clk 0:07:59.1]} 15. Ne4 {[%clk 0:08:25.1]} Qf5 {[%clk 0:07:49.3]}
+16. Bxd3 {[%clk 0:08:17.2]} Qh5 {[%clk 0:07:38.6]} 17. Nf6+ {[%clk 0:08:01.8]} gxf6 {[%clk 0:07:19.2]} 18. exf6 {[%clk 0:07:46.3]} Rg8 {[%clk 0:07:01.4]}
+19. Rad1 {[%clk 0:07:31.10]} Qxf3 {[%clk 0:06:41.6]} 20. Rxe7+ {[%clk 0:07:24.5]} Nxe7 {[%clk 0:06:30.1]} 21. Qxd7+ {[%clk 0:07:17.2]} Kxd7 {[%clk 0:06:12.5]}
+22. Bf5+ {[%clk 0:07:07.10]} Ke8 {[%clk 0:05:55.1]} 23. Bd7+ {[%clk 0:06:58.1]} Kf8 {[%clk 0:05:39.10]} 24. Bxe7# {[%clk 0:06:45]} 1-0

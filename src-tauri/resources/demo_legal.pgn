@@ -1,0 +1,19 @@
+[Event "Chenal Demo Blitz"]
+[Site "Chenal Studio Demo"]
+[Date "2026.10.11"]
+[Round "1"]
+[White "pawn_storm"]
+[Black "chenal_player"]
+[Result "1-0"]
+[WhiteElo "1760"]
+[BlackElo "1744"]
+[TimeControl "300+0"]
+[Termination "Normal"]
+[ECO "C41"]
+[Opening "Philidor Defense: Legal Mate"]
+[UTCDate "2026-10-11"]
+[UTCTime "21:33:09"]
+
+1. e4 {[%clk 0:04:51.7]} e5 {[%clk 0:04:18.1]} 2. Nf3 {[%clk 0:04:41.1]} d6 {[%clk 0:03:14.9]} 3. Bc4 {[%clk 0:04:33.5]} Bg4 {[%clk 0:03:13.3]}
+4. Nc3 {[%clk 0:04:20.1]} g6 {[%clk 0:02:25.7]} 5. Nxe5 {[%clk 0:04:11.9]} Bxd1 {[%clk 0:02:24.1]} 6. Bxf7+ {[%clk 0:03:44.9]} Ke7 {[%clk 0:00:23.1]}
+7. Nd5# {[%clk 0:03:10]} 1-0
