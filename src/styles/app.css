@@ -741,12 +741,13 @@ tr:hover .row-actions,
   height: 15px;
 }
 
+/* Pinned actions column: needs a background identical to the card, otherwise the
+   card gradient shows as a darker rectangle once the table scrolls sideways. */
 .data-table th:last-child,
 .data-table td:last-child {
   position: sticky;
   right: 0;
   background: var(--card);
-  box-shadow: -10px 0 16px -16px rgba(0, 0, 0, 0.9);
 }
 
 .data-table thead th:last-child {
@@ -757,9 +758,22 @@ tr:hover .row-actions,
   background: #1a1f2c;
 }
 
-@media (max-width: 1280px) {
+/* The card behind the table keeps a flat fill so the pinned column blends in. */
+.card-table {
+  background: var(--card);
+}
+
+@media (max-width: 1440px) {
   .data-table .col-acpl {
     display: none;
+  }
+  .data-table th,
+  .data-table td {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+  .data-table {
+    font-size: 12px;
   }
 }
 
@@ -1958,17 +1972,20 @@ tr:hover .row-actions,
   background: var(--accent-soft);
 }
 
+.star-icon path {
+  transition: fill 0.14s ease;
+}
+
+.icon-btn:hover .star-icon:not(.favorite-on) path {
+  fill: rgba(251, 191, 36, 0.32);
+}
+
 .favorite-on {
   color: #fbbf24;
 }
 
 .favorite-on path {
-  fill: rgba(251, 191, 36, 0.3);
-  transition: fill 0.14s ease;
-}
-
-.icon-btn:hover .favorite-on path {
-  fill: rgba(251, 191, 36, 0.45);
+  fill: currentColor;
 }
 
 .theme-mini-midnight {

@@ -93,8 +93,8 @@ function Row(props: { game: GameListItem }) {
           >
             <Icon
               name="star"
-              size={14}
-              class={props.game.isFavorite ? "favorite-on" : undefined}
+              size={15}
+              class={`star-icon${props.game.isFavorite ? " favorite-on" : ""}`}
             />
           </button>
           <button
@@ -118,7 +118,7 @@ export function GameTable() {
     libraryStore.games().every((game) => libraryStore.selected().includes(game.id));
 
   return (
-    <div class="card" style={{ overflow: "hidden" }}>
+    <div class="card card-table" style={{ overflow: "hidden" }}>
       <Show when={libraryStore.selectedCount() > 0}>
         <div
           style={{
