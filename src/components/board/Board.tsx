@@ -109,17 +109,6 @@ export function Board(props: BoardProps) {
     return item?.state() ?? null;
   });
 
-  const squareClass = (cell: Cell): string => {
-    const classes = [cell.light ? "board-sq-light" : "board-sq-dark"];
-    const move = props.lastMove;
-    if (move && (cell.name === move.slice(0, 2) || cell.name === move.slice(2, 4))) {
-      classes.push("board-sq-last");
-    }
-    if (selected() === cell.name) classes.push("board-sq-selected");
-    if (props.checkSquare === cell.name) classes.push("board-sq-check");
-    return classes.join(" ");
-  };
-
   const hoverCell = createMemo(() => {
     if (!props.interactive) return null;
     const name = hover();
@@ -127,8 +116,37 @@ export function Board(props: BoardProps) {
     return cells().find((cell) => cell.name === name) ?? null;
   });
 
-  const squareCursor = (cell: Cell): string => {
-    if (!props.interactive) return "default";
+  /**
+   * Highlights live above the checkerboard instead of being merged into the square rects:
+   * the board itself only paints one dark plate plus the light squares, so neighbouring
+   * squares never leave a hairline of the frame colour between them.
+   */
+  const highlights = createMemo(() => {
+    const list: { cell: Cell; classes: string }[] = [];
+    const add = (name: string | null | undefined, classes: string) => {
+      if (!name) return;
+      const cell = cells().find((entry) => entry.name === name);
+      if (cell) list.push({ cell, classes });
+    };
+    if (props.lastMove) {
+      add(props.lastMove.slice(0, 2), "board-sq-last");
+      add(props.lastMove.slice(2, 4), "board-sq-last");
+    }
+    add(selected(), "board-sq-selected");
+    add(props.checkSquare, "board-sq-check");
+    const hovered = hoverCell();
+    if (hovered) {
+      list.push({
+        cell: hovered,
+        classes: hovered.light ? "board-sq-hover on-light" : "board-sq-hover",
+      });
+    }
+    return list;
+  });
+
+  const boardCursor = (): string => {
+    const cell = hoverCell();
+    if (!cell) return "default";
     if (selected() && legal().has(cell.name)) return "pointer";
     if (ownPieces().has(cell.name)) return "grab";
     return "default";
@@ -157,6 +175,7 @@ export function Board(props: BoardProps) {
         ref={boardRef}
         class="board-svg"
         viewBox="-0.25 -0.25 8.5 8.5"
+        style={{ cursor: boardCursor() }}
         onPointerDown={pointer.handleDown}
         onPointerMove={pointer.handleMove}
         onPointerUp={pointer.handleUp}
@@ -164,24 +183,20 @@ export function Board(props: BoardProps) {
         onPointerLeave={pointer.clearHover}
       >
         <rect x="-0.25" y="-0.25" width="8.5" height="8.5" fill="var(--board-frame, #10141d)" />
+        <rect x="0" y="0" width="8" height="8" class="board-sq-dark" />
         <For each={cells()}>
           {(cell) => (
-            <rect
-              x={cell.col}
-              y={cell.row}
-              width="1"
-              height="1"
-              class={squareClass(cell)}
-              style={{ cursor: squareCursor(cell) }}
-            />
+            <Show when={cell.light}>
+              <rect x={cell.col} y={cell.row} width="1" height="1" class="board-sq-light" />
+            </Show>
           )}
         </For>
 
-        <Show when={hoverCell()}>
-          {(cell) => (
-            <rect x={cell().col} y={cell().row} width="1" height="1" class="board-sq-hover" />
+        <For each={highlights()}>
+          {(item) => (
+            <rect x={item.cell.col} y={item.cell.row} width="1" height="1" class={item.classes} />
           )}
-        </Show>
+        </For>
 
         <For each={cells()}>
           {(cell) => (

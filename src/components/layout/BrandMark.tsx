@@ -1,22 +1,21 @@
 /**
- * Chenal brand mark: the same knight silhouette as the app icon, punched out of the
+ * Chenal brand mark: the same king silhouette as the app icon, punched out of the
  * teal tile that `.brand-mark` paints behind it.
  */
-const KNIGHT_BODY = "M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21";
-const KNIGHT_HEAD =
-  "M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.04-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-1-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-2 2.5-3c1 0 1 3 1 3";
+const KING_CROSS = "M20.9 5.2h3.2v1.9h3.4v3h-3.4V14.6h-3.2v-4.5h-3.4v-3h3.4z";
+const KING_ORB =
+  "M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5";
+const KING_BODY =
+  "M11.5 37c5.5 3.5 15.5 3.5 21 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-3.5-7.5-13-10.5-16-4-3 6 5 10 5 10z";
 
 export function BrandMark(props: { size?: number }) {
   const size = () => props.size ?? 20;
   return (
     <svg viewBox="0 0 45 45" width={size()} height={size()} aria-hidden="true">
-      <mask id="chenal-brand-eye">
-        <rect width="45" height="45" fill="#fff" />
-        <circle cx="9.6" cy="25.4" r="1.05" fill="#000" />
-      </mask>
-      <g fill="currentColor" mask="url(#chenal-brand-eye)">
-        <path d={KNIGHT_BODY} />
-        <path d={KNIGHT_HEAD} />
+      <g fill="currentColor">
+        <path d={KING_CROSS} />
+        <path d={KING_ORB} />
+        <path d={KING_BODY} />
       </g>
     </svg>
   );

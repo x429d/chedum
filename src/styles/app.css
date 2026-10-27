@@ -1020,9 +1020,17 @@ tr:hover .row-actions,
   fill: rgba(239, 68, 68, 0.42);
 }
 
+/* Hover needs to read on both square shades of any palette, so it washes dark squares with
+   white and light squares with black: no per-theme colour to maintain, new themes included. */
 .board-sq-hover {
-  fill: rgba(226, 232, 240, 0.17);
+  fill: #ffffff;
+  fill-opacity: 0.16;
   pointer-events: none;
+}
+
+.board-sq-hover.on-light {
+  fill: #000000;
+  fill-opacity: 0.13;
 }
 
 .board-coord {
