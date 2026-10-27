@@ -77,29 +77,42 @@ export function EvalChart(props: {
     return Math.max(1, ...values);
   });
 
+  // The svg keeps its aspect ratio (xMidYMid meet) inside a fixed-height box,
+  // so the drawing is letterboxed horizontally. Every client->viewBox conversion
+  // must subtract that offset, otherwise the cursor and the highlighted ply drift apart.
+  const geometry = (target: SVGSVGElement): { rect: DOMRect; scale: number; padX: number } => {
+    const rect = target.getBoundingClientRect();
+    const scale = Math.min(rect.width / W, rect.height / H) || 1;
+    return { rect, scale, padX: (rect.width - W * scale) / 2 };
+  };
+
   const plyFromEvent = (event: PointerEvent | MouseEvent): number => {
     const target = event.currentTarget;
     if (!(target instanceof SVGSVGElement)) return 0;
-    const rect = target.getBoundingClientRect();
-    const relative = ((event.clientX - rect.left) / rect.width) * W;
-    const raw = ((relative - ML) / PLOT_W) * total();
+    const { rect, scale, padX } = geometry(target);
+    const viewX = (event.clientX - rect.left - padX) / scale;
+    const raw = ((viewX - ML) / PLOT_W) * total();
     return Math.max(0, Math.min(total(), Math.round(raw)));
   };
 
   const handleMove = (event: PointerEvent): void => {
-    const ply = plyFromEvent(event);
     const target = event.currentTarget;
     if (!(target instanceof SVGSVGElement)) return;
-    const rect = target.getBoundingClientRect();
-    const left = ((event.clientX - rect.left) / rect.width) * 100;
+    const ply = plyFromEvent(event);
+    const { rect, scale, padX } = geometry(target);
+    // Snap the guide to the data point so the highlight always matches the tooltip.
+    const left = ((padX + x(ply) * scale) / rect.width) * 100;
     setHover({ ply, left });
   };
 
   const hovered = createMemo(() => {
     const state = hover();
     if (!state) return null;
-    if (state.ply === 0) return { ...state, move: null as MoveEvaluation | null };
-    return { ...state, move: props.moves[state.ply - 1] ?? null };
+    const move = state.ply === 0 ? null : (props.moves[state.ply - 1] ?? null);
+    const win = move ? move.winProbWhite : 50;
+    const moveNumber = Math.max(1, Math.ceil(state.ply / 2));
+    const label = state.ply === 0 ? "" : state.ply % 2 === 1 ? `${moveNumber}.` : `${moveNumber}…`;
+    return { ...state, move, win, label };
   });
 
   return (
@@ -209,15 +222,25 @@ export function EvalChart(props: {
           }}
         </For>
 
-        <Show when={hover()}>
+        <Show when={hovered()}>
           {(state) => (
-            <line
-              x1={(state().left / 100) * W}
-              x2={(state().left / 100) * W}
-              y1={MT}
-              y2={H - 4}
-              class="chart-hover-line"
-            />
+            <>
+              <line
+                x1={x(state().ply)}
+                x2={x(state().ply)}
+                y1={MT}
+                y2={H - 4}
+                class="chart-hover-line"
+              />
+              <circle
+                cx={x(state().ply)}
+                cy={y(state().win)}
+                r="4"
+                fill="#2dd4bf"
+                stroke="#0b0e14"
+                stroke-width="1.4"
+              />
+            </>
           )}
         </Show>
       </svg>
@@ -226,7 +249,11 @@ export function EvalChart(props: {
         {(state) => (
           <div
             class="chart-tooltip"
-            style={{ left: `${state().left}%`, top: "6px", transform: "translateX(-50%)" }}
+            style={{
+              left: `${Math.max(12, Math.min(88, state().left))}%`,
+              top: "6px",
+              transform: "translateX(-50%)",
+            }}
           >
             <Show
               when={state().move}
@@ -235,7 +262,7 @@ export function EvalChart(props: {
               {(move) => (
                 <div style={{ display: "flex", "flex-direction": "column", gap: "2px" }}>
                   <div style={{ display: "flex", gap: "6px", "align-items": "center" }}>
-                    <span class="mono">{move().ply}.</span>
+                    <span class="mono">{state().label}</span>
                     <span style={{ "font-weight": "700" }}>{move().playedSan}</span>
                     <span style={{ color: CATEGORY_META[move().classification].color }}>
                       {CATEGORY_META[move().classification].label}
