@@ -3,8 +3,8 @@ use shakmaty::{Chess, Position};
 use chrono::Utc;
 
 use crate::analytics::{
-    average_cp_loss, build_summary, performance_elo, spent_time, time_flag, weighted_accuracy,
-    Score, SummaryInput, TimeContext,
+    average_cp_loss, build_summary, game_accuracy, performance_elo, phase_accuracy, spent_time,
+    time_flag, Score, SummaryInput, TimeContext,
 };
 use crate::domain::analysis::{CategoryCounts, GameAnalysis, MoveCategory, Phase, TimeFlag};
 use crate::domain::error::{AppError, AppResult};
@@ -191,14 +191,6 @@ pub fn time_info(
     TimeInfo { spent, flag }
 }
 
-pub fn phase_accuracy(entries: &[Vec<(f64, f64)>; 3]) -> [Option<f64>; 3] {
-    [
-        weighted_accuracy(entries[0].iter().copied()),
-        weighted_accuracy(entries[1].iter().copied()),
-        weighted_accuracy(entries[2].iter().copied()),
-    ]
-}
-
 pub struct AggregateInput<'a> {
     pub game: &'a Game,
     pub engine_name: &'a str,
@@ -206,10 +198,10 @@ pub struct AggregateInput<'a> {
     pub multipv: u32,
     pub counts: CategoryCounts,
     pub key_moments: u32,
-    pub white_acc: Vec<(f64, f64)>,
-    pub black_acc: Vec<(f64, f64)>,
-    pub white_phases: [Vec<(f64, f64)>; 3],
-    pub black_phases: [Vec<(f64, f64)>; 3],
+    pub accuracy_samples: Vec<(f64, f64)>,
+    pub first_color: Color,
+    pub phase_samples: [Vec<(f64, f64)>; 3],
+    pub phase_first: [Option<Color>; 3],
     pub white_cp: Vec<f64>,
     pub black_cp: Vec<f64>,
     pub user_time_trouble: u32,
@@ -218,12 +210,10 @@ pub struct AggregateInput<'a> {
 
 /// Собирает итоговые метрики партии из накопленных данных по ходам.
 pub fn finalize(input: AggregateInput<'_>) -> GameAnalysis {
-    let white_accuracy = weighted_accuracy(input.white_acc);
-    let black_accuracy = weighted_accuracy(input.black_acc);
+    let [white_accuracy, black_accuracy] = game_accuracy(&input.accuracy_samples, input.first_color);
     let white_acpl = average_cp_loss(input.white_cp);
     let black_acpl = average_cp_loss(input.black_cp);
-    let white_phase_acc = phase_accuracy(&input.white_phases);
-    let black_phase_acc = phase_accuracy(&input.black_phases);
+    let [white_phase_acc, black_phase_acc] = phase_accuracy(&input.phase_samples, &input.phase_first);
     let user_phases = match input.game.user_color {
         UserColor::White => white_phase_acc,
         UserColor::Black => black_phase_acc,

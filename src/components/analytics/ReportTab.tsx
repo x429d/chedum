@@ -55,10 +55,13 @@ export function ReportTab(props: {
       </div>
 
       <div class="metric-tiles">
-        <div class="metric-tile">
+        <div
+          class="metric-tile"
+          title="Метод Lichess: потеря вероятности победы, взвешенная по волатильности, и гармоническое среднее"
+        >
           <div class="metric-label">Ваша точность</div>
           <div class="metric-value">{userAccuracy() === null ? "—" : `${formatNumber(userAccuracy(), 1)}%`}</div>
-          <div class="stat-hint">средневзвешенная</div>
+          <div class="stat-hint">метод Lichess</div>
         </div>
         <div class="metric-tile">
           <div class="metric-label">Performance Elo</div>
@@ -97,7 +100,11 @@ export function ReportTab(props: {
       </div>
 
       <div>
-        <div class="card-title" style={{ "margin-bottom": "8px" }}>
+        <div
+          class="card-title"
+          style={{ "margin-bottom": "8px" }}
+          title="Для каждой фазы — тот же метод Lichess"
+        >
           Точность по фазам
         </div>
         <PhaseBars analysis={props.analysis} userColor={props.game.userColor} />

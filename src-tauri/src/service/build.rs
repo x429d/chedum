@@ -1,6 +1,5 @@
 use crate::analytics::{
-    classify, critical_weight, explain, is_critical, move_accuracy, phase_for, ClassifyInput,
-    CoachInput, Score,
+    classify, explain, is_critical, move_accuracy, phase_for, ClassifyInput, CoachInput, Score,
 };
 use crate::domain::analysis::{AnalysisDraft, CategoryCounts, MoveCategory, MoveEvaluation};
 use crate::domain::error::{AppError, AppResult};
@@ -62,10 +61,10 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
     let mut prev_category: Option<MoveCategory> = None;
     let mut counts = CategoryCounts::new();
     let mut moves: Vec<MoveEvaluation> = Vec::with_capacity(total);
-    let mut white_acc: Vec<(f64, f64)> = Vec::new();
-    let mut black_acc: Vec<(f64, f64)> = Vec::new();
-    let mut white_phases: [Vec<(f64, f64)>; 3] = [Vec::new(), Vec::new(), Vec::new()];
-    let mut black_phases: [Vec<(f64, f64)>; 3] = [Vec::new(), Vec::new(), Vec::new()];
+    let mut accuracy_samples: Vec<(f64, f64)> = Vec::with_capacity(total);
+    let mut phase_samples: [Vec<(f64, f64)>; 3] = [Vec::new(), Vec::new(), Vec::new()];
+    let mut phase_first: [Option<Color>; 3] = [None, None, None];
+    let mut first_color: Option<Color> = None;
     let mut white_cp: Vec<f64> = Vec::new();
     let mut black_cp: Vec<f64> = Vec::new();
     let mut key_moments = 0u32;
@@ -191,19 +190,19 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
             pv_san: &best_line.san_moves,
         });
         let phase = phase_for(index as u32 + 1, &mv.fen_before);
-        let weight = critical_weight(critical);
         let phase_slot = phase_index(phase);
+        let sample = (best_win, played_win);
+        accuracy_samples.push(sample);
+        if first_color.is_none() {
+            first_color = Some(player);
+        }
+        if phase_first[phase_slot].is_none() {
+            phase_first[phase_slot] = Some(player);
+        }
+        phase_samples[phase_slot].push(sample);
         match player {
-            Color::White => {
-                white_acc.push((accuracy, weight));
-                white_phases[phase_slot].push((accuracy, weight));
-                white_cp.push(cp_loss);
-            }
-            Color::Black => {
-                black_acc.push((accuracy, weight));
-                black_phases[phase_slot].push((accuracy, weight));
-                black_cp.push(cp_loss);
-            }
+            Color::White => white_cp.push(cp_loss),
+            Color::Black => black_cp.push(cp_loss),
         }
         counts.increment(player, classification);
         if classification.is_key_moment() || critical {
@@ -260,10 +259,10 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
         multipv: input.multipv,
         counts,
         key_moments,
-        white_acc,
-        black_acc,
-        white_phases,
-        black_phases,
+        accuracy_samples,
+        first_color: first_color.unwrap_or(Color::White),
+        phase_samples,
+        phase_first,
         white_cp,
         black_cp,
         user_time_trouble,

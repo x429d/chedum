@@ -167,7 +167,12 @@ export function GameTable() {
               <th>Игроки</th>
               <th>Результат</th>
               <th>Дебют</th>
-              <th style={{ "text-align": "right" }}>Точность</th>
+              <th
+                style={{ "text-align": "right" }}
+                title="Метод Lichess: потеря вероятности победы за ход, окна волатильности + гармоническое среднее"
+              >
+                Точность
+              </th>
               <th class="col-acpl" style={{ "text-align": "right" }}>ACPL</th>
               <th />
             </tr>

@@ -17,7 +17,7 @@ pub mod state;
 
 use tauri::Manager;
 
-use crate::db::{seed, Db};
+use crate::db::{analyses_repo, seed, Db};
 use crate::engine::EngineState;
 use crate::state::AppState;
 
@@ -30,12 +30,24 @@ pub fn run() {
             })?;
             std::fs::create_dir_all(&data_dir)?;
             let db = Db::open(&data_dir.join("chenal.db"))?;
-            match seed::ensure_demo(&db) {
+            let seeded = match seed::ensure_demo(&db) {
+                Ok(count) => {
+                    if count > 0 {
+                        eprintln!("Chenal: загружено демонстрационных партий — {count}");
+                    }
+                    count
+                }
+                Err(err) => {
+                    eprintln!("Chenal: не удалось загрузить демо-данные: {err}");
+                    0
+                }
+            };
+            match analyses_repo::backfill_lichess_accuracy(&db, seeded > 0) {
                 Ok(count) if count > 0 => {
-                    eprintln!("Chenal: загружено демонстрационных партий — {count}");
+                    eprintln!("Chenal: точность пересчитана по методу Lichess — {count}");
                 }
                 Ok(_) => {}
-                Err(err) => eprintln!("Chenal: не удалось загрузить демо-данные: {err}"),
+                Err(err) => eprintln!("Chenal: не удалось пересчитать точность: {err}"),
             }
             let engine = EngineState::discover(app.handle());
             app.manage(AppState { db, engine });

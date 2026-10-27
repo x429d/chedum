@@ -7,7 +7,7 @@ pub mod timemanage;
 pub mod winprob;
 
 pub use accuracy::{
-    average_cp_loss, critical_weight, move_accuracy, performance_elo, weighted_accuracy,
+    average_cp_loss, game_accuracy, move_accuracy, performance_elo, phase_accuracy,
 };
 pub use classify::{classify, is_critical, ClassifyInput};
 pub use coach::{explain, CoachInput, Explanation};

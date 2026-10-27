@@ -18,7 +18,7 @@ export function KpiCards(props: { kpis: HubKpis }) {
     {
       label: "Средняя точность",
       value: props.kpis.avgAccuracy === null ? "—" : `${formatNumber(props.kpis.avgAccuracy, 1)}%`,
-      hint: "по проанализированным",
+      hint: "метод Lichess",
     },
     {
       label: "Средний ACPL",

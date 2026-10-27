@@ -1,5 +1,7 @@
 use super::*;
-use crate::db::analyses_repo::{get_analysis, get_moves, insert_analysis_draft, save_move_comment};
+use crate::db::analyses_repo::{
+    backfill_lichess_accuracy, get_analysis, get_moves, insert_analysis_draft, save_move_comment,
+};
 use crate::db::connection::Db;
 use crate::db::stats_repo::hub_stats;
 use crate::domain::analysis::{
@@ -292,4 +294,37 @@ fn aggregates_hub_statistics() {
     assert_eq!(stats.trend.len(), 2);
     assert_eq!(stats.time.time_trouble_moves, 1);
     assert_eq!(stats.time.impulsive_errors, 1);
+}
+
+#[test]
+fn backfills_accuracy_with_lichess_method() {
+    let db = Db::in_memory().unwrap();
+    let game = draft(
+        "g1",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    let mut first = move_eval(id, 1, Phase::Opening, MoveCategory::Best, TimeFlag::Normal);
+    first.best_eval_cp = Some(50);
+    first.win_prob_white = 55.0;
+    let mut second = move_eval(id, 2, Phase::Opening, MoveCategory::Blunder, TimeFlag::Normal);
+    second.best_eval_cp = Some(-200);
+    second.win_prob_white = 40.0;
+    insert_analysis_draft(&db, &analysis(id, 90.0, 80.0, vec![first, second])).unwrap();
+
+    assert_eq!(backfill_lichess_accuracy(&db, false).unwrap(), 1);
+    let stored = get_analysis(&db, id).unwrap().unwrap();
+    // Белые не потеряли Win% ни на одном ходу — по методу Lichess это ровно 100.
+    assert_eq!(stored.white_accuracy, Some(100.0));
+    assert_eq!(stored.white_opening_acc, Some(100.0));
+    let black = stored.black_accuracy.unwrap();
+    assert!(black > 0.0 && black < 100.0);
+    assert_ne!(stored.black_accuracy, Some(80.0));
+    // Повторный запуск идемпотентен.
+    assert_eq!(backfill_lichess_accuracy(&db, false).unwrap(), 0);
 }

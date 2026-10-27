@@ -12,7 +12,8 @@ inspired dark interface.
 - **Analysis Studio**: custom SVG board with three themes and six switchable open-source piece sets,
   drag-and-drop and click-to-move, eval bar, multi-arrow layer, move-category badges, variation
   exploration, fullscreen, live Stockfish panel, and ←/→ keyboard navigation.
-- **Deep analytics**: Win% area chart + synchronized move-time histogram, accuracy rings, ACPL,
+- **Deep analytics**: Win% area chart + synchronized move-time histogram, Lichess-style accuracy
+  (win-probability loss with volatility windows and harmonic mean), ACPL,
   performance Elo, 11 move categories, phase accuracy, time-management flags.
 - **Move Coach**: Russian explanations for brilliant/great/inaccuracy/mistake/miss/blunder moves,
   MultiPV lines and animated main-line playback.
