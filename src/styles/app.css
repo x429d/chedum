@@ -1026,6 +1026,23 @@ tr:hover .row-actions {
   pointer-events: none;
 }
 
+.board-piece-enter {
+  animation: board-piece-enter 0.18s ease-out;
+}
+
+.board-piece-fading {
+  pointer-events: none;
+}
+
+@keyframes board-piece-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .theme-midnight {
   --sq-light: #3b4356;
   --sq-dark: #262c3b;

@@ -19,7 +19,7 @@ export interface BoardPointerOptions {
   position: () => Chess | null;
   orientation: () => Color;
   interactive: () => boolean;
-  onMove: (from: string, to: string) => void;
+  onMove: (from: string, to: string, animate: boolean) => void;
 }
 
 /**
@@ -60,9 +60,9 @@ export function createBoardPointer(options: BoardPointerOptions) {
     return new Set(Array.from(pos.dests(square)).map((target) => makeSquare(target)));
   });
 
-  const attemptMove = (from: string, to: string): void => {
+  const attemptMove = (from: string, to: string, animate = true): void => {
     if (!options.interactive()) return;
-    options.onMove(from, to);
+    options.onMove(from, to, animate);
     setSelected(null);
     setDrag(null);
   };
@@ -119,7 +119,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     if (!current) return;
     const target = squareOf(event);
     if (target && target !== current.from && legal().has(target)) {
-      attemptMove(current.from, target);
+      attemptMove(current.from, target, false);
     } else if (target === current.from && current.wasSelected) {
       setSelected(null);
     }

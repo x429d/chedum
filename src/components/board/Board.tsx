@@ -7,6 +7,7 @@ import { positionFromFen } from "../../utils/chess";
 import { Arrows } from "./Arrows";
 import { CategoryBadge } from "./CategoryBadge";
 import { createBoardPointer } from "./interaction";
+import { createPieceMotion } from "./pieceMotion";
 import { PieceGlyph } from "./Pieces";
 
 interface Cell {
@@ -40,12 +41,20 @@ export interface BoardProps {
 export function Board(props: BoardProps) {
   let boardRef: SVGSVGElement | undefined;
   const position = createMemo(() => positionFromFen(props.fen));
+  const motion = createPieceMotion({
+    fen: () => props.fen,
+    orientation: () => props.orientation,
+    position,
+  });
   const pointer = createBoardPointer({
     board: () => boardRef,
     position,
     orientation: () => props.orientation,
     interactive: () => Boolean(props.interactive),
-    onMove: (from, to) => props.onMove?.(from, to),
+    onMove: (from, to, animate) => {
+      if (!animate) motion.suppressNext();
+      props.onMove?.(from, to);
+    },
   });
   const { selected, drag, hover, ownPieces, legal } = pointer;
 
@@ -95,7 +104,8 @@ export function Board(props: BoardProps) {
   const dragPiece = createMemo(() => {
     const current = drag();
     if (!current) return null;
-    return pieces().find((item) => item.name === current.from) ?? null;
+    const item = motion.pieces().find((entry) => !entry.state().fading && entry.state().square === current.from);
+    return item?.state() ?? null;
   });
 
   const squareClass = (cell: Cell): string => {
@@ -185,17 +195,19 @@ export function Board(props: BoardProps) {
           )}
         </For>
 
-        <For each={pieces()}>
+        <For each={motion.pieces()}>
           {(item) => (
             <g
-              transform={`translate(${item.col} ${item.row})`}
+              classList={{ "board-piece-enter": item.state().entering, "board-piece-fading": item.state().fading }}
               style={{
-                opacity: drag()?.from === item.name ? 0.32 : 1,
+                transform: `translate(${item.state().col}px, ${item.state().row}px)`,
+                transition: `transform ${item.state().duration}ms cubic-bezier(0.2, 0.7, 0.3, 1), opacity 170ms ease-out`,
+                opacity: item.state().fading ? 0 : drag()?.from === item.state().square ? 0.32 : 1,
                 "pointer-events": "none",
               }}
             >
               <svg x="0.035" y="0.035" width="0.93" height="0.93" viewBox="0 0 45 45">
-                <PieceGlyph role={item.piece.role} color={item.piece.color} />
+                <PieceGlyph role={item.state().role} color={item.state().color} />
               </svg>
             </g>
           )}
@@ -204,11 +216,14 @@ export function Board(props: BoardProps) {
         <Show when={dragPiece()}>
           {(item) => (
             <g
-              transform={`translate(${(drag()?.x ?? 0) - 0.46} ${(drag()?.y ?? 0) - 0.46})`}
-              style={{ opacity: 0.92, "pointer-events": "none" }}
+              style={{
+                transform: `translate(${(drag()?.x ?? 0) - 0.46}px, ${(drag()?.y ?? 0) - 0.46}px)`,
+                opacity: 0.92,
+                "pointer-events": "none",
+              }}
             >
               <svg width="0.93" height="0.93" viewBox="0 0 45 45">
-                <PieceGlyph role={item().piece.role} color={item().piece.color} />
+                <PieceGlyph role={item().role} color={item().color} />
               </svg>
             </g>
           )}
