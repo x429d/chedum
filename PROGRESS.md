@@ -24,7 +24,7 @@
 - [x] Async Stockfish manager (`Arc<tokio::sync::Mutex<EngineProcess>>`), UCI parser, 75 ms
       throttled updates, cancellation and guaranteed kill.
 - [x] Move Coach explanations in Russian and deterministic game summary.
-- **Gate 2:** 72 Rust unit tests pass, including all 11 categories, accuracy, clocks and eval
+- **Gate 2:** 74 Rust unit tests pass, including all 11 categories, accuracy, clocks and eval
       normalization.
 
 ## Stage 3 — Chess.com PubAPI and local storage
@@ -63,6 +63,9 @@
 ## Stage 6 — Library, Player Hub, final audit
 
 - [x] Library filters, selection, batch queue with progress/cancel, PGN import/export, sync panel.
+- [x] Pagination with 25/50/100 page sizes, stable action column and batch deletion with native confirmation.
+- [x] Keyboard navigation: ←/→ step through moves, Home/End jump to start/end.
+- [x] Full-width window drag region with double-click maximize.
 - [x] Player Analytics Hub: KPI cards, color splits, opening matrix, phase weaknesses, accuracy
       trend, time-management stats.
 - [x] Settings: profile, analysis depth/MultiPV, board theme, arrows, engine diagnostics.
@@ -75,7 +78,7 @@
 - [x] No file over 300 lines (`find ... wc -l`).
 - [x] No `any`, `as any`, `@ts-ignore`, `@ts-expect-error` in `src/`.
 - [x] No `todo!`, `unimplemented!` or `TODO` in `src-tauri/src/`.
-- [x] `cargo test` — 72 passed.
+- [x] `cargo test` — 74 passed.
 - [x] `cargo clippy --all-targets -- -D warnings` — clean.
 - [x] `npx tsc --noEmit` — clean.
 - [x] `npm run build` — clean.

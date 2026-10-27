@@ -8,9 +8,10 @@ inspired dark interface.
 
 - **Library**: import/export PGN, Chess.com PubAPI sync with rate limiting and incremental archive
   cache, filters by opponent, color, result, time class, ECO, date, analysis, favorites and notes,
-  batch analysis queue.
+  pagination (25/50/100), batch analysis queue and batch deletion.
 - **Analysis Studio**: custom SVG board with three themes, drag-and-drop and click-to-move, eval bar,
-  multi-arrow layer, move-category badges, variation exploration, fullscreen, live Stockfish panel.
+  multi-arrow layer, move-category badges, variation exploration, fullscreen, live Stockfish panel,
+  and ←/→ keyboard navigation.
 - **Deep analytics**: Win% area chart + synchronized move-time histogram, accuracy rings, ACPL,
   performance Elo, 11 move categories, phase accuracy, time-management flags.
 - **Move Coach**: Russian explanations for brilliant/great/inaccuracy/mistake/miss/blunder moves,
@@ -39,6 +40,7 @@ inspired dark interface.
 npm install
 npm run tauri dev      # development app
 npm run tauri build    # macOS .app / .dmg bundle
+npm run install:app    # keep exactly one Chenal.app in /Applications
 ```
 
 If the bundled engine is missing, Chenal also looks for `/opt/homebrew/bin/stockfish` and
