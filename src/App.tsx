@@ -18,9 +18,10 @@ export default function App() {
 
   return (
     <div class="app-shell">
+      <div class="window-drag-bar" data-tauri-drag-region aria-hidden="true" />
       <Sidebar />
       <main class="main">
-        <div class="drag-strip" data-tauri-drag-region />
+        <div class="drag-strip" />
         <Show when={ui.view() === "library"}>
           <LibraryView />
         </Show>
