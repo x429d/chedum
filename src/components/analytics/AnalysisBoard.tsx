@@ -21,7 +21,7 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
   };
 
   return (
-    <div class="board-column">
+    <div class="board-column" classList={{ "is-live": analysisStore.liveEnabled() }}>
       <div class="board-stage">
         <EvalBar
           winProbWhite={gameStore.winProbWhite()}
@@ -38,7 +38,6 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
           badge={gameStore.badge()}
           checkSquare={gameStore.checkSquareName()}
           interactive={!gameStore.preview()}
-          fullscreen={props.fullscreen}
           onMove={(from, to) => {
             gameStore.enterVariation(from, to);
           }}

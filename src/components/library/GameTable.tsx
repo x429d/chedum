@@ -186,8 +186,7 @@ export function GameTable() {
                         {libraryStore.loading() ? "Загружаю библиотеку…" : "Пока нет партий"}
                       </div>
                       <div style={{ "font-size": "11.5px", "max-width": "360px" }}>
-                        Импортируйте PGN или синхронизируйте публичные партии Chess.com — анализ
-                        Stockfish запускается локально.
+                        Импортируйте PGN или синхронизируйте партии с Chess.com.
                       </div>
                       <div style={{ display: "flex", gap: "8px", "margin-top": "8px" }}>
                         <button

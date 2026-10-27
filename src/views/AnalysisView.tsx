@@ -162,7 +162,7 @@ export function AnalysisView() {
               </div>
             </Show>
 
-            <div class="analysis-layout">
+            <div class="analysis-layout" classList={{ "is-fullscreen": fullscreen() }}>
               <AnalysisBoard
                 fullscreen={fullscreen()}
                 onFullscreen={() => setFullscreen((value) => !value)}
@@ -194,6 +194,18 @@ export function AnalysisView() {
                   >
                     Моменты и Retry
                   </button>
+                  <Show when={fullscreen()}>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-sm"
+                      style={{ "flex": "none", "margin-left": "auto" }}
+                      title="Выйти из полноэкранного режима"
+                      onClick={() => setFullscreen(false)}
+                    >
+                      <Icon name="close" size={13} />
+                      Закрыть
+                    </button>
+                  </Show>
                 </div>
                 <div class="tab-body">
                   <Show
@@ -207,8 +219,7 @@ export function AnalysisView() {
                           Партия ещё не разобрана
                         </div>
                         <div style={{ "font-size": "11.5px", "max-width": "280px" }}>
-                          Запустите локальный Stockfish: точность, 11 категорий, фазы и объяснения
-                          тренера.
+                          Запустите Stockfish, чтобы получить разбор партии.
                         </div>
                         <button
                           type="button"
@@ -273,24 +284,6 @@ export function AnalysisView() {
                   onSelect={(ply) => gameStore.goTo(ply)}
                 />
               </div>
-            </Show>
-
-            <Show when={fullscreen()}>
-              <button
-                type="button"
-                class="btn"
-                style={{
-                  position: "fixed",
-                  top: "28px",
-                  right: "28px",
-                  "z-index": 100,
-                  background: "#131722",
-                }}
-                onClick={() => setFullscreen(false)}
-              >
-                <Icon name="close" size={14} />
-                Закрыть
-              </button>
             </Show>
           </div>
         )}

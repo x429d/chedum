@@ -348,15 +348,6 @@ button {
   margin-bottom: 20px;
 }
 
-.view-kicker {
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--accent-bright);
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
 .view-title {
   font-size: 27px;
   line-height: 1.1;
@@ -1103,6 +1094,65 @@ tr:hover .row-actions,
   align-items: start;
 }
 
+/* Fullscreen turns the whole analysis workspace into a dimmed overlay: the board keeps
+   its toolbar and live panel, and the tabbed report stays reachable on the right. */
+.analysis-layout.is-fullscreen {
+  --fs-panel: clamp(360px, 38vw, 560px);
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  grid-template-columns: minmax(0, 1fr) var(--fs-panel);
+  align-items: stretch;
+  gap: 22px;
+  padding: 38px 26px 22px;
+  background: rgba(6, 9, 14, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.analysis-layout.is-fullscreen .board-column {
+  --fs-board-h: calc(100vh - 124px);
+  --fs-board-w: min(
+    calc(100vw - 52px - 22px - var(--fs-panel) - 76px),
+    var(--fs-board-h)
+  );
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.analysis-layout.is-fullscreen .board-column.is-live {
+  --fs-board-h: calc(100vh - 300px);
+}
+
+/* The label hangs left of the thin bar; in fullscreen the bar keeps a wider shell so
+   values like "-0.11" or "+12.30" are never clipped by the column edge. */
+.analysis-layout.is-fullscreen .eval-bar {
+  width: 56px;
+}
+
+.analysis-layout.is-fullscreen .eval-bar-track {
+  inset: 0 0 0 auto;
+  width: 18px;
+}
+
+.analysis-layout.is-fullscreen .board-wrap {
+  width: var(--fs-board-w);
+}
+
+.analysis-layout.is-fullscreen .board-toolbar,
+.analysis-layout.is-fullscreen .board-column > .card,
+.analysis-layout.is-fullscreen .board-column > .live-panel {
+  width: min(100%, calc(var(--fs-board-w) + 68px));
+}
+
+.analysis-layout.is-fullscreen .analysis-panel {
+  height: auto;
+  max-height: 100%;
+}
+
 .board-column {
   display: flex;
   flex-direction: column;
@@ -1173,19 +1223,6 @@ tr:hover .row-actions,
   background: var(--sq-dark, #262c3b);
   position: relative;
   flex: none;
-}
-
-.board-wrap.fullscreen {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(calc(100vw - 36px), calc(100vh - 36px));
-  height: min(calc(100vw - 36px), calc(100vh - 36px));
-  max-width: none;
-  z-index: 90;
-  border-radius: 16px;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
 }
 
 .board-wrap.board-embed {

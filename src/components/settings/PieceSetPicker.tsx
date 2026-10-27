@@ -25,7 +25,6 @@ export function PieceSetPicker() {
       <div class="card-header">
         <div>
           <div class="card-title">Набор фигур</div>
-          <div class="card-subtitle">Шесть open-source SVG-наборов для доски</div>
         </div>
         <Icon name="sparkles" size={16} />
       </div>
@@ -62,8 +61,7 @@ export function PieceSetPicker() {
         </div>
         <div class="form-hint" style={{ "margin-top": "9px" }}>
           {pieceSetMeta(settingsStore.settings().pieceSet).author} ·{" "}
-          {pieceSetMeta(settingsStore.settings().pieceSet).license}. Все наборы распространяются
-          по открытым лицензиям.
+          {pieceSetMeta(settingsStore.settings().pieceSet).license}
         </div>
       </div>
     </div>

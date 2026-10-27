@@ -28,11 +28,8 @@ export function SettingsView() {
     <div class="view-scroll">
       <header class="view-header">
         <div>
-          <div class="view-kicker">Preferences</div>
           <h1 class="view-title">Настройки</h1>
-          <div class="view-subtitle">
-            Профиль, локальный движок и оформление студии. Всё сохраняется на этом Mac.
-          </div>
+          <div class="view-subtitle">Профиль, движок и оформление доски.</div>
         </div>
       </header>
 
@@ -265,7 +262,6 @@ export function SettingsView() {
             <div class="card-header">
               <div>
                 <div class="card-title">О приложении</div>
-                <div class="card-subtitle">Chenal · native chess analytics</div>
               </div>
               <Icon name="info" size={16} />
             </div>
@@ -273,15 +269,6 @@ export function SettingsView() {
               <div class="form-hint" style={{ "line-height": "1.7" }}>
                 Версия {settingsStore.info()?.version ?? "0.1.0"} · встроенный словарь ECO:{" "}
                 {settingsStore.info()?.ecoOpenings ?? "—"} линий.
-                <br />
-                Local-first: партии, оценки и заметки хранятся в SQLite (WAL). Stockfish работает
-                офлайн, интернет нужен только для Chess.com PubAPI.
-              </div>
-              <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap", "margin-top": "10px" }}>
-                <span class="chip accent">Stockfish</span>
-                <span class="chip">SQLite WAL</span>
-                <span class="chip">SolidJS</span>
-                <span class="chip">Tauri v2</span>
               </div>
             </div>
           </div>

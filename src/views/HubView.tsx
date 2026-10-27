@@ -54,11 +54,8 @@ export function HubView() {
     <div class="view-scroll">
       <header class="view-header">
         <div>
-          <div class="view-kicker">Player analytics hub</div>
           <h1 class="view-title">Аналитика игрока</h1>
-          <div class="view-subtitle">
-            Глобальный дашборд по локальной базе: результаты, дебюты, фазы и тайм-менеджмент.
-          </div>
+          <div class="view-subtitle">Результаты, дебюты, фазы и время на ход.</div>
         </div>
         <div class="header-actions">
           <button type="button" class="btn" onClick={() => void load()} disabled={loading()}>

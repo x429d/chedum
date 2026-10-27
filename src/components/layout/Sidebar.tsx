@@ -101,9 +101,6 @@ export function Sidebar() {
           {settingsStore.engine()?.name ?? "local engine"} · v
           {settingsStore.info()?.version ?? "0.1.0"}
         </div>
-        <div style={{ color: "var(--dim)", "font-size": "10px", "line-height": "1.4" }}>
-          Local-first. Партии и анализ остаются на этом Mac.
-        </div>
       </div>
     </aside>
   );

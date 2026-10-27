@@ -35,7 +35,6 @@ export interface BoardProps {
   checkSquare?: string | null;
   interactive?: boolean;
   embedded?: boolean;
-  fullscreen?: boolean;
   onMove?: (from: string, to: string) => void;
 }
 
@@ -168,7 +167,7 @@ export function Board(props: BoardProps) {
   return (
     <div
       class={`board-wrap theme-${props.theme}`}
-      classList={{ fullscreen: props.fullscreen, "board-embed": props.embedded }}
+      classList={{ "board-embed": props.embedded }}
       style={props.embedded ? { width: "100%", "max-width": "none" } : undefined}
     >
       <svg

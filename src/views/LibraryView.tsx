@@ -39,12 +39,11 @@ export function LibraryView() {
     <div class="view-scroll">
       <header class="view-header">
         <div>
-          <div class="view-kicker">Local library</div>
           <h1 class="view-title">Библиотека партий</h1>
           <div class="view-subtitle">
             {libraryStore.total()}{" "}
             {pluralRu(libraryStore.total(), "партия", "партии", "партий")} · {analyzed()} с
-            анализом · всё хранится локально
+            анализом
           </div>
         </div>
         <div class="header-actions">
@@ -56,7 +55,6 @@ export function LibraryView() {
         <div class="stat-card">
           <div class="stat-label">Всего партий</div>
           <div class="stat-value">{libraryStore.total()}</div>
-          <div class="stat-hint">в локальной SQLite</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">С анализом</div>
@@ -161,12 +159,11 @@ export function LibraryView() {
                   </div>
                   <div>
                     <div class="card-title">Глубокий разбор</div>
-                    <div class="card-subtitle">11 категорий · Win% · CAPS · Move Coach</div>
+                    <div class="card-subtitle">Открывается вместе с партией</div>
                   </div>
                 </div>
                 <div class="form-hint" style={{ "margin-top": "9px" }}>
-                  Откройте партию, чтобы увидеть двухслойный график, кольца точности, объяснения
-                  тренера и тренажёр «Retry Mistake».
+                  Выберите партию в таблице — разбор откроется в студии.
                 </div>
               </div>
             </div>
