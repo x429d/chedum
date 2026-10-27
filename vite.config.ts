@@ -26,5 +26,8 @@ export default defineConfig({
     target: "safari15",
     minify: "esbuild",
     sourcemap: false,
+    // Keep SVG piece sets as standalone files so their licenses stay separable
+    // from the application bundle and the WebView can cache each piece.
+    assetsInlineLimit: 0,
   },
 });

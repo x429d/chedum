@@ -92,6 +92,15 @@ pub struct EngineStatus {
     pub error: Option<String>,
 }
 
+pub const PIECE_SETS: [&str; 6] = [
+    "cburnett",
+    "merida",
+    "chessnut",
+    "rhosgfx",
+    "celtic",
+    "kiwen-suwi",
+];
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
@@ -99,6 +108,7 @@ pub struct AppSettings {
     pub analysis_depth: u32,
     pub multipv: u32,
     pub board_theme: String,
+    pub piece_set: String,
     pub show_arrows: bool,
     pub auto_analyze: bool,
 }
@@ -110,6 +120,7 @@ impl Default for AppSettings {
             analysis_depth: 14,
             multipv: 2,
             board_theme: "midnight".to_string(),
+            piece_set: "cburnett".to_string(),
             show_arrows: true,
             auto_analyze: false,
         }

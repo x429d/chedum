@@ -1,7 +1,13 @@
 import { createSignal } from "solid-js";
 
 import { api } from "../services/api";
-import type { AppInfo, AppSettings, BoardTheme, EngineStatus } from "../types/models";
+import type {
+  AppInfo,
+  AppSettings,
+  BoardTheme,
+  EngineStatus,
+  PieceSet,
+} from "../types/models";
 import { toErrorMessage } from "../utils/format";
 import { ui } from "./uiStore";
 
@@ -10,6 +16,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   analysisDepth: 14,
   multipv: 2,
   boardTheme: "midnight",
+  pieceSet: "cburnett",
   showArrows: true,
   autoAnalyze: false,
 };
@@ -62,6 +69,10 @@ async function setBoardTheme(theme: BoardTheme): Promise<boolean> {
   return update({ boardTheme: theme });
 }
 
+async function setPieceSet(pieceSet: PieceSet): Promise<boolean> {
+  return update({ pieceSet });
+}
+
 export const settingsStore = {
   settings,
   engine,
@@ -71,5 +82,6 @@ export const settingsStore = {
   save,
   update,
   setBoardTheme,
+  setPieceSet,
   refreshEngine,
 };

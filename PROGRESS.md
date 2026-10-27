@@ -39,7 +39,7 @@
 
 ## Stage 4 — SVG board, variation tree, live analysis
 
-- [x] Original vector SVG pieces (pawn, rook, knight, bishop, queen, king).
+- [x] Vector SVG pieces (original set, later replaced by six open-source sets in Stage 7).
 - [x] Custom board with three themes, coordinates, last move, check, legal destinations,
       click-to-move, pointer drag-and-drop, flip and fullscreen.
 - [x] Category badges on destination squares.
@@ -68,7 +68,7 @@
 - [x] Full-width window drag region with double-click maximize.
 - [x] Player Analytics Hub: KPI cards, color splits, opening matrix, phase weaknesses, accuracy
       trend, time-management stats.
-- [x] Settings: profile, analysis depth/MultiPV, board theme, arrows, engine diagnostics.
+- [x] Settings: profile, analysis depth/MultiPV, board theme, piece set, arrows, engine diagnostics.
 - [x] Headless Playwright smoke test of all views with mocked IPC: no console errors.
 - [x] Native macOS `.app` bundle built successfully (105.4 MiB, Stockfish resource executable):
       `src-tauri/target/release/bundle/macos/Chenal.app`.
@@ -86,3 +86,12 @@
 - [x] `cargo fmt --check` — clean.
 
 All gates are green. The app is ready to run from the bundle above.
+
+## Stage 7 — Open-source piece sets
+
+- [x] Six switchable SVG sets from lichess-org/lila: Cburnett and Merida (GPLv2+),
+      Chessnut (Apache 2.0), Rhosgfx (CC0), Celtic (MIT), Kiwen Suwi (CC BY 4.0).
+- [x] `pieceSet` persisted in `app_settings` with validation and a safe fallback for old values.
+- [x] Visual picker in **Настройки → Набор фигур** with per-set author and license.
+- [x] Attribution file plus full license texts bundled as a Tauri resource.
+- **Gate 7:** 75 Rust tests, `cargo clippy -D warnings`, `tsc --noEmit` and `npm run build` pass.

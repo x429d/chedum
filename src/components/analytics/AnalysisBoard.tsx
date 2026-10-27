@@ -32,6 +32,7 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
           fen={gameStore.boardFen()}
           orientation={gameStore.orientation()}
           theme={settingsStore.settings().boardTheme}
+          pieceSet={settingsStore.settings().pieceSet}
           lastMove={gameStore.lastMoveUci()}
           arrows={gameStore.arrows()}
           badge={gameStore.badge()}

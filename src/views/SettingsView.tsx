@@ -1,5 +1,6 @@
 import { createEffect, createSignal, For, on, Show } from "solid-js";
 
+import { PieceSetPicker } from "../components/settings/PieceSetPicker";
 import { Icon } from "../components/ui/Icon";
 import { settingsStore } from "../stores/settingsStore";
 import { ui } from "../stores/uiStore";
@@ -257,6 +258,8 @@ export function SettingsView() {
               </div>
             </div>
           </div>
+
+          <PieceSetPicker />
 
           <div class="card">
             <div class="card-header">

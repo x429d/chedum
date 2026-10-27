@@ -149,6 +149,7 @@ export function RetryTrainer() {
               fen={boardFen()}
               orientation={userColor()}
               theme={settingsStore.settings().boardTheme}
+              pieceSet={settingsStore.settings().pieceSet}
               embedded
               interactive={status() === "idle"}
               checkSquare={checkSquare(boardFen())}

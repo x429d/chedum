@@ -1,6 +1,13 @@
 export type Color = "white" | "black";
 export type UserColor = Color | "none";
 export type BoardTheme = "midnight" | "walnut" | "slate";
+export type PieceSet =
+  | "cburnett"
+  | "merida"
+  | "chessnut"
+  | "rhosgfx"
+  | "celtic"
+  | "kiwen-suwi";
 
 export type MoveCategory =
   | "book"

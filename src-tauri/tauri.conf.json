@@ -43,7 +43,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["binaries/stockfish-aarch64-apple-darwin", "resources/STOCKFISH-COPYING.txt"],
+    "resources": [
+      "binaries/stockfish-aarch64-apple-darwin",
+      "resources/STOCKFISH-COPYING.txt",
+      "resources/CHESS-PIECE-LICENSES.txt"
+    ],
     "macOS": {
       "minimumSystemVersion": "12.0"
     }

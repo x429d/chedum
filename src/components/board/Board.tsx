@@ -1,14 +1,14 @@
 import { createEffect, createMemo, For, on, Show } from "solid-js";
 import type { Piece } from "chessops/types";
 import { makeSquare, squareFile, squareRank } from "chessops/util";
-import type { ArrowSpec, BoardBadge, BoardTheme, Color } from "../../types/models";
+import type { ArrowSpec, BoardBadge, BoardTheme, Color, PieceSet } from "../../types/models";
 import { FILES } from "../../utils/boardGeometry";
 import { positionFromFen } from "../../utils/chess";
+import { pieceImage } from "../../utils/pieceSets";
 import { Arrows } from "./Arrows";
 import { CategoryBadge } from "./CategoryBadge";
 import { createBoardPointer } from "./interaction";
 import { createPieceMotion } from "./pieceMotion";
-import { PieceGlyph } from "./Pieces";
 
 interface Cell {
   name: string;
@@ -28,6 +28,7 @@ export interface BoardProps {
   fen: string;
   orientation: Color;
   theme: BoardTheme;
+  pieceSet: PieceSet;
   lastMove?: string | null;
   arrows?: ArrowSpec[];
   badge?: BoardBadge | null;
@@ -206,9 +207,14 @@ export function Board(props: BoardProps) {
                 "pointer-events": "none",
               }}
             >
-              <svg x="0.035" y="0.035" width="0.93" height="0.93" viewBox="0 0 45 45">
-                <PieceGlyph role={item.state().role} color={item.state().color} />
-              </svg>
+              <image
+                href={pieceImage(props.pieceSet, item.state().color, item.state().role)}
+                x="0.035"
+                y="0.035"
+                width="0.93"
+                height="0.93"
+                preserveAspectRatio="xMidYMid meet"
+              />
             </g>
           )}
         </For>
@@ -222,9 +228,12 @@ export function Board(props: BoardProps) {
                 "pointer-events": "none",
               }}
             >
-              <svg width="0.93" height="0.93" viewBox="0 0 45 45">
-                <PieceGlyph role={item().role} color={item().color} />
-              </svg>
+              <image
+                href={pieceImage(props.pieceSet, item().color, item().role)}
+                width="0.93"
+                height="0.93"
+                preserveAspectRatio="xMidYMid meet"
+              />
             </g>
           )}
         </Show>

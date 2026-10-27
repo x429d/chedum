@@ -1,4 +1,4 @@
-import type { BoardTheme, Color, Phase } from "./chess";
+import type { BoardTheme, Color, Phase, PieceSet } from "./chess";
 
 export interface EngineStatus {
   available: boolean;
@@ -12,6 +12,7 @@ export interface AppSettings {
   analysisDepth: number;
   multipv: number;
   boardTheme: BoardTheme;
+  pieceSet: PieceSet;
   showArrows: boolean;
   autoAnalyze: boolean;
 }

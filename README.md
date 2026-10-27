@@ -9,9 +9,9 @@ inspired dark interface.
 - **Library**: import/export PGN, Chess.com PubAPI sync with rate limiting and incremental archive
   cache, filters by opponent, color, result, time class, ECO, date, analysis, favorites and notes,
   pagination (25/50/100), batch analysis queue and batch deletion.
-- **Analysis Studio**: custom SVG board with three themes, drag-and-drop and click-to-move, eval bar,
-  multi-arrow layer, move-category badges, variation exploration, fullscreen, live Stockfish panel,
-  and ←/→ keyboard navigation.
+- **Analysis Studio**: custom SVG board with three themes and six switchable open-source piece sets,
+  drag-and-drop and click-to-move, eval bar, multi-arrow layer, move-category badges, variation
+  exploration, fullscreen, live Stockfish panel, and ←/→ keyboard navigation.
 - **Deep analytics**: Win% area chart + synchronized move-time histogram, accuracy rings, ACPL,
   performance Elo, 11 move categories, phase accuracy, time-management flags.
 - **Move Coach**: Russian explanations for brilliant/great/inaccuracy/mistake/miss/blunder moves,
@@ -24,6 +24,10 @@ inspired dark interface.
 ## Data
 
 - ECO opening lines: [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings).
+- Chess piece sets: [lichess-org/lila](https://github.com/lichess-org/lila/tree/master/public/piece)
+  — cburnett and Merida (GPLv2+), Chessnut (Apache 2.0), Kiwen Suwi (CC BY 4.0),
+  Celtic (MIT), Rhosgfx (CC0). Full attributions and license texts live in
+  `src/assets/pieces/ATTRIBUTION.md` and `src-tauri/resources/CHESS-PIECE-LICENSES.txt`.
 - Demo games use classic games with fictional local handles and generated clock comments; all
   evaluations are produced locally by Stockfish at depth 14.
 
