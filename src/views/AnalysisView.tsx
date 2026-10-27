@@ -1,4 +1,4 @@
-import { createEffect, createSignal, on, onCleanup, Show } from "solid-js";
+import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-js";
 
 import { AnalysisBoard } from "../components/analytics/AnalysisBoard";
 import { AnalysisHeader } from "../components/analytics/AnalysisHeader";
@@ -49,6 +49,39 @@ export function AnalysisView() {
       onCleanup(() => window.removeEventListener("keydown", handler));
     }),
   );
+
+  onMount(() => {
+    const handler = (event: KeyboardEvent): void => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement) {
+        const tag = target.tagName;
+        if (
+          tag === "INPUT" ||
+          tag === "TEXTAREA" ||
+          tag === "SELECT" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        gameStore.previous();
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        gameStore.next();
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        gameStore.first();
+      } else if (event.key === "End") {
+        event.preventDefault();
+        gameStore.last();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    onCleanup(() => window.removeEventListener("keydown", handler));
+  });
 
   onCleanup(() => {
     gameStore.stopPreview();
