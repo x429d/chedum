@@ -13,7 +13,7 @@ export function buildArrows(move: MoveEvaluation | null): ArrowSpec[] {
   const second = move.pvLines[1];
   const best = first?.uciMoves[0] ?? move.bestUci;
   if (best && best.length >= 4) {
-    result.push({ from: best.slice(0, 2), to: best.slice(2, 4), color: "#14B8A6", width: 0.14 });
+    result.push({ from: best.slice(0, 2), to: best.slice(2, 4), color: "#14B8A6", width: 0.15 });
   }
   const secondMove = second?.uciMoves[0];
   if (secondMove && secondMove.length >= 4) {
@@ -21,8 +21,8 @@ export function buildArrows(move: MoveEvaluation | null): ArrowSpec[] {
       from: secondMove.slice(0, 2),
       to: secondMove.slice(2, 4),
       color: "#3B82F6",
-      opacity: 0.55,
-      width: 0.1,
+      opacity: 0.72,
+      width: 0.115,
     });
   }
   if (["inaccuracy", "mistake", "miss", "blunder"].includes(move.classification)) {
@@ -30,8 +30,8 @@ export function buildArrows(move: MoveEvaluation | null): ArrowSpec[] {
       from: move.playedUci.slice(0, 2),
       to: move.playedUci.slice(2, 4),
       color: "#EF4444",
-      opacity: 0.85,
-      width: 0.12,
+      opacity: 0.9,
+      width: 0.13,
     });
   }
   const threat = first?.uciMoves[1];
@@ -41,8 +41,8 @@ export function buildArrows(move: MoveEvaluation | null): ArrowSpec[] {
       to: threat.slice(2, 4),
       color: "#F97316",
       dashed: true,
-      opacity: 0.65,
-      width: 0.1,
+      opacity: 0.8,
+      width: 0.115,
     });
   }
   return result;

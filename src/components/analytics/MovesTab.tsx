@@ -4,6 +4,7 @@ import { gameStore } from "../../stores/gameStore";
 import type { MoveCategory, MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { formatClock } from "../../utils/format";
+import { CategoryGlyph } from "../ui/CategoryGlyph";
 import { CoachCard } from "./CoachCard";
 
 function MoveCell(props: {
@@ -31,7 +32,7 @@ function MoveCell(props: {
             class="category-symbol"
             style={{ background: CATEGORY_META[move().classification].color, width: "16px", height: "16px" }}
           >
-            {CATEGORY_META[move().classification].symbol}
+            <CategoryGlyph category={move().classification} size={11} />
           </span>
           <span class="move-san">{move().playedSan}</span>
           <Show when={move().timeSpentSec !== null}>

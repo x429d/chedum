@@ -4,6 +4,7 @@ import { libraryStore } from "../../stores/libraryStore";
 import { settingsStore } from "../../stores/settingsStore";
 import { ui, type View } from "../../stores/uiStore";
 import { Icon, type IconName } from "../ui/Icon";
+import { BrandMark } from "./BrandMark";
 
 interface NavItem {
   view: View;
@@ -39,7 +40,7 @@ export function Sidebar() {
     <aside class="sidebar">
       <div class="brand">
         <div class="brand-mark">
-          <Icon name="board" size={19} />
+          <BrandMark size={21} />
         </div>
         <div>
           <div class="brand-title">Chenal</div>

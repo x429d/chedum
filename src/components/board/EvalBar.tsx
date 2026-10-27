@@ -4,17 +4,17 @@ export function EvalBar(props: { winProbWhite: number; label: string; orientatio
   const percent = () => Math.max(2, Math.min(98, props.winProbWhite));
   return (
     <div class="eval-bar" title={`Вероятность победы белых: ${props.winProbWhite.toFixed(1)}%`}>
-      <div
-        class="eval-bar-white"
-        style={
-          props.orientation === "white"
-            ? { height: `${percent()}%`, bottom: "0" }
-            : { height: `${percent()}%`, top: "0" }
-        }
-      />
-      <span class="eval-bar-label" classList={{ top: true }}>
-        {props.label}
-      </span>
+      <div class="eval-bar-track">
+        <div
+          class="eval-bar-white"
+          style={
+            props.orientation === "white"
+              ? { height: `${percent()}%`, bottom: "0" }
+              : { height: `${percent()}%`, top: "0" }
+          }
+        />
+      </div>
+      <span class="eval-bar-label">{props.label}</span>
     </div>
   );
 }

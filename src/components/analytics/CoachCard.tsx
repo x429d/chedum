@@ -3,6 +3,7 @@ import { For, Show } from "solid-js";
 import type { MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { formatClock, formatEval } from "../../utils/format";
+import { CategoryGlyph } from "../ui/CategoryGlyph";
 import { Icon } from "../ui/Icon";
 
 export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () => void }) {
@@ -24,7 +25,7 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
           <div class="coach-card">
             <div class="coach-head">
               <span class="badge" style={{ color: meta().color, "border-color": meta().color }}>
-                {meta().symbol} {meta().label}
+                <CategoryGlyph category={move().classification} size={12} /> {meta().label}
               </span>
               <span class="mono" style={{ "font-size": "11px" }}>
                 {move().ply}. {move().playedSan}

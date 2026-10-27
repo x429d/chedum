@@ -104,7 +104,7 @@ function Row(props: { game: GameListItem }) {
             aria-label="Анализировать партию"
             onClick={() => libraryStore.analyzeOne(props.game.id)}
           >
-            <Icon name="sparkles" size={14} />
+            <Icon name="analyze" size={15} />
           </button>
         </div>
       </td>

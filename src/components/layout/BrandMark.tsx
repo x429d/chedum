@@ -1,0 +1,23 @@
+/**
+ * Chenal brand mark: the same knight silhouette as the app icon, punched out of the
+ * teal tile that `.brand-mark` paints behind it.
+ */
+const KNIGHT_BODY = "M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21";
+const KNIGHT_HEAD =
+  "M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.04-.94 1.41-3.04 0-3-1 0 .19 1.23-1 2-1 0-4 1-4-4 0-2 6-12 6-12s1.89-1.9 2-3.5c-.73-1-.5-2-.5-3 1-1 3 2.5 3 2.5h2s.78-2 2.5-3c1 0 1 3 1 3";
+
+export function BrandMark(props: { size?: number }) {
+  const size = () => props.size ?? 20;
+  return (
+    <svg viewBox="0 0 45 45" width={size()} height={size()} aria-hidden="true">
+      <mask id="chenal-brand-eye">
+        <rect width="45" height="45" fill="#fff" />
+        <circle cx="9.6" cy="25.4" r="1.05" fill="#000" />
+      </mask>
+      <g fill="currentColor" mask="url(#chenal-brand-eye)">
+        <path d={KNIGHT_BODY} />
+        <path d={KNIGHT_HEAD} />
+      </g>
+    </svg>
+  );
+}

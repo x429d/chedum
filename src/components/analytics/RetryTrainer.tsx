@@ -7,6 +7,7 @@ import { CATEGORY_META } from "../../types/models";
 import { applyUci, checkSquare, playMove } from "../../utils/chess";
 import { formatEval } from "../../utils/format";
 import { Board } from "../board/Board";
+import { CategoryGlyph } from "../ui/CategoryGlyph";
 import { Icon } from "../ui/Icon";
 
 type RetryStatus = "idle" | "correct" | "wrong";
@@ -135,7 +136,8 @@ export function RetryTrainer() {
                 "border-color": CATEGORY_META[move().classification].color,
               }}
             >
-              {CATEGORY_META[move().classification].symbol} {CATEGORY_META[move().classification].label}
+              <CategoryGlyph category={move().classification} size={12} />{" "}
+              {CATEGORY_META[move().classification].label}
             </span>
             <span class="mono" style={{ "font-size": "11px" }}>
               {move().ply}. {move().playedSan}

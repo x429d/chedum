@@ -2,6 +2,7 @@ import { For } from "solid-js";
 
 import type { CategoryCounts, MoveCategory, UserColor } from "../../types/models";
 import { CATEGORY_META, CATEGORY_ORDER } from "../../types/models";
+import { CategoryGlyph } from "../ui/CategoryGlyph";
 
 export function CategoryTable(props: {
   counts: CategoryCounts;
@@ -27,7 +28,7 @@ export function CategoryTable(props: {
                 <td>
                   <span class="category-label">
                     <span class="category-symbol" style={{ background: meta.color }}>
-                      {meta.symbol}
+                      <CategoryGlyph category={category} size={12} />
                     </span>
                     {meta.label}
                   </span>

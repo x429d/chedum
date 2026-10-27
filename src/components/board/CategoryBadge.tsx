@@ -1,6 +1,10 @@
 import type { Color, MoveCategory } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { squareCoords } from "../../utils/chess";
+import { CategoryGlyph } from "../ui/CategoryGlyph";
+
+const RADIUS = 0.195;
+const GLYPH = 0.235;
 
 export function CategoryBadge(props: {
   square: string;
@@ -19,27 +23,24 @@ export function CategoryBadge(props: {
     if (!value) return 0;
     return props.orientation === "white" ? 7 - value.rank : value.rank;
   };
+  const cx = () => col() + 0.785;
+  const cy = () => row() + 0.215;
   return (
     <g style={{ "pointer-events": "none" }}>
       <circle
-        cx={col() + 0.78}
-        cy={row() + 0.22}
-        r="0.205"
+        cx={cx()}
+        cy={cy()}
+        r={RADIUS}
         fill={meta().color}
         stroke="#0b0e14"
-        stroke-width="0.028"
+        stroke-width="0.026"
       />
-      <text
-        x={col() + 0.78}
-        y={row() + 0.225}
-        text-anchor="middle"
-        dominant-baseline="middle"
-        font-size={meta().symbol.length > 1 ? "0.145" : "0.17"}
-        font-weight="800"
-        fill="#0b0e14"
+      <g
+        color="#0b0e14"
+        transform={`translate(${cx()} ${cy()}) scale(${GLYPH / 24}) translate(-12 -12)`}
       >
-        {meta().symbol}
-      </text>
+        <CategoryGlyph category={props.category} size={24} />
+      </g>
     </g>
   );
 }

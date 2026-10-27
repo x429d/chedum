@@ -3,6 +3,7 @@ import { createMemo, For, Show } from "solid-js";
 import type { MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { formatEval } from "../../utils/format";
+import { CategoryGlyph } from "../ui/CategoryGlyph";
 
 export function KeyMoments(props: { moves: MoveEvaluation[]; onSelect: (ply: number) => void }) {
   const moments = createMemo(() =>
@@ -25,7 +26,7 @@ export function KeyMoments(props: { moves: MoveEvaluation[]; onSelect: (ply: num
             return (
               <button type="button" class="key-moment" onClick={() => props.onSelect(move.ply)}>
                 <span class="category-symbol" style={{ background: meta.color }}>
-                  {meta.symbol}
+                  <CategoryGlyph category={move.classification} size={12} />
                 </span>
                 <span class="mono" style={{ "font-size": "10.5px", color: "var(--muted)" }}>
                   {move.ply}.

@@ -95,3 +95,24 @@ All gates are green. The app is ready to run from the bundle above.
 - [x] Visual picker in **Настройки → Набор фигур** with per-set author and license.
 - [x] Attribution file plus full license texts bundled as a Tauri resource.
 - **Gate 7:** 75 Rust tests, `cargo clippy -D warnings`, `tsc --noEmit` and `npm run build` pass.
+
+## Stage 8 — Board legibility polish
+
+- [x] Dark piece fills lifted to `#2a2a2a` with black outlines, so тёмные фигуры читаются так же,
+      как белые (cburnett).
+- [x] Arrows thickened and outlined (`#111827` halo), MultiPV / error / threat arrows made more opaque.
+- [x] Emoji move marks replaced by a single vector glyph set (`CategoryGlyph`): `!!`, `!`, `★`, thumbs-up,
+      `✓`, open book, `?!`, `?`, `✕`, `??` и «только один ход» (стрелка в стену) — одинаковый вес
+      штриха, один вид на доске, в списке ходов, в таблице категорий, в Coach и Retry.
+- [x] Все иконки интерфейса переведены на Lucide (ISC, `lucide-solid`): навигация, тулбар доски,
+      библиотека, настройки, тосты; единый вес штриха 1.75 и размер по умолчанию 18. Бренд-марка
+      получила шахматного коня.
+- [x] Новый app icon: исходник `src-tauri/icon-source.svg` (тёмный squircle + бирюзовый градиентный
+      конь на плинте), пересобран `tauri icon` во все размеры/icns/ico. Бренд-марка в сайдбаре
+      рисуется тем же силуэтом (`BrandMark`), поэтому иконка в доке и логотип совпадают.
+- [x] Полоса оценки: белая доля клипуется во внутреннем треке, а цифра (±1.45 / M3) вынесена
+      наружу и свисает в жёлоб, поэтому больше не обрезается шириной полосы.
+- [x] Действия в строке таблицы партий: три тихие ghost-кнопки 28×28 вместо постоянной красной корзины;
+      нейтральный цвет, подсветка на hover (удаление — красное только при наведении), избранное — янтарное,
+      «Анализировать» получило читаемую иконку графика вместо мелких искр.
+- **Gate 8:** `tsc --noEmit` и `npm run build` чистые; UI проверен скриншотами на всех темах доски.

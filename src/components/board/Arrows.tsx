@@ -3,6 +3,11 @@ import { For } from "solid-js";
 import type { ArrowSpec, Color } from "../../types/models";
 import { squareCoords } from "../../utils/chess";
 
+/** Outline that separates arrows from the board and from each other. */
+const ARROW_BORDER = "#111827";
+/** Outline thickness in board cells. */
+const BORDER_WIDTH = 0.06;
+
 function center(name: string, orientation: Color): { x: number; y: number } | null {
   const coords = squareCoords(name);
   if (!coords) return null;
@@ -34,10 +39,24 @@ export function Arrows(props: { arrows: ArrowSpec[]; orientation: Color }) {
           const px = -uy;
           const py = ux;
           const opacity = arrow.opacity ?? 1;
-          const width = arrow.width ?? 0.11;
-          const head = 0.17;
+          const width = arrow.width ?? 0.12;
+          const head = 0.18;
+          const border = width + BORDER_WIDTH;
+          const headPoints = `${tipX},${tipY} ${baseX + px * head},${baseY + py * head} ${baseX - px * head},${baseY - py * head}`;
           return (
             <g opacity={opacity}>
+              <g stroke={ARROW_BORDER} fill={ARROW_BORDER} stroke-linejoin="round">
+                <line
+                  x1={startX}
+                  y1={startY}
+                  x2={baseX}
+                  y2={baseY}
+                  stroke-width={border}
+                  stroke-linecap="round"
+                  stroke-dasharray={arrow.dashed ? "0.16 0.12" : undefined}
+                />
+                <polygon points={headPoints} stroke-width={BORDER_WIDTH} />
+              </g>
               <line
                 x1={startX}
                 y1={startY}
@@ -48,10 +67,7 @@ export function Arrows(props: { arrows: ArrowSpec[]; orientation: Color }) {
                 stroke-linecap="round"
                 stroke-dasharray={arrow.dashed ? "0.16 0.12" : undefined}
               />
-              <polygon
-                points={`${tipX},${tipY} ${baseX + px * head},${baseY + py * head} ${baseX - px * head},${baseY - py * head}`}
-                fill={arrow.color}
-              />
+              <polygon points={headPoints} fill={arrow.color} />
             </g>
           );
         }}

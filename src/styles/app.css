@@ -696,17 +696,49 @@ button {
 .row-actions {
   display: flex;
   align-items: center;
-  gap: 1px;
-  opacity: 0.85;
+  gap: 2px;
+  opacity: 0.7;
   transition: opacity 0.12s ease;
 }
 
-tr:hover .row-actions {
+tr:hover .row-actions,
+.row-actions:focus-within {
   opacity: 1;
 }
 
-.row-delete {
-  color: #fca5a5;
+/* Row actions read as quiet ghost buttons: neutral until pointed at. */
+.row-actions .icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--muted);
+  transition:
+    background 0.14s ease,
+    color 0.14s ease,
+    transform 0.1s ease;
+}
+
+.row-actions .icon-btn:hover {
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text);
+}
+
+.row-actions .icon-btn:active {
+  transform: scale(0.94);
+}
+
+.row-actions .row-delete {
+  color: var(--muted);
+}
+
+.row-actions .row-delete:hover {
+  background: rgba(239, 68, 68, 0.14);
+  color: #f87171;
+}
+
+.row-actions .icon-btn svg {
+  width: 15px;
+  height: 15px;
 }
 
 .data-table th:last-child,
@@ -872,13 +904,20 @@ tr:hover .row-actions {
 }
 
 .eval-bar {
-  width: 16px;
+  width: 18px;
   flex: none;
-  border-radius: 8px;
+  position: relative;
+}
+
+/* The track clips the white share to the rounded bar; the label sits outside it and
+   hangs into the gutter, so a full evaluation like "+1.45" is never cut off. */
+.eval-bar-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 9px;
   overflow: hidden;
   background: #0a0d13;
   border: 1px solid var(--border);
-  position: relative;
 }
 
 .eval-bar-white {
@@ -892,24 +931,19 @@ tr:hover .row-actions {
 
 .eval-bar-label {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 3px;
+  right: 0;
+  z-index: 1;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 2px 3px;
-  border-radius: 4px;
-  background: rgba(11, 14, 20, 0.75);
+  letter-spacing: -0.02em;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: rgba(11, 14, 20, 0.9);
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.18);
   color: var(--text);
   white-space: nowrap;
-}
-
-.eval-bar-label.top {
-  top: 4px;
-}
-
-.eval-bar-label.bottom {
-  bottom: 4px;
 }
 
 .board-wrap {
@@ -1222,6 +1256,10 @@ tr:hover .row-actions {
   font-weight: 800;
   color: #0b0e14;
   flex: none;
+}
+
+.category-symbol svg {
+  display: block;
 }
 
 .phase-row {
@@ -1921,11 +1959,16 @@ tr:hover .row-actions {
 }
 
 .favorite-on {
-  color: #facc15;
+  color: #fbbf24;
 }
 
 .favorite-on path {
-  fill: rgba(250, 204, 21, 0.25);
+  fill: rgba(251, 191, 36, 0.3);
+  transition: fill 0.14s ease;
+}
+
+.icon-btn:hover .favorite-on path {
+  fill: rgba(251, 191, 36, 0.45);
 }
 
 .theme-mini-midnight {
