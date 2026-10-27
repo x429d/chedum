@@ -10,6 +10,7 @@ import {
   timeClassLabel,
 } from "../../utils/format";
 import { Icon } from "../ui/Icon";
+import { Pagination } from "./Pagination";
 
 function accuracyClass(value: number | null): string {
   if (value === null) return "";
@@ -67,7 +68,7 @@ function Row(props: { game: GameListItem }) {
           </span>
         </Show>
       </td>
-      <td style={{ "text-align": "right" }}>
+      <td class="col-acpl" style={{ "text-align": "right" }}>
         <Show when={props.game.userAcpl !== null} fallback={<span class="dim">—</span>}>
           <span class="mono">{formatNumber(props.game.userAcpl, 1)}</span>
         </Show>
@@ -76,8 +77,18 @@ function Row(props: { game: GameListItem }) {
         <div class="row-actions">
           <button
             type="button"
+            class="btn btn-ghost btn-sm icon-btn row-delete"
+            title="Удалить"
+            aria-label="Удалить партию"
+            onClick={() => libraryStore.deleteGame(props.game.id)}
+          >
+            <Icon name="trash" size={14} />
+          </button>
+          <button
+            type="button"
             class="btn btn-ghost btn-sm icon-btn"
             title={props.game.isFavorite ? "Убрать из избранного" : "В избранное"}
+            aria-label={props.game.isFavorite ? "Убрать из избранного" : "В избранное"}
             onClick={() => void libraryStore.toggleFavorite(props.game)}
           >
             <Icon
@@ -90,17 +101,10 @@ function Row(props: { game: GameListItem }) {
             type="button"
             class="btn btn-ghost btn-sm icon-btn"
             title="Анализировать"
+            aria-label="Анализировать партию"
             onClick={() => libraryStore.analyzeOne(props.game.id)}
           >
             <Icon name="sparkles" size={14} />
-          </button>
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm icon-btn"
-            title="Удалить"
-            onClick={() => void libraryStore.deleteGame(props.game.id)}
-          >
-            <Icon name="trash" size={14} />
           </button>
         </div>
       </td>
@@ -135,6 +139,15 @@ export function GameTable() {
           <button type="button" class="btn btn-ghost btn-sm" onClick={() => libraryStore.clearSelection()}>
             Снять выбор
           </button>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            style={{ "margin-left": "auto" }}
+            onClick={() => libraryStore.deleteSelected()}
+          >
+            <Icon name="trash" size={12} />
+            Удалить выбранные
+          </button>
         </div>
       </Show>
       <div class="table-wrap">
@@ -155,7 +168,7 @@ export function GameTable() {
               <th>Результат</th>
               <th>Дебют</th>
               <th style={{ "text-align": "right" }}>Точность</th>
-              <th style={{ "text-align": "right" }}>ACPL</th>
+              <th class="col-acpl" style={{ "text-align": "right" }}>ACPL</th>
               <th />
             </tr>
           </thead>
@@ -196,6 +209,7 @@ export function GameTable() {
           </tbody>
         </table>
       </div>
+      <Pagination />
     </div>
   );
 }

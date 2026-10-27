@@ -1,6 +1,7 @@
 pub mod analyses_repo;
 pub mod archives_repo;
 pub mod connection;
+pub mod games_delete;
 pub mod games_repo;
 pub mod migrations;
 pub mod seed;

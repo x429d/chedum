@@ -1,5 +1,5 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
-import { open, save } from "@tauri-apps/plugin-dialog";
+import { confirm as confirmDialog, open, save } from "@tauri-apps/plugin-dialog";
 
 import type {
   AnalysisProgress,
@@ -35,8 +35,17 @@ export const api = {
     return invoke<GameDetail>("get_game", { gameId });
   },
 
-  deleteGame(gameId: number): Promise<void> {
-    return invoke<void>("delete_game", { gameId });
+  deleteGames(ids: number[]): Promise<number> {
+    return invoke<number>("delete_games", { ids });
+  },
+
+  confirmDelete(message: string): Promise<boolean> {
+    return confirmDialog(message, {
+      title: "Chenal",
+      kind: "warning",
+      okLabel: "Удалить",
+      cancelLabel: "Отмена",
+    });
   },
 
   toggleFavorite(gameId: number, favorite: boolean): Promise<void> {

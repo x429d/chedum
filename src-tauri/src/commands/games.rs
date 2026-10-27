@@ -1,6 +1,6 @@
 use tauri::State;
 
-use crate::db::{analyses_repo, games_repo, settings_repo};
+use crate::db::{analyses_repo, games_delete, games_repo, settings_repo};
 use crate::domain::error::AppResult;
 use crate::domain::game::{GameDetail, GameFilter, ImportSummary, PagedGames};
 use crate::domain::stats::{AppSettings, OpeningEntry};
@@ -27,7 +27,12 @@ pub async fn get_game(state: State<'_, AppState>, game_id: i64) -> AppResult<Gam
 
 #[tauri::command]
 pub async fn delete_game(state: State<'_, AppState>, game_id: i64) -> AppResult<()> {
-    games_repo::delete_game(&state.db, game_id)
+    games_delete::delete_game(&state.db, game_id)
+}
+
+#[tauri::command]
+pub async fn delete_games(state: State<'_, AppState>, ids: Vec<i64>) -> AppResult<u32> {
+    games_delete::delete_games(&state.db, &ids)
 }
 
 #[tauri::command]

@@ -69,13 +69,6 @@ pub fn get_game(db: &Db, id: i64) -> AppResult<Game> {
     })
 }
 
-pub fn delete_game(db: &Db, id: i64) -> AppResult<()> {
-    db.with(|conn| {
-        conn.execute("DELETE FROM games WHERE id = ?1", params![id])?;
-        Ok(())
-    })
-}
-
 pub fn set_favorite(db: &Db, id: i64, favorite: bool) -> AppResult<()> {
     db.with(|conn| {
         conn.execute(
@@ -298,3 +291,8 @@ fn map_game_list_item(row: &Row<'_>) -> rusqlite::Result<GameListItem> {
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 #[path = "repo_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+#[path = "pagination_tests.rs"]
+mod pagination_tests;

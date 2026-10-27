@@ -10,14 +10,13 @@ import type {
 } from "../types/models";
 import { EMPTY_BATCH } from "../types/models";
 import { toErrorMessage } from "../utils/format";
-import { gameStore } from "./gameStore";
+import { createBatchController } from "./libraryBatch";
 import { settingsStore } from "./settingsStore";
 import { ui } from "./uiStore";
-
 const [games, setGames] = createSignal<GameListItem[]>([]);
 const [total, setTotal] = createSignal(0);
 const [loading, setLoading] = createSignal(false);
-const [filter, setFilter] = createSignal<GameFilter>({ limit: 200 });
+const [filter, setFilter] = createSignal<GameFilter>({ limit: 25, offset: 0 });
 const [selected, setSelected] = createSignal<number[]>([]);
 const [selectedGameId, setSelectedGameId] = createSignal<number | null>(null);
 const [syncProgress, setSyncProgress] = createSignal<SyncProgress | null>(null);
@@ -25,12 +24,9 @@ const [syncResult, setSyncResult] = createSignal<SyncResult | null>(null);
 const [syncing, setSyncing] = createSignal(false);
 const [importing, setImporting] = createSignal(false);
 const [batch, setBatch] = createSignal<BatchState>(EMPTY_BATCH);
-
 const selectedCount = () => selected().length;
-
 let loadSequence = 0;
 let searchTimer: number | undefined;
-let batchCancelled = false;
 
 async function load(): Promise<void> {
   const sequence = ++loadSequence;
@@ -48,11 +44,11 @@ async function load(): Promise<void> {
   }
 }
 function updateFilter(patch: Partial<GameFilter>): void {
-  setFilter((current) => ({ ...current, ...patch }));
+  setFilter((current) => ({ ...current, ...patch, offset: 0 }));
   void load();
 }
 function setSearch(value: string): void {
-  setFilter((current) => ({ ...current, search: value }));
+  setFilter((current) => ({ ...current, search: value, offset: 0 }));
   if (searchTimer !== undefined) window.clearTimeout(searchTimer);
   searchTimer = window.setTimeout(() => {
     searchTimer = undefined;
@@ -62,7 +58,7 @@ function setSearch(value: string): void {
 
 function resetFilter(): void {
   cancelPendingSearch();
-  setFilter({ limit: 200 });
+  setFilter({ limit: pageSize(), offset: 0 });
   void load();
 }
 
@@ -72,6 +68,30 @@ function cancelPendingSearch(): void {
     searchTimer = undefined;
   }
 }
+
+const pageSize = () => filter().limit ?? 25;
+const pageIndex = () => Math.floor((filter().offset ?? 0) / pageSize());
+const pageCount = () => Math.max(1, Math.ceil(total() / pageSize()));
+
+function setPage(page: number): void {
+  const target = Math.max(0, Math.min(page, pageCount() - 1));
+  setFilter((current) => ({ ...current, offset: target * pageSize() }));
+  void load();
+}
+
+function setPageSize(size: number): void {
+  const limit = Math.max(1, Math.min(100, Math.round(size)));
+  setFilter((current) => ({ ...current, limit, offset: 0 }));
+  void load();
+}
+
+const batchController = createBatchController({
+  batch,
+  setBatch,
+  games,
+  selected,
+  reload: load,
+});
 
 function toggleSelect(id: number): void {
   setSelected((ids) => (ids.includes(id) ? ids.filter((value) => value !== id) : [...ids, id]));
@@ -104,6 +124,7 @@ async function syncChesscom(username: string, force: boolean): Promise<void> {
     if (result.username) {
       await settingsStore.update({ playerUsername: result.username });
     }
+    setFilter((current) => ({ ...current, offset: 0 }));
     await load();
     maybeAutoAnalyze(result.gamesImported);
   } catch (error) {
@@ -119,6 +140,7 @@ async function importFiles(): Promise<void> {
     const result = await api.importPgnFiles();
     if (result) {
       notifyImport(result);
+      setFilter((current) => ({ ...current, offset: 0 }));
       await load();
       maybeAutoAnalyze(result.imported);
     }
@@ -134,6 +156,7 @@ async function importText(text: string): Promise<void> {
   try {
     const result = await api.importPgnText(text);
     notifyImport(result);
+    setFilter((current) => ({ ...current, offset: 0 }));
     await load();
     maybeAutoAnalyze(result.imported);
   } catch (error) {
@@ -148,7 +171,7 @@ function maybeAutoAnalyze(imported: number): void {
   const ids = games()
     .filter((game) => !game.hasAnalysis)
     .map((game) => game.id);
-  if (ids.length > 0) void analyzeIds(ids, "Автоанализ");
+  if (ids.length > 0) void batchController.analyzeIds(ids, "Автоанализ");
 }
 
 function notifyImport(result: ImportSummary): void {
@@ -181,88 +204,57 @@ async function toggleFavorite(game: GameListItem): Promise<void> {
   }
 }
 
-async function deleteGame(id: number): Promise<void> {
-  if (!window.confirm("Удалить партию вместе с анализом?")) return;
+async function deleteGames(ids: number[]): Promise<void> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return;
+  const message =
+    unique.length === 1
+      ? "Удалить партию вместе с анализом?"
+      : `Удалить ${unique.length} партий вместе с анализом?`;
+  let confirmed = false;
   try {
-    await api.deleteGame(id);
-    setGames((items) => items.filter((game) => game.id !== id));
-    setSelected((ids) => ids.filter((value) => value !== id));
-    if (selectedGameId() === id) {
+    confirmed = await api.confirmDelete(message);
+  } catch (error) {
+    ui.notify(toErrorMessage(error), "error");
+    return;
+  }
+  if (!confirmed) return;
+  try {
+    const deleted = await api.deleteGames(unique);
+    if (deleted === 0) {
+      ui.notify("Партии уже удалены", "info");
+      await load();
+      return;
+    }
+    setGames((items) => items.filter((game) => !unique.includes(game.id)));
+    setSelected((items) => items.filter((id) => !unique.includes(id)));
+    const current = selectedGameId();
+    if (current !== null && unique.includes(current)) {
       setSelectedGameId(null);
       ui.setView("library");
     }
-    ui.notify("Партия удалена", "success");
+    ui.notify(
+      unique.length === 1 ? "Партия удалена" : `Удалено партий: ${deleted}`,
+      "success",
+    );
+    if (games().length === 0 && pageIndex() > 0) {
+      setFilter((currentFilter) => ({
+        ...currentFilter,
+        offset: Math.max(0, (currentFilter.offset ?? 0) - pageSize()),
+      }));
+    }
+    await load();
   } catch (error) {
     ui.notify(toErrorMessage(error), "error");
   }
 }
 
-async function analyzeIds(ids: number[], label: string): Promise<void> {
-  if (ids.length === 0 || batch().running) return;
-  if (gameStore.analyzing()) {
-    ui.notify("Дождитесь завершения анализа партии", "info");
-    return;
-  }
-  batchCancelled = false;
-  const settings = settingsStore.settings();
-  setBatch({ running: true, current: 0, total: ids.length, percent: 0, label });
-  for (let index = 0; index < ids.length; index += 1) {
-    if (batchCancelled) break;
-    setBatch((current) => ({
-      ...current,
-      current: index,
-      label: `${label}: ${index + 1} из ${ids.length}`,
-    }));
-    try {
-      await api.analyzeGame(ids[index], settings.analysisDepth, settings.multipv, (progress) => {
-        setBatch((current) => ({
-          ...current,
-          percent: ((index + progress.percent / 100) / ids.length) * 100,
-          label: progress.message,
-        }));
-      });
-    } catch (error) {
-      if (!batchCancelled) ui.notify(toErrorMessage(error), "error");
-    }
-  }
-  const cancelled = batchCancelled;
-  setBatch((current) => ({
-    ...current,
-    running: false,
-    percent: cancelled ? current.percent : 100,
-    label: cancelled ? "Очередь остановлена" : "Анализ завершён",
-  }));
-  if (!cancelled) ui.notify(`Готово: ${ids.length} партий`, "success");
-  await load();
-  await settingsStore.refreshEngine();
+function deleteGame(id: number): void {
+  void deleteGames([id]);
 }
 
-function analyzeSelected(): void {
-  const ids =
-    selected().length > 0
-      ? selected()
-      : games()
-          .filter((game) => !game.hasAnalysis)
-          .map((game) => game.id);
-  if (ids.length === 0) {
-    ui.notify("Нет партий, ожидающих анализа", "info");
-    return;
-  }
-  void analyzeIds(ids, "Пакетный анализ");
-}
-
-function analyzeOne(id: number): void {
-  void analyzeIds([id], "Анализ партии");
-}
-
-async function cancelBatch(): Promise<void> {
-  batchCancelled = true;
-  try {
-    await api.stopEngine();
-  } catch {
-    // движок мог уже завершиться
-  }
-  setBatch((current) => ({ ...current, label: "Останавливаю очередь…" }));
+function deleteSelected(): void {
+  void deleteGames(selected());
 }
 
 export const libraryStore = {
@@ -283,6 +275,11 @@ export const libraryStore = {
   setSearch,
   resetFilter,
   cancelPendingSearch,
+  pageSize,
+  pageIndex,
+  pageCount,
+  setPage,
+  setPageSize,
   toggleSelect,
   selectAll,
   clearSelection,
@@ -293,8 +290,10 @@ export const libraryStore = {
   importText,
   exportSelection,
   toggleFavorite,
+  deleteGames,
   deleteGame,
-  analyzeSelected,
-  analyzeOne,
-  cancelBatch,
+  deleteSelected,
+  analyzeSelected: () => batchController.analyzeSelected(),
+  analyzeOne: (id: number) => batchController.analyzeOne(id),
+  cancelBatch: () => batchController.cancel(),
 };

@@ -696,13 +696,39 @@ button {
 .row-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-  opacity: 0.55;
+  gap: 1px;
+  opacity: 0.85;
   transition: opacity 0.12s ease;
 }
 
 tr:hover .row-actions {
   opacity: 1;
+}
+
+.row-delete {
+  color: #fca5a5;
+}
+
+.data-table th:last-child,
+.data-table td:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--card);
+  box-shadow: -10px 0 16px -16px rgba(0, 0, 0, 0.9);
+}
+
+.data-table thead th:last-child {
+  z-index: 2;
+}
+
+.data-table tbody tr:hover td:last-child {
+  background: #1a1f2c;
+}
+
+@media (max-width: 1280px) {
+  .data-table .col-acpl {
+    display: none;
+  }
 }
 
 .empty-state {
@@ -1850,4 +1876,40 @@ input[type="checkbox"] {
 
 input[type="date"] {
   color-scheme: dark;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pagination-bar .spacer {
+  flex: 1;
+}
+
+.pagination-size {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.pagination-size .select {
+  width: 68px;
+  height: 28px;
+  font-size: 11px;
+  padding: 0 22px 0 8px;
+  background-position: calc(100% - 11px) 11px, calc(100% - 6px) 11px;
+}
+
+.pagination-label {
+  min-width: 52px;
+  text-align: center;
+  font-size: 11px;
 }

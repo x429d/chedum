@@ -7,7 +7,6 @@ use crate::domain::analysis::{
     TimeFlag,
 };
 use crate::domain::game::{Color, GameDraft, GameSource, TimeClass, UserColor};
-
 const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 fn draft(
@@ -188,7 +187,6 @@ fn inserts_dedupes_and_filters_games() {
     assert_eq!(game.white_username, "alice");
     assert_eq!(game.user_result(), Some("win"));
 }
-
 #[test]
 fn stores_analysis_and_move_comments() {
     let db = Db::in_memory().unwrap();

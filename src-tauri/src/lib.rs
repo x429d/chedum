@@ -45,6 +45,7 @@ pub fn run() {
             commands::games::list_games,
             commands::games::get_game,
             commands::games::delete_game,
+            commands::games::delete_games,
             commands::games::toggle_favorite,
             commands::games::update_notes,
             commands::games::save_user_comment,
