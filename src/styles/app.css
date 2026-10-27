@@ -85,6 +85,11 @@ button {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
   height: 100%;
+  transition: grid-template-columns 0.18s ease;
+}
+
+.app-shell.nav-collapsed {
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
 .sidebar {
@@ -126,6 +131,103 @@ button {
   color: var(--muted);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.brand-text {
+  min-width: 0;
+}
+
+.sidebar-toggle {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  margin-left: auto;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dim);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  color: var(--text);
+  background: var(--hover);
+  border-color: var(--border-strong);
+}
+
+.sidebar-expand {
+  width: 44px;
+  height: 30px;
+  margin-left: 0;
+  border-radius: 9px;
+}
+
+.app-shell.nav-collapsed .sidebar {
+  align-items: center;
+  gap: 14px;
+  padding: 40px 8px 16px;
+}
+
+.app-shell.nav-collapsed .brand {
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+}
+
+.app-shell.nav-collapsed .brand-text {
+  display: none;
+}
+
+.app-shell.nav-collapsed .nav {
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.app-shell.nav-collapsed .nav-item {
+  position: relative;
+  justify-content: center;
+  width: 44px;
+  height: 42px;
+  padding: 0;
+}
+
+.app-shell.nav-collapsed .nav-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.app-shell.nav-collapsed .nav-label {
+  display: none;
+}
+
+.app-shell.nav-collapsed .nav-item .nav-badge {
+  position: absolute;
+  top: 5px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 0;
+  line-height: 0;
+  background: var(--accent-bright);
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.8);
+}
+
+.app-shell.nav-collapsed .sidebar-footer {
+  align-items: center;
+  width: 100%;
+  padding: 12px 0;
+}
+
+.app-shell.nav-collapsed .engine-row span:not(.engine-dot),
+.app-shell.nav-collapsed .sidebar-footer > div:not(.engine-row) {
+  display: none;
 }
 
 .nav {
@@ -596,6 +698,11 @@ button {
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 18px;
   align-items: start;
+  transition: grid-template-columns 0.18s ease;
+}
+
+.library-grid.side-collapsed {
+  grid-template-columns: minmax(0, 1fr) 64px;
 }
 
 .filter-bar {
@@ -802,6 +909,100 @@ tr:hover .row-actions,
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
+}
+
+.side-section {
+  min-width: 0;
+}
+
+.side-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.side-stack:not(.collapsed) .side-rail,
+.side-stack.collapsed .side-body {
+  display: none;
+}
+
+.side-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0 2px 0 8px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.side-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(23, 28, 41, 0.92), rgba(19, 23, 34, 0.97));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.rail-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--muted);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.rail-btn:hover {
+  color: var(--text);
+  background: var(--hover);
+  border-color: var(--border-strong);
+}
+
+.rail-btn-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.rail-divider {
+  width: 22px;
+  height: 1px;
+  margin: 2px 0;
+  background: var(--border);
+}
+
+.rail-badge {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-bright);
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.8);
+  animation: rail-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes rail-pulse {
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .progress-track {
@@ -1965,9 +2166,20 @@ tr:hover .row-actions,
     grid-template-columns: 196px minmax(0, 1fr);
   }
   .library-grid,
+  .library-grid.side-collapsed,
   .hub-grid,
   .settings-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .side-rail {
+    flex-direction: row;
+    justify-content: center;
+    padding: 8px;
+  }
+  .side-rail .rail-divider {
+    width: 1px;
+    height: 22px;
+    margin: 0 2px;
   }
   .analysis-layout {
     grid-template-columns: minmax(0, 1fr) 360px;

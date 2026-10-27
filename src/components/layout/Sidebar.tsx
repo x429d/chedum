@@ -42,11 +42,35 @@ export function Sidebar() {
         <div class="brand-mark">
           <BrandMark size={21} />
         </div>
-        <div>
+        <div class="brand-text">
           <div class="brand-title">Chenal</div>
           <div class="brand-subtitle">Chess Studio</div>
         </div>
+        <Show when={!ui.navSidebarCollapsed()}>
+          <button
+            type="button"
+            class="sidebar-toggle"
+            title="Свернуть меню"
+            aria-label="Свернуть меню"
+            aria-expanded="true"
+            onClick={() => ui.setNavSidebarCollapsed(true)}
+          >
+            <Icon name="chevrons-left" size={15} />
+          </button>
+        </Show>
       </div>
+
+      <Show when={ui.navSidebarCollapsed()}>
+        <button
+          type="button"
+          class="sidebar-toggle sidebar-expand"
+          title="Развернуть меню"
+          aria-label="Развернуть меню"
+          onClick={() => ui.setNavSidebarCollapsed(false)}
+        >
+          <Icon name="chevrons-right" size={15} />
+        </button>
+      </Show>
 
       <nav class="nav">
         <For each={NAV}>
@@ -55,10 +79,11 @@ export function Sidebar() {
               type="button"
               class="nav-item"
               classList={{ active: ui.view() === item.view }}
+              title={ui.navSidebarCollapsed() ? item.label : undefined}
               onClick={() => navigate(item.view)}
             >
               <Icon name={item.icon} />
-              <span>{item.label}</span>
+              <span class="nav-label">{item.label}</span>
               <Show when={item.view === "library" && libraryStore.total() > 0}>
                 <span class="nav-badge">{libraryStore.total()}</span>
               </Show>

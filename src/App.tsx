@@ -17,7 +17,7 @@ export default function App() {
   });
 
   return (
-    <div class="app-shell">
+    <div class="app-shell" classList={{ "nav-collapsed": ui.navSidebarCollapsed() }}>
       <div class="window-drag-bar" data-tauri-drag-region aria-hidden="true" />
       <Sidebar />
       <main class="main">
