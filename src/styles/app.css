@@ -972,6 +972,11 @@ tr:hover .row-actions {
   fill: rgba(239, 68, 68, 0.42);
 }
 
+.board-sq-hover {
+  fill: rgba(226, 232, 240, 0.17);
+  pointer-events: none;
+}
+
 .board-coord {
   fill: var(--coord, #aab3c5);
   font-size: 0.18px;
