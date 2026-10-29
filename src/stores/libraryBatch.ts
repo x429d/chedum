@@ -192,6 +192,7 @@ export function createBatchController(deps: BatchControllerDeps) {
             if (code !== null && FATAL_CODES.has(code)) {
               fatal = true;
               cancelled = true;
+              void api.stopEngine();
               break;
             }
           } finally {
