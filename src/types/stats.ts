@@ -47,6 +47,7 @@ export interface HubKpis {
   avgAccuracy: number | null;
   avgAcpl: number | null;
   avgPerfElo: number | null;
+  avgPerfEloSpread: number | null;
   white: ColorRecord;
   black: ColorRecord;
 }

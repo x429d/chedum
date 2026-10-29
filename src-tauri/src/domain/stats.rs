@@ -25,6 +25,8 @@ pub struct HubKpis {
     pub avg_accuracy: Option<f64>,
     pub avg_acpl: Option<f64>,
     pub avg_perf_elo: Option<f64>,
+    /// Разброс (стандартное отклонение) оценки Performance Elo, если она показана.
+    pub avg_perf_elo_spread: Option<f64>,
     pub white: ColorRecord,
     pub black: ColorRecord,
 }

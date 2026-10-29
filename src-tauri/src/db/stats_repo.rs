@@ -27,8 +27,7 @@ fn kpis(conn: &Connection) -> AppResult<HubKpis> {
             COALESCE(SUM(CASE WHEN g.result='1/2-1/2' THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN (g.user_color='white' AND g.result='0-1') OR (g.user_color='black' AND g.result='1-0') THEN 1 ELSE 0 END), 0),
             AVG(CASE WHEN g.user_color='white' THEN a.white_accuracy ELSE a.black_accuracy END),
-            AVG(CASE WHEN g.user_color='white' THEN a.white_acpl ELSE a.black_acpl END),
-            AVG(CASE WHEN g.user_color='white' THEN a.white_perf_elo ELSE a.black_perf_elo END)
+            AVG(CASE WHEN g.user_color='white' THEN a.white_acpl ELSE a.black_acpl END)
          FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
          WHERE g.user_color IN ('white', 'black')",
         [],
@@ -41,15 +40,16 @@ fn kpis(conn: &Connection) -> AppResult<HubKpis> {
                 row.get::<_, i64>(4)?,
                 row.get::<_, Option<f64>>(5)?,
                 row.get::<_, Option<f64>>(6)?,
-                row.get::<_, Option<f64>>(7)?,
             ))
         },
     )?;
     let total = row.0 as u32;
+    let analyzed = row.1 as u32;
     let wins = row.2 as u32;
+    let (avg_perf_elo, avg_perf_elo_spread) = performance_summary(conn, analyzed)?;
     Ok(HubKpis {
         total_games: total,
-        analyzed_games: row.1 as u32,
+        analyzed_games: analyzed,
         wins,
         draws: row.3 as u32,
         losses: row.4 as u32,
@@ -60,10 +60,44 @@ fn kpis(conn: &Connection) -> AppResult<HubKpis> {
         },
         avg_accuracy: row.5,
         avg_acpl: row.6,
-        avg_perf_elo: row.7,
+        avg_perf_elo,
+        avg_perf_elo_spread,
         white: color_record(conn, "white")?,
         black: color_record(conn, "black")?,
     })
+}
+
+/// Оценка силы по точности показывается только на достаточной выборке
+/// и всегда с разбросом: это экспериментальная величина, а не рейтинг.
+const MIN_PERF_SAMPLE: u32 = 20;
+
+fn performance_summary(conn: &Connection, analyzed: u32) -> AppResult<(Option<f64>, Option<f64>)> {
+    if analyzed < MIN_PERF_SAMPLE {
+        return Ok((None, None));
+    }
+    let mut stmt = conn.prepare(
+        "SELECT CASE WHEN g.user_color='white' THEN a.white_perf_elo ELSE a.black_perf_elo END
+         FROM game_analyses a JOIN games g ON g.id = a.game_id
+         WHERE g.user_color IN ('white', 'black')",
+    )?;
+    let rows = stmt.query_map([], |row| row.get::<_, Option<i32>>(0))?;
+    let mut values = Vec::new();
+    for row in rows {
+        if let Some(value) = row? {
+            values.push(f64::from(value));
+        }
+    }
+    if values.len() < MIN_PERF_SAMPLE as usize {
+        return Ok((None, None));
+    }
+    let len = values.len() as f64;
+    let mean = values.iter().sum::<f64>() / len;
+    let variance = values
+        .iter()
+        .map(|value| (value - mean).powi(2))
+        .sum::<f64>()
+        / len;
+    Ok((Some(mean), Some(variance.sqrt())))
 }
 
 fn color_record(conn: &Connection, color: &str) -> AppResult<ColorRecord> {

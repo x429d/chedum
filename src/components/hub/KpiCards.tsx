@@ -27,8 +27,14 @@ export function KpiCards(props: { kpis: HubKpis }) {
     },
     {
       label: "Performance Elo",
-      value: props.kpis.avgPerfElo === null ? "—" : String(Math.round(props.kpis.avgPerfElo)),
-      hint: "оценка силы игры",
+      value:
+        props.kpis.avgPerfElo === null
+          ? "—"
+          : `${Math.round(props.kpis.avgPerfElo)} ± ${Math.round(props.kpis.avgPerfEloSpread ?? 0)}`,
+      hint:
+        props.kpis.avgPerfElo === null
+          ? "нужно ≥ 20 разобранных партий"
+          : "оценка по точности, экспериментально",
     },
   ];
   return (

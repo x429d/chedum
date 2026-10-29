@@ -19,8 +19,27 @@ export function ReportTab(props: {
     props.game.userColor === "black" ? props.analysis.blackAccuracy : props.analysis.whiteAccuracy;
   const userAcpl = () =>
     props.game.userColor === "black" ? props.analysis.blackAcpl : props.analysis.whiteAcpl;
-  const userPerf = () =>
-    props.game.userColor === "black" ? props.analysis.blackPerfElo : props.analysis.whitePerfElo;
+  const opponentElo = () =>
+    props.game.userColor === "black" ? props.game.whiteElo : props.game.blackElo;
+  // Классический Performance Rating по результату одной партии:
+  // рейтинг соперника +400 за победу, 0 за ничью, −400 за поражение.
+  const resultPerf = () => {
+    const elo = opponentElo();
+    if (elo === null) return null;
+    const score =
+      props.game.userColor === "white"
+        ? props.game.result === "1-0"
+          ? 1
+          : props.game.result === "1/2-1/2"
+            ? 0.5
+            : 0
+        : props.game.result === "0-1"
+          ? 1
+          : props.game.result === "1/2-1/2"
+            ? 0.5
+            : 0;
+    return Math.round(elo + 800 * (score - 0.5));
+  };
 
   return (
     <div style={{ display: "flex", "flex-direction": "column", gap: "14px" }}>
@@ -63,10 +82,13 @@ export function ReportTab(props: {
           <div class="metric-value">{userAccuracy() === null ? "—" : `${formatNumber(userAccuracy(), 1)}%`}</div>
           <div class="stat-hint">метод Lichess</div>
         </div>
-        <div class="metric-tile">
-          <div class="metric-label">Performance Elo</div>
-          <div class="metric-value">{userPerf() ?? "—"}</div>
-          <div class="stat-hint">оценка силы игры</div>
+        <div
+          class="metric-tile"
+          title="Рейтинг соперника с поправкой на результат: +400 за победу, 0 за ничью, −400 за поражение"
+        >
+          <div class="metric-label">Performance Rating</div>
+          <div class="metric-value">{resultPerf() ?? "—"}</div>
+          <div class="stat-hint">по результату партии</div>
         </div>
         <div class="metric-tile">
           <div class="metric-label">ACPL</div>

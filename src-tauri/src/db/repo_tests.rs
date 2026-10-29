@@ -297,6 +297,46 @@ fn aggregates_hub_statistics() {
     assert_eq!(stats.trend.len(), 2);
     assert_eq!(stats.time.time_trouble_moves, 1);
     assert_eq!(stats.time.impulsive_errors, 1);
+    // Меньше 20 разобранных партий — оценка силы по точности не показывается.
+    assert!(stats.kpis.avg_perf_elo.is_none());
+    assert!(stats.kpis.avg_perf_elo_spread.is_none());
+}
+
+#[test]
+fn performance_estimate_requires_twenty_analyses() {
+    let db = Db::in_memory().unwrap();
+    for index in 0..20 {
+        let game = draft(
+            &format!("g{index}"),
+            "alice",
+            "bob",
+            UserColor::White,
+            "1-0",
+            TimeClass::Rapid,
+            index,
+        );
+        let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+        insert_analysis_draft(
+            &db,
+            &analysis(
+                id,
+                70.0 + index as f64,
+                60.0,
+                vec![move_eval(
+                    id,
+                    1,
+                    Phase::Opening,
+                    MoveCategory::Best,
+                    TimeFlag::Normal,
+                )],
+            ),
+        )
+        .unwrap();
+    }
+    let stats = hub_stats(&db).unwrap();
+    assert_eq!(stats.kpis.analyzed_games, 20);
+    assert!(stats.kpis.avg_perf_elo.is_some());
+    assert!(stats.kpis.avg_perf_elo_spread.is_some());
 }
 
 #[test]
