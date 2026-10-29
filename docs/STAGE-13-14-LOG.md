@@ -282,3 +282,28 @@ LIMIT 200`: после 200 разобранных партий график за
 - `export_pgn_keeps_game_importable_and_adds_annotator`: экспорт → импорт в
   чистую БД → 1 партия, число ходов и результат совпадают.
 - Гейты: `cargo test` 118, clippy, `tsc`, `npm run build` — clean.
+
+## T13.9 — Автогенерация статуса для аудита
+
+**Сделано.** `scripts/audit-status.sh` (bash, без новых зависимостей) печатает:
+число партий/анализов/оценок ходов, распределение конфигураций, min/avg/max
+ключевых моментов, источники дебютов, файлы > 300 строк, наличие
+`.github/workflows`, число Rust-тестов (`cargo test -- --list`). Скрипт
+только читает БД (`CHENAL_DB` переопределяет путь).
+
+**Вывод на 29.10.2026 (после T13.1–T13.8):**
+
+```text
+games 839, analyses 154, move evaluations 9106
+Stockfish 19 depth 14 MultiPV 3 — 131
+Stockfish 19 depth 14 MultiPV 2 — 21
+Stockfish 19 depth 22 MultiPV 3 — 1
+Stockfish 19 depth 18 MultiPV 3 — 1
+key moments: avg=3.44 min=0 max=8
+openings: position — 839
+ci: .github/workflows missing
+rust tests: 118
+files > 300: 9 (будут устранены в T14.6)
+```
+
+Все числа в отчётах этапа берутся из этого вывода, а не пишутся вручную.
