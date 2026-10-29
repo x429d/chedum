@@ -549,6 +549,79 @@ fn backfill_keeps_zero_key_moments_for_a_clean_game() {
 }
 
 #[test]
+fn trend_keeps_last_two_hundred_games_in_chronological_order() {
+    let db = Db::in_memory().unwrap();
+    for index in 1..=300i64 {
+        let game = draft(
+            &format!("g{index}"),
+            "alice",
+            "bob",
+            UserColor::White,
+            "1-0",
+            TimeClass::Rapid,
+            index,
+        );
+        let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+        insert_analysis_draft(
+            &db,
+            &analysis(
+                id,
+                50.0 + (index % 50) as f64,
+                60.0,
+                vec![move_eval(
+                    id,
+                    1,
+                    Phase::Opening,
+                    MoveCategory::Best,
+                    TimeFlag::Normal,
+                )],
+            ),
+        )
+        .unwrap();
+    }
+    // Партия без даты не должна попадать в тренд.
+    let undated = draft(
+        "g-undated",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        0,
+    );
+    let undated_id = db
+        .with_tx(|tx| insert_game(tx, &undated))
+        .unwrap()
+        .unwrap();
+    insert_analysis_draft(
+        &db,
+        &analysis(
+            undated_id,
+            99.0,
+            60.0,
+            vec![move_eval(
+                undated_id,
+                1,
+                Phase::Opening,
+                MoveCategory::Best,
+                TimeFlag::Normal,
+            )],
+        ),
+    )
+    .unwrap();
+
+    let stats = hub_stats(&db).unwrap();
+    assert_eq!(stats.trend.len(), 200);
+    assert_eq!(stats.trend.first().unwrap().played_at, 101);
+    assert_eq!(stats.trend.last().unwrap().played_at, 300);
+    assert!(stats
+        .trend
+        .windows(2)
+        .all(|pair| pair[0].played_at < pair[1].played_at));
+    assert!(!stats.trend.iter().any(|point| point.played_at == 0));
+}
+
+#[test]
 fn summary_text_always_matches_accuracy_fields() {
     let db = Db::in_memory().unwrap();
     let game = draft(
