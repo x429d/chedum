@@ -89,12 +89,13 @@ fn engine_path() -> PathBuf {
 }
 
 async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
+    let settings = chenal_lib::db::settings_repo::get_settings(db)?;
     let depth = arg_value(args, "--depth")
         .and_then(|value| value.parse::<u32>().ok())
-        .unwrap_or(14);
+        .unwrap_or(settings.analysis_depth);
     let multipv = arg_value(args, "--multipv")
         .and_then(|value| value.parse::<u32>().ok())
-        .unwrap_or(3);
+        .unwrap_or(settings.multipv);
     let limit = arg_value(args, "--limit")
         .and_then(|value| value.parse::<usize>().ok())
         .unwrap_or(20);
@@ -121,18 +122,19 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
     }
     let ids: Vec<i64> = match explicit_ids {
         Some(ids) => ids,
-        None => db.with(|conn| {
-            let mut stmt = conn.prepare(
-                "SELECT g.id FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
-                 WHERE a.id IS NULL ORDER BY g.played_at DESC LIMIT ?1",
+        None => {
+            let key = chenal_lib::service::queue::target_config_key(db, &settings)?;
+            let mut plan = chenal_lib::db::games_repo::pending_analysis(
+                db,
+                &chenal_lib::domain::game::GameFilter::default(),
+                &key,
             )?;
-            let rows = stmt.query_map([limit as i64], |row| row.get::<_, i64>(0))?;
-            let mut out = Vec::new();
-            for row in rows {
-                out.push(row?);
+            plan.ids.truncate(limit);
+            if plan.excluded > 0 {
+                println!("исключено после 3 ошибок: {}", plan.excluded);
             }
-            Ok(out)
-        })?,
+            plan.ids
+        }
     };
     if ids.is_empty() {
         println!("Нет партий для анализа");

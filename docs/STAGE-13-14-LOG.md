@@ -410,3 +410,64 @@ files > 300: 9 (будут устранены в T14.6)
   меняется. В живой базе ключ уже был `false`, значение сохранено.
 - Автоанализ использует половину пула (`lowPriority`), ручной запуск — весь пул.
 - `new_install_defaults_to_auto_analyze_on`.
+
+## T14.4 — CI
+
+**Сделано.**
+- `.github/workflows/ci.yml`: на push (master, stage-13-14) и pull_request —
+  `cargo test`, `cargo clippy --all-targets -- -D warnings`, `npx tsc --noEmit`,
+  `npm run build`; раннер `macos-14` (Apple Silicon), кэш npm и cargo.
+- Версии actions зафиксированы мажорными тегами: `actions/checkout@v4`,
+  `actions/setup-node@v4`, `dtolnay/rust-toolchain@stable`,
+  `Swatinem/rust-cache@v2`.
+- Stockfish-бинарник уже лежит в репозитории (`src-tauri/binaries/…`), поэтому
+  отдельный шаг скачивания не нужен; тесты, которым движок недоступен, сами
+  пропускаются (`bundled_engine() -> Option`).
+- Бейдж CI добавлен в `README.md`.
+- `Cargo.toml`: `default-run = "chenal"`, иначе второй bin (`chenal-cli`) ломает
+  `tauri build` («failed to find main binary»).
+
+**Проверено локально.** Все четыре команды проходят; `npx tauri build
+--debug --no-bundle` доходит до сборки приложения. Прогон на GitHub не
+выполнялся: ветка ещё не запушена.
+
+## T14.5 — Строгий CSP
+
+**Сделано.** `tauri.conf.json`:
+- `csp`: `default-src 'self'; script-src 'self'; style-src 'self'
+  'unsafe-inline'; img-src 'self' data: asset: blob:; font-src 'self' data:;
+  media-src 'self' data: blob:; connect-src 'self' ipc: http://ipc.localhost;
+  object-src 'none'; base-uri 'self'; frame-ancestors 'none'`.
+- `devCsp` дополнительно разрешает `ws://localhost:1420` и inline-скрипты Vite.
+- `style-src 'unsafe-inline'` оставлен осознанно: Solid выставляет сотни
+  inline-стилей через атрибут `style`; без него весь layout ломается. Сетевых
+  `connect-src` для Chess.com нет — запросы идут из Rust.
+
+**Проверено.** `tauri build --debug --no-bundle` принимает конфигурацию и
+собирает приложение (CSP прошёл валидацию схемы). Ручной проход четырёх
+экранов с открытой консолью WebView в этом проходе не выполнялся; это
+единственный непроверенный пункт этапа.
+
+## T14.6 — Декомпозиция файлов > 300 строк
+
+Правило «файл ≤ 300 строк» восстановлено для всех `.rs/.ts/.tsx`
+(`scripts/audit-status.sh` → `files over 300: none`). Публичный API сохранён
+реэкспортами. Разбито:
+
+| Было | Стало |
+|---|---|
+| `db/analyses_repo.rs` 639 | `analyses_repo/{mod,insert,mapping,summary,backfill,annotations}.rs` (43–239) |
+| `db/games_repo.rs` 405 | `games_repo/{mod,list,queue,mapping}.rs` (88–134) |
+| `db/repo_tests.rs` 885 | `db/tests/{mod,support,games,analysis,stats,queue}.rs` (5–286) |
+| `db/stats_repo.rs` 371 | `stats_repo/{mod,kpis,openings,phases}.rs` (78–123) |
+| `eco/mod.rs` 382 | `eco/{mod,line,identify,tests}.rs` (25–172) |
+| `pgn/parser.rs` 333 | `pgn/parser.rs` 288 + `pgn/opening.rs` 46 |
+| `engine/manager.rs` 327 | `manager.rs` 223 + `manager_tests.rs` 106 |
+| `domain/analysis.rs` 313 | `analysis.rs` 152 + `move_category.rs` 109 + `phase.rs` 58 |
+| `domain/game.rs` 319 | `game.rs` 201 + `enums.rs` 122 |
+| `views/SettingsView.tsx` 334 | view 80 + `AnalysisCard` 138 + `AppearanceCard` 92 + `EngineCard` 55 |
+| `stores/libraryStore.ts` 340 | store 285 + `libraryActions.ts` 105 |
+
+Поведение не менялось; каждый шаг проверялся `cargo check --all-targets`,
+итоговые гейты — ниже. Из-за пересечения правок в одном рабочем дереве
+некоторые split-коммиты объединены (см. таблицу коммитов в отчёте).
