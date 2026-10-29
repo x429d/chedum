@@ -294,7 +294,13 @@ fn aggregates_hub_statistics() {
     assert_eq!(stats.kpis.losses, 1);
     assert!((stats.kpis.avg_accuracy.unwrap() - 75.0).abs() < 1e-9);
     assert!(!stats.openings.is_empty());
+    let opening = &stats.openings[0];
+    assert_eq!(opening.games, 2);
+    assert_eq!(opening.analyzed, 2);
+    assert!(!opening.reliable);
+    assert!(opening.price > 0.0);
     assert_eq!(stats.phases[0].moves, 2);
+    assert_eq!(stats.phases[0].games, 2);
     assert_eq!(stats.trend.len(), 2);
     assert_eq!(stats.time.time_trouble_moves, 1);
     assert_eq!(stats.time.impulsive_errors, 1);
@@ -338,6 +344,10 @@ fn performance_estimate_requires_twenty_analyses() {
     assert_eq!(stats.kpis.analyzed_games, 20);
     assert!(stats.kpis.avg_perf_elo.is_some());
     assert!(stats.kpis.avg_perf_elo_spread.is_some());
+    let opening = &stats.openings[0];
+    assert_eq!(opening.analyzed, 20);
+    assert!(opening.reliable);
+    assert!(opening.price > 0.0);
 }
 
 #[test]

@@ -56,6 +56,7 @@ export interface OpeningStat {
   eco: string;
   name: string;
   games: number;
+  analyzed: number;
   wins: number;
   draws: number;
   losses: number;
@@ -63,12 +64,15 @@ export interface OpeningStat {
   accuracy: number | null;
   exitEval: number | null;
   exitWinProb: number | null;
+  price: number;
+  reliable: boolean;
 }
 
 export interface PhaseStat {
   phase: Phase;
   accuracy: number | null;
   moves: number;
+  games: number;
 }
 
 export interface AccuracyPoint {

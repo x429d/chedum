@@ -37,6 +37,8 @@ pub struct OpeningStat {
     pub eco: String,
     pub name: String,
     pub games: u32,
+    /// Сколько партий этого дебюта уже разобрано.
+    pub analyzed: u32,
     pub wins: u32,
     pub draws: u32,
     pub losses: u32,
@@ -44,6 +46,10 @@ pub struct OpeningStat {
     pub accuracy: Option<f64>,
     pub exit_eval: Option<f64>,
     pub exit_win_prob: Option<f64>,
+    /// Цена дебюта: партии × средняя потеря Win% на ходах игрока.
+    pub price: f64,
+    /// Точность можно показывать только при n ≥ 5.
+    pub reliable: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,6 +58,8 @@ pub struct PhaseStat {
     pub phase: Phase,
     pub accuracy: Option<f64>,
     pub moves: u32,
+    /// Число разобранных партий, у которых есть ходы в этой фазе.
+    pub games: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

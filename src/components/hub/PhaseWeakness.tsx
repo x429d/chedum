@@ -31,7 +31,7 @@ export function PhaseWeakness(props: { phases: PhaseStat[] }) {
               >
                 {PHASE_LABELS[phase.phase]}
                 <span class="dim" style={{ display: "block", "font-size": "9px" }}>
-                  {phase.moves} ходов
+                  {phase.moves} ходов · {phase.games} партий
                 </span>
               </span>
               <div class="phase-track" style={{ flex: "1" }}>

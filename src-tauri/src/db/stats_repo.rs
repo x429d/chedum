@@ -133,9 +133,13 @@ fn color_record(conn: &Connection, color: &str) -> AppResult<ColorRecord> {
     })
 }
 
+/// Минимальная выборка, при которой точность дебюта считается показательной.
+const MIN_RELIABLE_SAMPLE: u32 = 5;
+
 fn openings(conn: &Connection) -> AppResult<Vec<OpeningStat>> {
     let mut stmt = conn.prepare(
         "SELECT g.eco, COALESCE(g.opening_name, ''), COUNT(*),
+            COALESCE(SUM(CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN (g.user_color='white' AND g.result='1-0') OR (g.user_color='black' AND g.result='0-1') THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN g.result='1/2-1/2' THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN (g.user_color='white' AND g.result='0-1') OR (g.user_color='black' AND g.result='1-0') THEN 1 ELSE 0 END), 0),
@@ -144,7 +148,7 @@ fn openings(conn: &Connection) -> AppResult<Vec<OpeningStat>> {
          WHERE g.user_color IN ('white', 'black') AND g.eco IS NOT NULL AND g.eco <> ''
          GROUP BY g.eco, COALESCE(g.opening_name, '')
          ORDER BY COUNT(*) DESC, g.eco ASC
-         LIMIT 12",
+         LIMIT 40",
     )?;
     let rows = stmt.query_map([], |row| {
         Ok((
@@ -154,17 +158,20 @@ fn openings(conn: &Connection) -> AppResult<Vec<OpeningStat>> {
             row.get::<_, i64>(3)?,
             row.get::<_, i64>(4)?,
             row.get::<_, i64>(5)?,
-            row.get::<_, Option<f64>>(6)?,
+            row.get::<_, i64>(6)?,
+            row.get::<_, Option<f64>>(7)?,
         ))
     })?;
     let mut stats = Vec::new();
     for row in rows {
-        let (eco, name, games, wins, draws, losses, accuracy) = row?;
-        let (exit_win_prob, exit_eval) = exit_metrics(conn, &eco, &name)?;
+        let (eco, name, games, analyzed, wins, draws, losses, accuracy) = row?;
+        let (exit_win_prob, exit_eval, avg_loss) = exit_metrics(conn, &eco, &name)?;
+        let analyzed = analyzed as u32;
         stats.push(OpeningStat {
             eco,
             name,
             games: games as u32,
+            analyzed,
             wins: wins as u32,
             draws: draws as u32,
             losses: losses as u32,
@@ -176,16 +183,27 @@ fn openings(conn: &Connection) -> AppResult<Vec<OpeningStat>> {
             accuracy,
             exit_eval,
             exit_win_prob,
+            price: f64::from(games as u32) * avg_loss.unwrap_or(0.0),
+            reliable: analyzed >= MIN_RELIABLE_SAMPLE,
         });
     }
     Ok(stats)
 }
 
-fn exit_metrics(conn: &Connection, eco: &str, name: &str) -> AppResult<(Option<f64>, Option<f64>)> {
+fn exit_metrics(
+    conn: &Connection,
+    eco: &str,
+    name: &str,
+) -> AppResult<(Option<f64>, Option<f64>, Option<f64>)> {
     conn.query_row(
         "SELECT
             AVG(CASE WHEN g.user_color='white' THEN me.win_prob_white ELSE 100.0 - me.win_prob_white END),
-            AVG(CASE WHEN g.user_color='white' THEN me.eval_cp ELSE -me.eval_cp END)
+            AVG(CASE WHEN g.user_color='white' THEN me.eval_cp ELSE -me.eval_cp END),
+            (SELECT AVG(me2.win_prob_loss)
+             FROM move_evaluations me2 JOIN games g2 ON g2.id = me2.game_id
+             WHERE g2.eco = ?1 AND COALESCE(g2.opening_name, '') = ?2
+               AND ((g2.user_color='white' AND me2.ply % 2 = 1)
+                    OR (g2.user_color='black' AND me2.ply % 2 = 0)))
          FROM move_evaluations me JOIN games g ON g.id = me.game_id
          WHERE g.eco = ?1 AND COALESCE(g.opening_name, '') = ?2 AND me.phase = 'opening'
            AND me.ply = (
@@ -197,6 +215,7 @@ fn exit_metrics(conn: &Connection, eco: &str, name: &str) -> AppResult<(Option<f
             Ok((
                 row.get::<_, Option<f64>>(0)?,
                 row.get::<_, Option<f64>>(1)?.map(|value| value / 100.0),
+                row.get::<_, Option<f64>>(2)?,
             ))
         },
     )
@@ -208,7 +227,10 @@ fn phases(conn: &Connection) -> AppResult<Vec<PhaseStat>> {
         "SELECT
             AVG(CASE WHEN g.user_color='white' THEN a.white_opening_acc ELSE a.black_opening_acc END),
             AVG(CASE WHEN g.user_color='white' THEN a.white_middlegame_acc ELSE a.black_middlegame_acc END),
-            AVG(CASE WHEN g.user_color='white' THEN a.white_endgame_acc ELSE a.black_endgame_acc END)
+            AVG(CASE WHEN g.user_color='white' THEN a.white_endgame_acc ELSE a.black_endgame_acc END),
+            COUNT(CASE WHEN g.user_color='white' THEN a.white_opening_acc ELSE a.black_opening_acc END),
+            COUNT(CASE WHEN g.user_color='white' THEN a.white_middlegame_acc ELSE a.black_middlegame_acc END),
+            COUNT(CASE WHEN g.user_color='white' THEN a.white_endgame_acc ELSE a.black_endgame_acc END)
          FROM game_analyses a JOIN games g ON g.id = a.game_id
          WHERE g.user_color IN ('white', 'black')",
         [],
@@ -217,6 +239,9 @@ fn phases(conn: &Connection) -> AppResult<Vec<PhaseStat>> {
                 row.get::<_, Option<f64>>(0)?,
                 row.get::<_, Option<f64>>(1)?,
                 row.get::<_, Option<f64>>(2)?,
+                row.get::<_, i64>(3)?,
+                row.get::<_, i64>(4)?,
+                row.get::<_, i64>(5)?,
             ))
         },
     )?;
@@ -226,16 +251,19 @@ fn phases(conn: &Connection) -> AppResult<Vec<PhaseStat>> {
             phase: Phase::Opening,
             accuracy: row.0,
             moves: counts.0,
+            games: row.3 as u32,
         },
         PhaseStat {
             phase: Phase::Middlegame,
             accuracy: row.1,
             moves: counts.1,
+            games: row.4 as u32,
         },
         PhaseStat {
             phase: Phase::Endgame,
             accuracy: row.2,
             moves: counts.2,
+            games: row.5 as u32,
         },
     ])
 }

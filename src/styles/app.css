@@ -2091,7 +2091,7 @@ tr:hover .row-actions,
 
 .opening-row {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) 52px 58px 54px;
+  grid-template-columns: 46px minmax(0, 1fr) 46px 54px 52px 62px;
   gap: 8px;
   align-items: center;
   padding: 9px 4px;
@@ -2101,6 +2101,10 @@ tr:hover .row-actions,
 
 .opening-row:last-child {
   border-bottom: 0;
+}
+
+.opening-row.unreliable {
+  opacity: 0.55;
 }
 
 .eco-code {

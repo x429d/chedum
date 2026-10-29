@@ -8,22 +8,22 @@ export function KpiCards(props: { kpis: HubKpis }) {
     {
       label: "Партий",
       value: String(props.kpis.totalGames),
-      hint: `${props.kpis.analyzedGames} с анализом`,
+      hint: `по всем ${props.kpis.totalGames}`,
     },
     {
       label: "Доля побед",
       value: `${formatNumber(props.kpis.winRate, 1)}%`,
-      hint: `${props.kpis.wins} ${pluralRu(props.kpis.wins, "победа", "победы", "побед")}, ${props.kpis.draws} ${pluralRu(props.kpis.draws, "ничья", "ничьи", "ничьих")}, ${props.kpis.losses} ${pluralRu(props.kpis.losses, "поражение", "поражения", "поражений")}`,
+      hint: `${props.kpis.wins} ${pluralRu(props.kpis.wins, "победа", "победы", "побед")}, ${props.kpis.draws} ${pluralRu(props.kpis.draws, "ничья", "ничьи", "ничьих")}, ${props.kpis.losses} ${pluralRu(props.kpis.losses, "поражение", "поражения", "поражений")} · по всем ${props.kpis.totalGames}`,
     },
     {
       label: "Средняя точность",
       value: props.kpis.avgAccuracy === null ? "—" : `${formatNumber(props.kpis.avgAccuracy, 1)}%`,
-      hint: "метод Lichess",
+      hint: `по ${props.kpis.analyzedGames} разобранным · метод Lichess`,
     },
     {
       label: "Средний ACPL",
       value: formatNumber(props.kpis.avgAcpl, 1),
-      hint: "потеря сантипешек",
+      hint: `по ${props.kpis.analyzedGames} разобранным`,
     },
     {
       label: "Performance Elo",
@@ -34,7 +34,7 @@ export function KpiCards(props: { kpis: HubKpis }) {
       hint:
         props.kpis.avgPerfElo === null
           ? "нужно ≥ 20 разобранных партий"
-          : "оценка по точности, экспериментально",
+          : `по ${props.kpis.analyzedGames} разобранным · оценка по точности, экспериментально`,
     },
   ];
   return (
