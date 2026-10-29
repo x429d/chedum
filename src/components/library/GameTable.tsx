@@ -12,11 +12,12 @@ import {
 import { Icon } from "../ui/Icon";
 import { Pagination } from "./Pagination";
 
-function accuracyClass(value: number | null): string {
-  if (value === null) return "";
-  if (value >= 90) return "accuracy-high";
-  if (value >= 75) return "accuracy-mid";
-  return "accuracy-low";
+/// Плавная шкала: 0 % — красный, 50 % — янтарный, 100 % — зелёный.
+function accuracyColor(value: number | null): string | undefined {
+  if (value === null) return undefined;
+  const clamped = Math.max(0, Math.min(100, value));
+  const hue = clamped <= 50 ? (clamped / 50) * 42 : 42 + ((clamped - 50) / 50) * 68;
+  return `hsl(${hue.toFixed(1)} 58% 65%)`;
 }
 
 function accuracyHint(game: GameListItem): string {
@@ -72,7 +73,10 @@ function Row(props: { game: GameListItem }) {
           when={props.game.userAccuracy !== null}
           fallback={<span class="dim">—</span>}
         >
-          <span class={`accuracy-cell ${accuracyClass(props.game.userAccuracy)}`}>
+          <span
+            class="accuracy-cell"
+            style={{ color: accuracyColor(props.game.userAccuracy) }}
+          >
             {formatNumber(props.game.userAccuracy, 1)}%
           </span>
         </Show>

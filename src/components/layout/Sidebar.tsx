@@ -79,7 +79,9 @@ export function Sidebar() {
               type="button"
               class="nav-item"
               classList={{ active: ui.view() === item.view }}
-              title={ui.navSidebarCollapsed() ? item.label : undefined}
+              title={item.label}
+              aria-label={item.label}
+              aria-current={ui.view() === item.view ? "page" : undefined}
               onClick={() => navigate(item.view)}
             >
               <Icon name={item.icon} />

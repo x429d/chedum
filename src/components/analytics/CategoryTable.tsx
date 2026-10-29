@@ -12,6 +12,25 @@ export function CategoryTable(props: {
 }) {
   return (
     <table class="category-table">
+      <thead>
+        <tr>
+          <th style={{ "text-align": "left" }}>Категория</th>
+          <th style={{ "text-align": "right" }}>
+            {props.userColor === "none"
+              ? "Белые"
+              : props.userColor === "white"
+                ? "Вы"
+                : "Соперник"}
+          </th>
+          <th style={{ "text-align": "right" }}>
+            {props.userColor === "none"
+              ? "Чёрные"
+              : props.userColor === "white"
+                ? "Соперник"
+                : "Вы"}
+          </th>
+        </tr>
+      </thead>
       <tbody>
         <For each={CATEGORY_ORDER}>
           {(category) => {

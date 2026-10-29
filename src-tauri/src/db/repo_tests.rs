@@ -549,6 +549,53 @@ fn backfill_keeps_zero_key_moments_for_a_clean_game() {
 }
 
 #[test]
+fn date_filters_limit_the_library() {
+    let db = Db::in_memory().unwrap();
+    let early = draft(
+        "g-early",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        1_672_531_200,
+    );
+    let late = draft(
+        "g-late",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        1_688_169_600,
+    );
+    db.with_tx(|tx| insert_game(tx, &early)).unwrap().unwrap();
+    db.with_tx(|tx| insert_game(tx, &late)).unwrap().unwrap();
+
+    let from = list_games(
+        &db,
+        &GameFilter {
+            date_from: Some(1_680_000_000),
+            ..GameFilter::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(from.games.len(), 1);
+    assert_eq!(from.games[0].played_at, 1_688_169_600);
+
+    let to = list_games(
+        &db,
+        &GameFilter {
+            date_to: Some(1_680_000_000),
+            ..GameFilter::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(to.games.len(), 1);
+    assert_eq!(to.games[0].played_at, 1_672_531_200);
+}
+
+#[test]
 fn trend_keeps_last_two_hundred_games_in_chronological_order() {
     let db = Db::in_memory().unwrap();
     for index in 1..=300i64 {
