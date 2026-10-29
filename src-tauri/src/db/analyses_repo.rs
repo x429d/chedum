@@ -1,4 +1,6 @@
-use rusqlite::{params, Connection, OptionalExtension, Row};
+use std::collections::HashMap;
+
+use rusqlite::{params, params_from_iter, Connection, OptionalExtension, Row};
 
 use crate::analytics::{
     game_accuracy, performance_elo, phase_accuracy, summary_from_analysis, win_prob_cp,
@@ -247,6 +249,43 @@ pub fn save_move_comment(db: &Db, game_id: i64, ply: i32, comment: &str) -> AppR
             params![comment, game_id, ply],
         )?;
         Ok(())
+    })
+}
+
+/// Подписи происхождения анализа для экспорта PGN. Одна строка на партию.
+pub fn annotations_for_games(db: &Db, ids: &[i64]) -> AppResult<HashMap<i64, String>> {
+    if ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+    db.with(|conn| {
+        let placeholders = vec!["?"; ids.len()].join(",");
+        let sql = format!(
+            "SELECT game_id, engine_name, depth, accuracy_method_version
+             FROM game_analyses WHERE game_id IN ({placeholders})"
+        );
+        let mut stmt = conn.prepare(&sql)?;
+        let rows = stmt.query_map(params_from_iter(ids.iter()), |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, i32>(2)?,
+                row.get::<_, String>(3)?,
+            ))
+        })?;
+        let mut out = HashMap::new();
+        for row in rows {
+            let (game_id, engine, depth, method) = row?;
+            let label = if method == crate::domain::analysis::ACCURACY_METHOD_VERSION {
+                "Lichess accuracy".to_string()
+            } else {
+                method
+            };
+            out.insert(
+                game_id,
+                format!("Chenal · {engine} · depth {depth} · {label}"),
+            );
+        }
+        Ok(out)
     })
 }
 

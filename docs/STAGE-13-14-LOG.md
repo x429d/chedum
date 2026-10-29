@@ -263,3 +263,22 @@ LIMIT 200`: после 200 разобранных партий график за
   хронологический порядок; первая 78.94 при 1632587812, последняя 96.27 при
   1677405650.
 - Гейты: `cargo test` 115, clippy, `tsc`, `npm run build` — clean.
+
+## T13.8 — F-03: происхождение анализа в библиотеке и экспорте
+
+**Сделано.**
+- `GameListItem` получил `engine_name`, `analysis_depth`, `accuracy_method`
+  из записи анализа; в таблице библиотеки ячейка «Точность» показывает в
+  tooltip `Stockfish 19 · depth 14 · Lichess accuracy`.
+- Экспорт PGN добавляет/заменяет заголовок
+  `[Annotator "Chenal · Stockfish 19 · depth 14 · Lichess accuracy"]`.
+  Существующий `Annotator` не дублируется, остальные заголовки и текст
+  ходов не меняются.
+- Шапка партии не дублирует происхождение: там уже есть движок и depth.
+
+**Проверено.**
+- `adds_annotator_header_without_touching_movetext`,
+  `replaces_existing_annotator_instead_of_duplicating`.
+- `export_pgn_keeps_game_importable_and_adds_annotator`: экспорт → импорт в
+  чистую БД → 1 партия, число ходов и результат совпадают.
+- Гейты: `cargo test` 118, clippy, `tsc`, `npm run build` — clean.

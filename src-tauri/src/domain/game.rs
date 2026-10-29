@@ -248,6 +248,10 @@ pub struct GameListItem {
     pub user_accuracy: Option<f64>,
     pub user_acpl: Option<f64>,
     pub key_moments_count: Option<i32>,
+    /// Происхождение точности для подсказки в библиотеке.
+    pub engine_name: Option<String>,
+    pub analysis_depth: Option<i32>,
+    pub accuracy_method: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

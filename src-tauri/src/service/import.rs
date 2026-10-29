@@ -1,10 +1,11 @@
 use std::path::Path;
 
+use crate::db::analyses_repo;
 use crate::db::connection::Db;
 use crate::db::games_repo::{all_games, games_by_ids, insert_game};
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameSource, ImportSummary};
-use crate::pgn::export::export_games;
+use crate::pgn::export::export_games_with_annotations;
 use crate::pgn::{build_draft, parse_pgn};
 use crate::service::hashing::sha256_hex;
 
@@ -83,7 +84,9 @@ pub fn export_pgn(db: &Db, ids: &[i64]) -> AppResult<String> {
     if games.is_empty() {
         return Err(AppError::NotFound("Нет партий для экспорта".to_string()));
     }
-    Ok(export_games(&games))
+    let ids: Vec<i64> = games.iter().map(|game| game.id).collect();
+    let annotations = analyses_repo::annotations_for_games(db, &ids)?;
+    Ok(export_games_with_annotations(&games, &annotations))
 }
 
 pub fn export_pgn_to_path(db: &Db, ids: &[i64], path: &str) -> AppResult<()> {

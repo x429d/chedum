@@ -19,6 +19,15 @@ function accuracyClass(value: number | null): string {
   return "accuracy-low";
 }
 
+function accuracyHint(game: GameListItem): string {
+  if (!game.hasAnalysis || !game.engineName) return "Партия не разобрана";
+  const method =
+    game.accuracyMethod === "lichess-v1"
+      ? "Lichess accuracy"
+      : (game.accuracyMethod ?? "метод неизвестен");
+  return `${game.engineName} · depth ${game.analysisDepth ?? "—"} · ${method}`;
+}
+
 function Row(props: { game: GameListItem }) {
   const selected = () => libraryStore.selected().includes(props.game.id);
   return (
@@ -58,7 +67,7 @@ function Row(props: { game: GameListItem }) {
           {props.game.openingName ?? "Без дебюта"}
         </span>
       </td>
-      <td style={{ "text-align": "right" }}>
+      <td style={{ "text-align": "right" }} title={accuracyHint(props.game)}>
         <Show
           when={props.game.userAccuracy !== null}
           fallback={<span class="dim">—</span>}

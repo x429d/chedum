@@ -622,6 +622,57 @@ fn trend_keeps_last_two_hundred_games_in_chronological_order() {
 }
 
 #[test]
+fn export_pgn_keeps_game_importable_and_adds_annotator() {
+    let db = Db::in_memory().unwrap();
+    let mut game = draft(
+        "g1",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    game.pgn = "[White \"alice\"]\n[Black \"bob\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 Nc6 1-0"
+        .to_string();
+    game.total_plies = 4;
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    insert_analysis_draft(
+        &db,
+        &analysis(
+            id,
+            90.0,
+            80.0,
+            vec![move_eval(
+                id,
+                1,
+                Phase::Opening,
+                MoveCategory::Best,
+                TimeFlag::Normal,
+            )],
+        ),
+    )
+    .unwrap();
+
+    let exported = crate::service::import::export_pgn(&db, &[id]).unwrap();
+    assert!(
+        exported.contains("[Annotator \"Chenal · Stockfish 19 · depth 14 · Lichess accuracy\"]"),
+        "{exported}"
+    );
+
+    let fresh = Db::in_memory().unwrap();
+    let summary = crate::service::import::import_pgn_text(&fresh, &exported, "alice").unwrap();
+    assert_eq!(summary.imported, 1, "{:?}", summary.errors);
+    let page = list_games(&fresh, &GameFilter::default()).unwrap();
+    let imported = get_game(&fresh, page.games[0].id).unwrap();
+    let original = crate::pgn::parse_single(&exported).unwrap();
+    let reimported = crate::pgn::parse_single(&imported.pgn).unwrap();
+    assert_eq!(original.moves.len(), reimported.moves.len());
+    assert_eq!(original.result, reimported.result);
+    assert_eq!(imported.result, "1-0");
+}
+
+#[test]
 fn summary_text_always_matches_accuracy_fields() {
     let db = Db::in_memory().unwrap();
     let game = draft(

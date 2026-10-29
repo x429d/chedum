@@ -46,6 +46,9 @@ export interface GameListItem {
   userAccuracy: number | null;
   userAcpl: number | null;
   keyMomentsCount: number | null;
+  engineName: string | null;
+  analysisDepth: number | null;
+  accuracyMethod: string | null;
 }
 
 export interface GameFilter {

@@ -222,7 +222,8 @@ pub fn list_games(db: &Db, filter: &GameFilter) -> AppResult<PagedGames> {
         };
         let sql = format!(
             "SELECT {LIST_COLUMNS}, a.id IS NOT NULL AS has_analysis, a.white_accuracy, a.black_accuracy, \
-             a.white_acpl, a.black_acpl, a.key_moments_count {base} ORDER BY {order} LIMIT {limit} OFFSET {offset}"
+             a.white_acpl, a.black_acpl, a.key_moments_count, a.engine_name, a.depth, \
+             a.accuracy_method_version {base} ORDER BY {order} LIMIT {limit} OFFSET {offset}"
         );
         let mut stmt = conn.prepare(&sql)?;
         let rows = stmt.query_map(params_from_iter(values.iter()), map_game_list_item)?;
@@ -337,6 +338,9 @@ fn map_game_list_item(row: &Row<'_>) -> rusqlite::Result<GameListItem> {
             UserColor::None => None,
         },
         key_moments_count: row.get("key_moments_count")?,
+        engine_name: row.get("engine_name")?,
+        analysis_depth: row.get("depth")?,
+        accuracy_method: row.get("accuracy_method_version")?,
     })
 }
 

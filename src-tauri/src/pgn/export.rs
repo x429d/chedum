@@ -1,16 +1,44 @@
+use std::collections::HashMap;
+
 use crate::domain::game::Game;
 
 /// Экспортирует партии в один PGN-документ, разделяя их пустой строкой.
 pub fn export_games(games: &[Game]) -> String {
+    export_games_with_annotations(games, &HashMap::new())
+}
+
+/// То же, но с подписью происхождения анализа в заголовке `Annotator`.
+pub fn export_games_with_annotations(
+    games: &[Game],
+    annotations: &HashMap<i64, String>,
+) -> String {
     let mut out = String::new();
     for game in games {
         let pgn = game.pgn.trim_end();
-        out.push_str(pgn);
-        if !pgn.ends_with('\n') {
-            out.push('\n');
-        }
+        let annotated = match annotations.get(&game.id) {
+            Some(value) => apply_annotator(pgn, value),
+            None => pgn.to_string(),
+        };
+        out.push_str(annotated.trim_end());
+        out.push('\n');
         out.push('\n');
     }
+    out
+}
+
+/// Вставляет или заменяет `[Annotator "…"]`, не ломая остальные заголовки.
+fn apply_annotator(pgn: &str, value: &str) -> String {
+    let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
+    let line = format!("[Annotator \"{escaped}\"]");
+    let mut lines: Vec<String> = pgn.lines().map(str::to_string).collect();
+    lines.retain(|existing| !existing.starts_with("[Annotator "));
+    let insert_at = lines
+        .iter()
+        .position(|existing| !existing.starts_with('['))
+        .unwrap_or(lines.len());
+    lines.insert(insert_at, line);
+    let mut out = lines.join("\n");
+    out.push('\n');
     out
 }
 
@@ -53,5 +81,29 @@ mod tests {
         assert!(out.contains("1. e4 *"));
         assert!(out.contains("1. d4 *"));
         assert!(out.ends_with("\n\n"));
+    }
+
+    #[test]
+    fn adds_annotator_header_without_touching_movetext() {
+        let mut annotations = HashMap::new();
+        annotations.insert(1, "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string());
+        let out = export_games_with_annotations(
+            &[game("[White \"A\"]\n[Black \"B\"]\n\n1. e4 e5 *")],
+            &annotations,
+        );
+        assert!(out.contains("[Annotator \"Chenal · Stockfish 19 · depth 14 · Lichess accuracy\"]"));
+        assert!(out.contains("1. e4 e5 *"));
+    }
+
+    #[test]
+    fn replaces_existing_annotator_instead_of_duplicating() {
+        let mut annotations = HashMap::new();
+        annotations.insert(1, "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string());
+        let out = export_games_with_annotations(
+            &[game("[White \"A\"]\n[Annotator \"old\"]\n\n1. e4 *")],
+            &annotations,
+        );
+        assert_eq!(out.matches("[Annotator ").count(), 1);
+        assert!(!out.contains("\"old\""));
     }
 }
