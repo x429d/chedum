@@ -24,6 +24,9 @@ pub struct PvLine {
 pub struct MoveEvaluation {
     pub game_id: i64,
     pub ply: i32,
+    /// Сторона, сделавшая ход. Хранится отдельно, потому что `ply % 2`
+    /// неверен для партий, начатых с FEN.
+    pub player_color: Color,
     pub phase: Phase,
     pub fen_before: String,
     pub fen_after: String,

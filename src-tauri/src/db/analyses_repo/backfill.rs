@@ -14,6 +14,8 @@ use super::summary::summary_for_conn;
 const ACCURACY_ALGO_KEY: &str = "accuracy_algo";
 const KEY_MOMENTS_VERSION_KEY: &str = "key_moments_version";
 const KEY_MOMENTS_VERSION: &str = "errors-gap3-v2";
+const FEN_ACCURACY_KEY: &str = "fen_accuracy_version";
+const FEN_ACCURACY_VERSION: &str = "player-color-v1";
 
 /// Пересчитывает ключевые моменты по сохранённым оценкам. Движок не нужен:
 /// после смены алгоритма отбора достаточно пересмотреть ходы.
@@ -89,8 +91,8 @@ fn load_moves_conn(conn: &Connection, game_id: i64) -> AppResult<Vec<MoveEvaluat
     Ok(moves)
 }
 
-/// Сохранённый ход для пересчёта: полуход, Win% белых после, оценка до хода, фаза.
-type StoredMoveRow = (i32, f64, Option<i32>, Option<i32>, Phase);
+/// Сохранённый ход для пересчёта: Win% белых после, оценка до хода, фаза, игрок.
+type StoredMoveRow = (f64, Option<i32>, Option<i32>, Phase, Color);
 
 /// Пересчитывает точность по методу Lichess из уже сохранённых оценок.
 /// Нужен один раз после смены алгоритма: движок и повторный анализ не требуются.
@@ -127,6 +129,43 @@ pub fn backfill_lichess_accuracy(db: &Db, force: bool) -> AppResult<usize> {
     })
 }
 
+/// Пересчитывает точность партий с нестандартной начальной позицией: до
+/// появления `player_color` пересчёт определял игрока по чётности полухода
+/// и мог поменять стороны местами. Движок не нужен.
+pub fn backfill_fen_accuracy(db: &Db) -> AppResult<usize> {
+    db.with_tx(|tx| {
+        let current: Option<String> = tx
+            .query_row(
+                "SELECT value FROM app_settings WHERE key = ?1",
+                [FEN_ACCURACY_KEY],
+                |row| row.get(0),
+            )
+            .optional()?;
+        if current.as_deref() == Some(FEN_ACCURACY_VERSION) {
+            return Ok(0);
+        }
+        let game_ids: Vec<i64> = {
+            let mut stmt = tx.prepare(
+                "SELECT a.game_id FROM game_analyses a JOIN games g ON g.id = a.game_id
+                 WHERE g.initial_fen IS NOT NULL ORDER BY a.game_id",
+            )?;
+            let rows = stmt.query_map([], |row| row.get(0))?;
+            rows.collect::<rusqlite::Result<Vec<i64>>>()?
+        };
+        let mut updated = 0;
+        for game_id in game_ids {
+            if recompute_accuracy(tx, game_id)? {
+                updated += 1;
+            }
+        }
+        tx.execute(
+            "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?1, ?2)",
+            params![FEN_ACCURACY_KEY, FEN_ACCURACY_VERSION],
+        )?;
+        Ok(updated)
+    })
+}
+
 fn recompute_accuracy(conn: &Connection, game_id: i64) -> AppResult<bool> {
     let (white_acpl, black_acpl, white_elo, black_elo) = conn.query_row(
         "SELECT a.white_acpl, a.black_acpl, g.white_elo, g.black_elo
@@ -143,17 +182,18 @@ fn recompute_accuracy(conn: &Connection, game_id: i64) -> AppResult<bool> {
     )?;
     let rows: Vec<StoredMoveRow> = {
         let mut stmt = conn.prepare(
-            "SELECT ply, win_prob_white, best_eval_cp, best_eval_mate, phase
+            "SELECT win_prob_white, best_eval_cp, best_eval_mate, phase, player_color
              FROM move_evaluations WHERE game_id = ?1 ORDER BY ply ASC",
         )?;
         let mapped = stmt.query_map([game_id], |row| {
-            let phase: String = row.get(4)?;
+            let phase: String = row.get(3)?;
+            let player_color: String = row.get(4)?;
             Ok((
                 row.get(0)?,
                 row.get(1)?,
                 row.get(2)?,
-                row.get(3)?,
                 Phase::from_str_opt(&phase).unwrap_or(Phase::Middlegame),
+                Color::from_str_opt(&player_color).unwrap_or(Color::White),
             ))
         })?;
         mapped.collect::<rusqlite::Result<Vec<_>>>()?
@@ -166,12 +206,8 @@ fn recompute_accuracy(conn: &Connection, game_id: i64) -> AppResult<bool> {
     let mut phase_samples: [Vec<(f64, f64)>; 3] = [Vec::new(), Vec::new(), Vec::new()];
     let mut phase_first: [Option<Color>; 3] = [None, None, None];
     let mut first_color = Color::White;
-    for (index, (ply, win_white, cp, mate, phase)) in rows.iter().enumerate() {
-        let player = if ply % 2 == 1 {
-            Color::White
-        } else {
-            Color::Black
-        };
+    for (index, (win_white, cp, mate, phase, player)) in rows.iter().enumerate() {
+        let player = *player;
         let before_white = score_win_prob(*cp, *mate);
         let (before, after) = if matches!(player, Color::White) {
             (before_white, *win_white)

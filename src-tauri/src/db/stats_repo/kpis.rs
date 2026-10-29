@@ -5,8 +5,13 @@ use crate::domain::stats::{ColorRecord, HubKpis};
 
 const MIN_PERF_SAMPLE: u32 = 20;
 
-pub(super) fn kpis(conn: &Connection, key: Option<&str>) -> AppResult<HubKpis> {
-    let row = conn.query_row(
+pub(super) fn kpis(
+    conn: &Connection,
+    key: Option<&str>,
+    account: Option<&str>,
+) -> AppResult<HubKpis> {
+    let account_filter = super::account_clause("g", 1);
+    let sql = format!(
         "SELECT
             COUNT(*),
             COALESCE(SUM(CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END), 0),
@@ -16,25 +21,24 @@ pub(super) fn kpis(conn: &Connection, key: Option<&str>) -> AppResult<HubKpis> {
             AVG(CASE WHEN g.user_color='white' THEN a.white_accuracy ELSE a.black_accuracy END),
             AVG(CASE WHEN g.user_color='white' THEN a.white_acpl ELSE a.black_acpl END)
          FROM games g LEFT JOIN game_analyses a
-              ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
-         WHERE g.user_color IN ('white', 'black')",
-        params![key],
-        |row| {
-            Ok((
-                row.get::<_, i64>(0)?,
-                row.get::<_, i64>(1)?,
-                row.get::<_, i64>(2)?,
-                row.get::<_, i64>(3)?,
-                row.get::<_, i64>(4)?,
-                row.get::<_, Option<f64>>(5)?,
-                row.get::<_, Option<f64>>(6)?,
-            ))
-        },
-    )?;
+              ON a.game_id = g.id AND (?2 IS NULL OR a.config_key = ?2)
+         WHERE g.user_color IN ('white', 'black') AND {account_filter}"
+    );
+    let row = conn.query_row(&sql, params![account, key], |row| {
+        Ok((
+            row.get::<_, i64>(0)?,
+            row.get::<_, i64>(1)?,
+            row.get::<_, i64>(2)?,
+            row.get::<_, i64>(3)?,
+            row.get::<_, i64>(4)?,
+            row.get::<_, Option<f64>>(5)?,
+            row.get::<_, Option<f64>>(6)?,
+        ))
+    })?;
     let total = row.0 as u32;
     let analyzed = row.1 as u32;
     let wins = row.2 as u32;
-    let (avg_perf_elo, avg_perf_elo_spread) = performance_summary(conn, analyzed, key)?;
+    let (avg_perf_elo, avg_perf_elo_spread) = performance_summary(conn, analyzed, key, account)?;
     Ok(HubKpis {
         total_games: total,
         analyzed_games: analyzed,
@@ -50,8 +54,8 @@ pub(super) fn kpis(conn: &Connection, key: Option<&str>) -> AppResult<HubKpis> {
         avg_acpl: row.6,
         avg_perf_elo,
         avg_perf_elo_spread,
-        white: color_record(conn, "white", key)?,
-        black: color_record(conn, "black", key)?,
+        white: color_record(conn, "white", key, account)?,
+        black: color_record(conn, "black", key, account)?,
     })
 }
 
@@ -59,16 +63,20 @@ fn performance_summary(
     conn: &Connection,
     analyzed: u32,
     key: Option<&str>,
+    account: Option<&str>,
 ) -> AppResult<(Option<f64>, Option<f64>)> {
     if analyzed < MIN_PERF_SAMPLE {
         return Ok((None, None));
     }
-    let mut stmt = conn.prepare(
+    let account_filter = super::account_clause("g", 1);
+    let sql = format!(
         "SELECT CASE WHEN g.user_color='white' THEN a.white_perf_elo ELSE a.black_perf_elo END
          FROM game_analyses a JOIN games g ON g.id = a.game_id
-         WHERE g.user_color IN ('white', 'black') AND (?1 IS NULL OR a.config_key = ?1)",
-    )?;
-    let rows = stmt.query_map(params![key], |row| row.get::<_, Option<i32>>(0))?;
+         WHERE g.user_color IN ('white', 'black') AND (?2 IS NULL OR a.config_key = ?2)
+           AND {account_filter}"
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params![account, key], |row| row.get::<_, Option<i32>>(0))?;
     let mut values = Vec::new();
     for row in rows {
         if let Some(value) = row? {
@@ -88,12 +96,18 @@ fn performance_summary(
     Ok((Some(mean), Some(variance.sqrt())))
 }
 
-fn color_record(conn: &Connection, color: &str, key: Option<&str>) -> AppResult<ColorRecord> {
+fn color_record(
+    conn: &Connection,
+    color: &str,
+    key: Option<&str>,
+    account: Option<&str>,
+) -> AppResult<ColorRecord> {
     let (win_result, loss_result, accuracy_column) = if color == "white" {
         ("1-0", "0-1", "white_accuracy")
     } else {
         ("0-1", "1-0", "black_accuracy")
     };
+    let account_filter = super::account_clause("g", 1);
     let sql = format!(
         "SELECT COUNT(*),
             COALESCE(SUM(CASE WHEN g.result = '{win_result}' THEN 1 ELSE 0 END), 0),
@@ -101,10 +115,10 @@ fn color_record(conn: &Connection, color: &str, key: Option<&str>) -> AppResult<
             COALESCE(SUM(CASE WHEN g.result = '{loss_result}' THEN 1 ELSE 0 END), 0),
             AVG(a.{accuracy_column})
          FROM games g LEFT JOIN game_analyses a
-              ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
-         WHERE g.user_color = '{color}'"
+              ON a.game_id = g.id AND (?2 IS NULL OR a.config_key = ?2)
+         WHERE g.user_color = '{color}' AND {account_filter}"
     );
-    let row = conn.query_row(&sql, params![key], |row| {
+    let row = conn.query_row(&sql, params![account, key], |row| {
         Ok((
             row.get::<_, i64>(0)?,
             row.get::<_, i64>(1)?,

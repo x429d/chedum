@@ -56,7 +56,14 @@ export function Board(props: BoardProps) {
       props.onMove?.(from, to);
     },
   });
-  const { selected, drag, hover, ownPieces, legal } = pointer;
+  const { selected, drag, hover, ownPieces, legal, userArrows, drawingArrow } = pointer;
+
+  const allArrows = createMemo<ArrowSpec[]>(() => {
+    const list = [...(props.arrows ?? []), ...userArrows()];
+    const preview = drawingArrow();
+    if (preview) list.push({ ...preview, opacity: 0.75 });
+    return list;
+  });
 
   const cells = createMemo<Cell[]>(() => {
     const list: Cell[] = [];
@@ -144,6 +151,7 @@ export function Board(props: BoardProps) {
   });
 
   const boardCursor = (): string => {
+    if (drawingArrow()) return "crosshair";
     const cell = hoverCell();
     if (!cell) return "default";
     if (selected() && legal().has(cell.name)) return "pointer";
@@ -169,6 +177,11 @@ export function Board(props: BoardProps) {
       class={`board-wrap theme-${props.theme}`}
       classList={{ "board-embed": props.embedded }}
       style={props.embedded ? { width: "100%", "max-width": "none" } : undefined}
+      title={
+        props.interactive
+          ? "Правая кнопка мыши — нарисовать стрелку. Shift — зелёная, Alt — синяя, Ctrl/Cmd — красная, без модификатора — жёлтая. Правый клик без перетаскивания — очистить."
+          : undefined
+      }
     >
       <svg
         ref={boardRef}
@@ -180,6 +193,7 @@ export function Board(props: BoardProps) {
         onPointerUp={pointer.handleUp}
         onPointerCancel={pointer.handleCancel}
         onPointerLeave={pointer.clearHover}
+        onContextMenu={(event) => event.preventDefault()}
       >
         <rect x="-0.25" y="-0.25" width="8.5" height="8.5" fill="var(--board-frame, #10150e)" />
         <rect x="0" y="0" width="8" height="8" class="board-sq-dark" />
@@ -252,7 +266,7 @@ export function Board(props: BoardProps) {
           )}
         </Show>
 
-        <Arrows arrows={props.arrows ?? []} orientation={props.orientation} />
+        <Arrows arrows={allArrows()} orientation={props.orientation} />
         <Show when={props.badge}>
           {(badge) => (
             <CategoryBadge

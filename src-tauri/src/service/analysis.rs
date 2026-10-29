@@ -67,6 +67,8 @@ async fn analyze_game_inner(
 ) -> AppResult<GameDetail> {
     // Одна задача на движок: отмена больше не сбрасывается каждой позицией.
     let _job = engine.begin_job().await?;
+    // Пустая хеш-таблица перед партией: ACPL не зависит от порядка партий.
+    engine.prepare_game().await?;
     let game = games_repo::get_game(db, game_id)?;
     emit_progress(
         progress,

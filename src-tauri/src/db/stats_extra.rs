@@ -1,27 +1,35 @@
 use rusqlite::{params, Connection};
 
+use crate::db::stats_repo::account_clause;
 use crate::domain::error::AppResult;
 use crate::domain::game::Color;
 use crate::domain::stats::{AccuracyPoint, TimeStats};
 
 /// Последние 200 разобранных партий, развёрнутые в хронологический порядок.
 /// Пустые даты не попадают в тренд.
-pub(crate) fn trend(conn: &Connection, key: Option<&str>) -> AppResult<Vec<AccuracyPoint>> {
-    let mut stmt = conn.prepare(
+pub(crate) fn trend(
+    conn: &Connection,
+    key: Option<&str>,
+    account: Option<&str>,
+) -> AppResult<Vec<AccuracyPoint>> {
+    let account_filter = account_clause("g", 1);
+    let sql = format!(
         "SELECT id, played_at, white_username, black_username, user_color, result, accuracy
          FROM (
             SELECT g.id, g.played_at, g.white_username, g.black_username, g.user_color, g.result,
                 CASE WHEN g.user_color='white' THEN a.white_accuracy ELSE a.black_accuracy END
                     AS accuracy
             FROM games g
-            JOIN game_analyses a ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
+            JOIN game_analyses a ON a.game_id = g.id AND (?2 IS NULL OR a.config_key = ?2)
             WHERE g.user_color IN ('white', 'black') AND g.played_at > 0
+              AND {account_filter}
             ORDER BY g.played_at DESC, g.id DESC
             LIMIT 200
          )
-         ORDER BY played_at ASC, id ASC",
-    )?;
-    let rows = stmt.query_map(params![key], |row| {
+         ORDER BY played_at ASC, id ASC"
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params![account, key], |row| {
         Ok((
             row.get::<_, i64>(0)?,
             row.get::<_, i64>(1)?,
@@ -60,8 +68,13 @@ pub(crate) fn trend(conn: &Connection, key: Option<&str>) -> AppResult<Vec<Accur
     Ok(points)
 }
 
-pub(crate) fn time_stats(conn: &Connection, key: Option<&str>) -> AppResult<TimeStats> {
-    let row = conn.query_row(
+pub(crate) fn time_stats(
+    conn: &Connection,
+    key: Option<&str>,
+    account: Option<&str>,
+) -> AppResult<TimeStats> {
+    let account_filter = account_clause("g", 1);
+    let sql = format!(
         "SELECT
             COALESCE(SUM(CASE WHEN me.time_flag='time_trouble' THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN me.time_flag='impulsive_error' THEN 1 ELSE 0 END), 0),
@@ -70,19 +83,19 @@ pub(crate) fn time_stats(conn: &Connection, key: Option<&str>) -> AppResult<Time
             AVG(CASE WHEN me.time_flag IN ('time_trouble', 'impulsive_error') THEN me.move_accuracy END)
          FROM move_evaluations me
          JOIN games g ON g.id = me.game_id
-         JOIN game_analyses a ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
-         WHERE (g.user_color='white' AND me.ply % 2 = 1) OR (g.user_color='black' AND me.ply % 2 = 0)",
-        params![key],
-        |row| {
-            Ok((
-                row.get::<_, i64>(0)?,
-                row.get::<_, i64>(1)?,
-                row.get::<_, i64>(2)?,
-                row.get::<_, Option<f64>>(3)?,
-                row.get::<_, Option<f64>>(4)?,
-            ))
-        },
-    )?;
+         JOIN game_analyses a ON a.game_id = g.id AND (?2 IS NULL OR a.config_key = ?2)
+         WHERE me.player_color = g.user_color
+           AND {account_filter}"
+    );
+    let row = conn.query_row(&sql, params![account, key], |row| {
+        Ok((
+            row.get::<_, i64>(0)?,
+            row.get::<_, i64>(1)?,
+            row.get::<_, i64>(2)?,
+            row.get::<_, Option<f64>>(3)?,
+            row.get::<_, Option<f64>>(4)?,
+        ))
+    })?;
     Ok(TimeStats {
         time_trouble_moves: row.0 as u32,
         impulsive_errors: row.1 as u32,

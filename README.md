@@ -12,7 +12,8 @@ inspired dark interface.
   cache, filters by opponent, color, result, time class, ECO, date, analysis, favorites and notes,
   pagination (25/50/100), batch analysis queue and batch deletion.
 - **Analysis Studio**: custom SVG board with three themes and six switchable open-source piece sets,
-  drag-and-drop and click-to-move, eval bar, multi-arrow layer, move-category badges, variation
+  drag-and-drop and click-to-move, eval bar with live Stockfish score, multi-arrow layer,
+  right-drag user arrows (Shift/Alt/Ctrl change colour), move-category badges, variation
   exploration, fullscreen, live Stockfish panel, and ←/→ keyboard navigation.
 - **Deep analytics**: Win% area chart + synchronized move-time histogram, Lichess-style accuracy
   (win-probability loss with volatility windows and harmonic mean), ACPL,

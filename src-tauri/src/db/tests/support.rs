@@ -50,6 +50,11 @@ pub(super) fn move_eval(
     MoveEvaluation {
         game_id,
         ply,
+        player_color: if ply % 2 == 1 {
+            Color::White
+        } else {
+            Color::Black
+        },
         phase,
         fen_before: START.to_string(),
         fen_after: START.to_string(),

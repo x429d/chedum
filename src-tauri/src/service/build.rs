@@ -219,6 +219,7 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
         moves.push(MoveEvaluation {
             game_id: input.game.id,
             ply: index as i32 + 1,
+            player_color: player,
             phase,
             fen_before: mv.fen_before.clone(),
             fen_after: mv.fen_after.clone(),

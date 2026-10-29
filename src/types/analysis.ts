@@ -1,4 +1,4 @@
-import type { MoveCategory, Phase, TimeFlag } from "./chess";
+import type { Color, MoveCategory, Phase, TimeFlag } from "./chess";
 import type { Game } from "./game";
 
 export interface PvLine {
@@ -13,6 +13,7 @@ export interface PvLine {
 export interface MoveEvaluation {
   gameId: number;
   ply: number;
+  playerColor: Color;
   phase: Phase;
   fenBefore: string;
   fenAfter: string;

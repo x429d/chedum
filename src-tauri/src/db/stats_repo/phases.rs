@@ -4,8 +4,13 @@ use crate::domain::analysis::Phase;
 use crate::domain::error::AppResult;
 use crate::domain::stats::PhaseStat;
 
-pub(super) fn phases(conn: &Connection, key: Option<&str>) -> AppResult<Vec<PhaseStat>> {
-    let row = conn.query_row(
+pub(super) fn phases(
+    conn: &Connection,
+    key: Option<&str>,
+    account: Option<&str>,
+) -> AppResult<Vec<PhaseStat>> {
+    let account_filter = super::account_clause("g", 1);
+    let sql = format!(
         "SELECT
             AVG(CASE WHEN g.user_color='white' THEN a.white_opening_acc ELSE a.black_opening_acc END),
             AVG(CASE WHEN g.user_color='white' THEN a.white_middlegame_acc ELSE a.black_middlegame_acc END),
@@ -14,20 +19,20 @@ pub(super) fn phases(conn: &Connection, key: Option<&str>) -> AppResult<Vec<Phas
             COUNT(CASE WHEN g.user_color='white' THEN a.white_middlegame_acc ELSE a.black_middlegame_acc END),
             COUNT(CASE WHEN g.user_color='white' THEN a.white_endgame_acc ELSE a.black_endgame_acc END)
          FROM game_analyses a JOIN games g ON g.id = a.game_id
-         WHERE g.user_color IN ('white', 'black') AND (?1 IS NULL OR a.config_key = ?1)",
-        params![key],
-        |row| {
-            Ok((
-                row.get::<_, Option<f64>>(0)?,
-                row.get::<_, Option<f64>>(1)?,
-                row.get::<_, Option<f64>>(2)?,
-                row.get::<_, i64>(3)?,
-                row.get::<_, i64>(4)?,
-                row.get::<_, i64>(5)?,
-            ))
-        },
-    )?;
-    let counts = phase_move_counts(conn, key)?;
+         WHERE g.user_color IN ('white', 'black') AND (?2 IS NULL OR a.config_key = ?2)
+           AND {account_filter}"
+    );
+    let row = conn.query_row(&sql, params![account, key], |row| {
+        Ok((
+            row.get::<_, Option<f64>>(0)?,
+            row.get::<_, Option<f64>>(1)?,
+            row.get::<_, Option<f64>>(2)?,
+            row.get::<_, i64>(3)?,
+            row.get::<_, i64>(4)?,
+            row.get::<_, i64>(5)?,
+        ))
+    })?;
+    let counts = phase_move_counts(conn, key, account)?;
     Ok(vec![
         PhaseStat {
             phase: Phase::Opening,
@@ -50,16 +55,23 @@ pub(super) fn phases(conn: &Connection, key: Option<&str>) -> AppResult<Vec<Phas
     ])
 }
 
-fn phase_move_counts(conn: &Connection, key: Option<&str>) -> AppResult<(u32, u32, u32)> {
-    let mut stmt = conn.prepare(
+fn phase_move_counts(
+    conn: &Connection,
+    key: Option<&str>,
+    account: Option<&str>,
+) -> AppResult<(u32, u32, u32)> {
+    let account_filter = super::account_clause("g", 1);
+    let sql = format!(
         "SELECT me.phase, COUNT(*)
          FROM move_evaluations me
          JOIN games g ON g.id = me.game_id
-         JOIN game_analyses a ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
-         WHERE (g.user_color='white' AND me.ply % 2 = 1) OR (g.user_color='black' AND me.ply % 2 = 0)
-         GROUP BY me.phase",
-    )?;
-    let rows = stmt.query_map(params![key], |row| {
+         JOIN game_analyses a ON a.game_id = g.id AND (?2 IS NULL OR a.config_key = ?2)
+         WHERE me.player_color = g.user_color
+           AND {account_filter}
+         GROUP BY me.phase"
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params![account, key], |row| {
         Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
     })?;
     let mut opening = 0;

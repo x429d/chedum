@@ -8,7 +8,6 @@ export function AnalysisHeader(props: {
   game: Game;
   analysis: GameAnalysis | null;
   analyzing: boolean;
-  busy: boolean;
   onAnalyze: () => void;
   onBack: () => void;
 }) {
@@ -60,7 +59,7 @@ export function AnalysisHeader(props: {
         <button
           type="button"
           class="btn btn-primary"
-          disabled={props.analyzing || props.busy}
+          disabled={props.analyzing}
           onClick={props.onAnalyze}
         >
           <Show when={props.analyzing} fallback={<Icon name="analyze" size={14} />}>

@@ -2,7 +2,9 @@ use rusqlite::Row;
 
 use crate::domain::analysis::{
     CategoryCounts, GameAnalysis, MoveCategory, MoveEvaluation, Phase, PvLine, TimeFlag,
+    DEFAULT_ENGINE_VERSION,
 };
+use crate::domain::game::Color;
 
 pub(super) fn map_analysis(row: &Row<'_>) -> rusqlite::Result<GameAnalysis> {
     let counts_json: String = row.get("counts_json")?;
@@ -11,7 +13,10 @@ pub(super) fn map_analysis(row: &Row<'_>) -> rusqlite::Result<GameAnalysis> {
     Ok(GameAnalysis {
         game_id: row.get("game_id")?,
         engine_name: row.get("engine_name")?,
-        engine_version: row.get("engine_version")?,
+        // Старые записи могли появиться до миграции v4 с пустой версией.
+        engine_version: row
+            .get::<_, Option<String>>("engine_version")?
+            .unwrap_or_else(|| DEFAULT_ENGINE_VERSION.to_string()),
         classifier_version: row.get("classifier_version")?,
         accuracy_method_version: row.get("accuracy_method_version")?,
         depth: row.get("depth")?,
@@ -39,11 +44,13 @@ pub(super) fn map_move(row: &Row<'_>) -> rusqlite::Result<MoveEvaluation> {
     let phase: String = row.get("phase")?;
     let classification: String = row.get("classification")?;
     let time_flag: String = row.get("time_flag")?;
+    let player_color: String = row.get("player_color")?;
     let pv_json: String = row.get("pv_lines_json")?;
     let pv_lines = serde_json::from_str::<Vec<PvLine>>(&pv_json).unwrap_or_default();
     Ok(MoveEvaluation {
         game_id: row.get("game_id")?,
         ply: row.get("ply")?,
+        player_color: Color::from_str_opt(&player_color).unwrap_or(Color::White),
         phase: Phase::from_str_opt(&phase).unwrap_or(Phase::Middlegame),
         fen_before: row.get("fen_before")?,
         fen_after: row.get("fen_after")?,

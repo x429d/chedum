@@ -14,7 +14,7 @@ use mapping::{map_analysis, map_move};
 use summary::summary_for_conn;
 
 pub use annotations::annotations_for_games;
-pub use backfill::{backfill_key_moments, backfill_lichess_accuracy};
+pub use backfill::{backfill_fen_accuracy, backfill_key_moments, backfill_lichess_accuracy};
 pub use insert::{analysis_config_key, insert_analysis_conn, insert_analysis_draft};
 pub use summary::backfill_summaries;
 

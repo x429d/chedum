@@ -1,10 +1,12 @@
-import { Show } from "solid-js";
+import { createMemo, createSignal, Show } from "solid-js";
 
 import { analysisStore } from "../../stores/analysisStore";
 import { gameStore } from "../../stores/gameStore";
 import { libraryStore } from "../../stores/libraryStore";
 import { settingsStore } from "../../stores/settingsStore";
 import type { BoardTheme } from "../../types/models";
+import { sideToMove } from "../../utils/chess";
+import { formatEval } from "../../utils/format";
 import { Board } from "../board/Board";
 import { BoardControls } from "../board/BoardControls";
 import { EvalBar } from "../board/EvalBar";
@@ -13,6 +15,46 @@ import { LivePanel } from "./LivePanel";
 const THEMES: BoardTheme[] = ["midnight", "walnut", "slate"];
 
 export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => void }) {
+  /** Оценка live-движка в перспективе белых; UCI отдаёт cp/mate от ходящего. */
+  const liveEval = createMemo(() => {
+    if (!analysisStore.liveEnabled()) return null;
+    const update = analysisStore.liveUpdate();
+    if (!update || update.fen !== gameStore.boardFen()) return null;
+    const line = update.lines[0];
+    if (!line) return null;
+    const blackToMove = sideToMove(update.fen) === "black";
+    const cp = blackToMove ? (line.cp === null ? null : -line.cp) : line.cp;
+    const mate = blackToMove ? (line.mate === null ? null : -line.mate) : line.mate;
+    const winProbWhite = blackToMove ? 100 - line.winProb : line.winProb;
+    return {
+      winProbWhite: Math.max(0, Math.min(100, winProbWhite)),
+      label: formatEval(cp, mate),
+    };
+  });
+
+  const [livePending, setLivePending] = createSignal(false);
+
+  const requestLive = (): void => {
+    if (livePending()) return;
+    void (async () => {
+      if (gameStore.analyzing()) return;
+      if (libraryStore.batch().running) {
+        setLivePending(true);
+        try {
+          const confirmed = await libraryStore.stopBatchWithConfirm(
+            "Остановить текущий пакетный анализ и перейти в live-режим?",
+          );
+          if (!confirmed || gameStore.analyzing()) return;
+          analysisStore.setLiveEnabled(true);
+        } finally {
+          setLivePending(false);
+        }
+        return;
+      }
+      analysisStore.toggle();
+    })();
+  };
+
   const cycleTheme = (): void => {
     const current = settingsStore.settings().boardTheme;
     const index = THEMES.indexOf(current);
@@ -24,8 +66,8 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
     <div class="board-column" classList={{ "is-live": analysisStore.liveEnabled() }}>
       <div class="board-stage">
         <EvalBar
-          winProbWhite={gameStore.winProbWhite()}
-          label={gameStore.evalLabel()}
+          winProbWhite={liveEval()?.winProbWhite ?? gameStore.winProbWhite()}
+          label={liveEval()?.label ?? gameStore.evalLabel()}
           orientation={gameStore.orientation()}
         />
         <Board
@@ -50,7 +92,7 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
         theme={settingsStore.settings().boardTheme}
         showArrows={settingsStore.settings().showArrows}
         liveEnabled={analysisStore.liveEnabled()}
-        liveDisabled={gameStore.analyzing() || libraryStore.batch().running}
+        liveDisabled={gameStore.analyzing() || livePending()}
         fullscreen={props.fullscreen}
         onFirst={() => gameStore.first()}
         onPrevious={() => gameStore.previous()}
@@ -61,9 +103,7 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
         onArrows={() =>
           void settingsStore.update({ showArrows: !settingsStore.settings().showArrows })
         }
-        onLive={() => {
-          if (!gameStore.analyzing() && !libraryStore.batch().running) analysisStore.toggle();
-        }}
+        onLive={requestLive}
         onFullscreen={props.onFullscreen}
       />
 

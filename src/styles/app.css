@@ -1355,17 +1355,6 @@ tr:hover .row-actions,
   --fs-board-h: calc(100vh - 300px);
 }
 
-/* The label hangs left of the thin bar; in fullscreen the bar keeps a wider shell so
-   values like "-0.11" or "+12.30" are never clipped by the column edge. */
-.analysis-layout.is-fullscreen .eval-bar {
-  width: 56px;
-}
-
-.analysis-layout.is-fullscreen .eval-bar-track {
-  inset: 0 0 0 auto;
-  width: 18px;
-}
-
 .analysis-layout.is-fullscreen .board-wrap {
   width: var(--fs-board-w);
 }
@@ -1396,17 +1385,20 @@ tr:hover .row-actions,
   min-width: 0;
 }
 
+/* The shell reserves room for the score chip to the left of the thin track, so
+   values like "-0.11" or "+12.30" never spill onto the board. */
 .eval-bar {
-  width: 18px;
+  width: 56px;
   flex: none;
   position: relative;
 }
 
-/* The track clips the white share to the rounded bar; the label sits outside it and
-   hangs into the gutter, so a full evaluation like "+1.45" is never cut off. */
+/* The track clips the white share to the rounded bar; the score chip sits above it
+   and hangs into the reserved gutter, so values like "+12.30" are never cut off. */
 .eval-bar-track {
   position: absolute;
-  inset: 0;
+  inset: 0 0 0 auto;
+  width: 18px;
   border-radius: 6px;
   overflow: hidden;
   background: #0a0e09;
@@ -1424,16 +1416,16 @@ tr:hover .row-actions,
 
 .eval-bar-label {
   position: absolute;
-  top: 3px;
+  top: 0;
   right: 0;
   z-index: 1;
   font-family: var(--font-mono);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  padding: 2px 5px;
-  border-radius: 3px;
-  background: rgba(12, 17, 11, 0.92);
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--bg);
   box-shadow: 0 0 0 1px var(--border);
   color: var(--text);
   white-space: nowrap;
@@ -1454,6 +1446,11 @@ tr:hover .row-actions,
 
 .board-wrap.board-embed {
   flex: none;
+}
+
+/* 56px под оценку + 12px зазор: доска не выходит за колонку на высоких окнах. */
+.board-stage .board-wrap {
+  width: min(calc(100% - 68px), 48vh);
 }
 
 .board-svg {

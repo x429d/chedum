@@ -10,6 +10,7 @@ import type {
 } from "../types/models";
 import { EMPTY_BATCH } from "../types/models";
 import { toErrorMessage } from "../utils/format";
+import { stopBatchWithConfirm } from "./batchStop";
 import { createLibraryActions } from "./libraryActions";
 import { createBatchController } from "./libraryBatch";
 import { settingsStore } from "./settingsStore";
@@ -282,4 +283,6 @@ export const libraryStore = {
   refreshQueue,
   startAutoResume,
   cancelBatch: () => batchController.cancel(),
+  stopBatchWithConfirm: (message: string) =>
+    stopBatchWithConfirm(() => batch().running, () => batchController.cancel(), message),
 };

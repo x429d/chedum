@@ -84,6 +84,24 @@ impl EngineManager {
         Ok(EngineJob { _slot: slot })
     }
 
+    /// Начинает партию с чистого состояния движка. Без `ucinewgame`
+    /// transposition table переходит из партии в партию, и ACPL зависит от
+    /// порядка обработки в пуле.
+    pub async fn prepare_game(&self) -> AppResult<()> {
+        let mut process = self.process.lock().await;
+        if !process.is_running() {
+            *process = EngineProcess::spawn(&self.path).await?;
+        }
+        let outcome = process.new_game().await;
+        if outcome.is_err() {
+            // Сдвинутый UCI-поток нельзя переиспользовать.
+            if let Ok(fresh) = EngineProcess::spawn(&self.path).await {
+                *process = fresh;
+            }
+        }
+        outcome
+    }
+
     /// Анализирует позицию, транслируя обновления с троттлингом 75 мс.
     /// Вызывается только внутри задачи, открытой `begin_job`.
     pub async fn analyze<F>(

@@ -74,6 +74,7 @@
       {
         "gameId": 0,
         "ply": 1,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
@@ -179,6 +180,7 @@
       {
         "gameId": 0,
         "ply": 2,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
@@ -282,6 +284,7 @@
       {
         "gameId": 0,
         "ply": 3,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
@@ -397,6 +400,7 @@
       {
         "gameId": 0,
         "ply": 4,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
         "fenAfter": "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3",
@@ -526,6 +530,7 @@
       {
         "gameId": 0,
         "ply": 5,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3",
         "fenAfter": "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
@@ -611,6 +616,7 @@
       {
         "gameId": 0,
         "ply": 6,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/ppp2ppp/3p4/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 3",
         "fenAfter": "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4",
@@ -704,6 +710,7 @@
       {
         "gameId": 0,
         "ply": 7,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/3p4/4p3/3PP1b1/5N2/PPP2PPP/RNBQKB1R w KQkq - 1 4",
         "fenAfter": "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4",
@@ -803,6 +810,7 @@
       {
         "gameId": 0,
         "ply": 8,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/3p4/4P3/4P1b1/5N2/PPP2PPP/RNBQKB1R b KQkq - 0 4",
         "fenAfter": "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5",
@@ -914,6 +922,7 @@
       {
         "gameId": 0,
         "ply": 9,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5b2/PPP2PPP/RNBQKB1R w KQkq - 0 5",
         "fenAfter": "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5",
@@ -1041,6 +1050,7 @@
       {
         "gameId": 0,
         "ply": 10,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/3p4/4P3/4P3/5Q2/PPP2PPP/RNB1KB1R b KQkq - 0 5",
         "fenAfter": "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6",
@@ -1168,6 +1178,7 @@
       {
         "gameId": 0,
         "ply": 11,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/8/4p3/4P3/5Q2/PPP2PPP/RNB1KB1R w KQkq - 0 6",
         "fenAfter": "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6",
@@ -1283,6 +1294,7 @@
       {
         "gameId": 0,
         "ply": 12,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/8/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R b KQkq - 1 6",
         "fenAfter": "rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R w KQkq - 2 7",
@@ -1418,6 +1430,7 @@
       {
         "gameId": 0,
         "ply": 13,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/5Q2/PPP2PPP/RNB1K2R w KQkq - 2 7",
         "fenAfter": "rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/1Q6/PPP2PPP/RNB1K2R b KQkq - 3 7",
@@ -1535,6 +1548,7 @@
       {
         "gameId": 0,
         "ply": 14,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn1qkb1r/ppp2ppp/5n2/4p3/2B1P3/1Q6/PPP2PPP/RNB1K2R b KQkq - 3 7",
         "fenAfter": "rn2kb1r/ppp1qppp/5n2/4p3/2B1P3/1Q6/PPP2PPP/RNB1K2R w KQkq - 4 8",
@@ -1676,6 +1690,7 @@
       {
         "gameId": 0,
         "ply": 15,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn2kb1r/ppp1qppp/5n2/4p3/2B1P3/1Q6/PPP2PPP/RNB1K2R w KQkq - 4 8",
         "fenAfter": "rn2kb1r/ppp1qppp/5n2/4p3/2B1P3/1QN5/PPP2PPP/R1B1K2R b KQkq - 5 8",
@@ -1801,6 +1816,7 @@
       {
         "gameId": 0,
         "ply": 16,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn2kb1r/ppp1qppp/5n2/4p3/2B1P3/1QN5/PPP2PPP/R1B1K2R b KQkq - 5 8",
         "fenAfter": "rn2kb1r/pp2qppp/2p2n2/4p3/2B1P3/1QN5/PPP2PPP/R1B1K2R w KQkq - 0 9",
@@ -1930,6 +1946,7 @@
       {
         "gameId": 0,
         "ply": 17,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn2kb1r/pp2qppp/2p2n2/4p3/2B1P3/1QN5/PPP2PPP/R1B1K2R w KQkq - 0 9",
         "fenAfter": "rn2kb1r/pp2qppp/2p2n2/4p1B1/2B1P3/1QN5/PPP2PPP/R3K2R b KQkq - 1 9",
@@ -2075,6 +2092,7 @@
       {
         "gameId": 0,
         "ply": 18,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn2kb1r/pp2qppp/2p2n2/4p1B1/2B1P3/1QN5/PPP2PPP/R3K2R b KQkq - 1 9",
         "fenAfter": "rn2kb1r/p3qppp/2p2n2/1p2p1B1/2B1P3/1QN5/PPP2PPP/R3K2R w KQkq - 0 10",
@@ -2206,6 +2224,7 @@
       {
         "gameId": 0,
         "ply": 19,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn2kb1r/p3qppp/2p2n2/1p2p1B1/2B1P3/1QN5/PPP2PPP/R3K2R w KQkq - 0 10",
         "fenAfter": "rn2kb1r/p3qppp/2p2n2/1N2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R b KQkq - 0 10",
@@ -2361,6 +2380,7 @@
       {
         "gameId": 0,
         "ply": 20,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn2kb1r/p3qppp/2p2n2/1N2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R b KQkq - 0 10",
         "fenAfter": "rn2kb1r/p3qppp/5n2/1p2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R w KQkq - 0 11",
@@ -2466,6 +2486,7 @@
       {
         "gameId": 0,
         "ply": 21,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn2kb1r/p3qppp/5n2/1p2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R w KQkq - 0 11",
         "fenAfter": "rn2kb1r/p3qppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R b KQkq - 0 11",
@@ -2583,6 +2604,7 @@
       {
         "gameId": 0,
         "ply": 22,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn2kb1r/p3qppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R b KQkq - 0 11",
         "fenAfter": "r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R w KQkq - 1 12",
@@ -2708,6 +2730,7 @@
       {
         "gameId": 0,
         "ply": 23,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/R3K2R w KQkq - 1 12",
         "fenAfter": "r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR3R b kq - 2 12",
@@ -2833,6 +2856,7 @@
       {
         "gameId": 0,
         "ply": 24,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r3kb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR3R b kq - 2 12",
         "fenAfter": "3rkb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR3R w k - 3 13",
@@ -2950,6 +2974,7 @@
       {
         "gameId": 0,
         "ply": 25,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "3rkb1r/p2nqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR3R w k - 3 13",
         "fenAfter": "3rkb1r/p2Rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2K4R b k - 0 13",
@@ -3083,6 +3108,7 @@
       {
         "gameId": 0,
         "ply": 26,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "3rkb1r/p2Rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2K4R b k - 0 13",
         "fenAfter": "4kb1r/p2rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2K4R w k - 0 14",
@@ -3190,6 +3216,7 @@
       {
         "gameId": 0,
         "ply": 27,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "4kb1r/p2rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2K4R w k - 0 14",
         "fenAfter": "4kb1r/p2rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR4 b k - 1 14",
@@ -3321,6 +3348,7 @@
       {
         "gameId": 0,
         "ply": 28,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "4kb1r/p2rqppp/5n2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR4 b k - 1 14",
         "fenAfter": "4kb1r/p2r1ppp/4qn2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 2 15",
@@ -3432,6 +3460,7 @@
       {
         "gameId": 0,
         "ply": 29,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "4kb1r/p2r1ppp/4qn2/1B2p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 2 15",
         "fenAfter": "4kb1r/p2B1ppp/4qn2/4p1B1/4P3/1Q6/PPP2PPP/2KR4 b k - 0 15",
@@ -3569,6 +3598,7 @@
       {
         "gameId": 0,
         "ply": 30,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "4kb1r/p2B1ppp/4qn2/4p1B1/4P3/1Q6/PPP2PPP/2KR4 b k - 0 15",
         "fenAfter": "4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16",
@@ -3674,6 +3704,7 @@
       {
         "gameId": 0,
         "ply": 31,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "4kb1r/p2n1ppp/4q3/4p1B1/4P3/1Q6/PPP2PPP/2KR4 w k - 0 16",
         "fenAfter": "1Q2kb1r/p2n1ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 b k - 1 16",
@@ -3755,6 +3786,7 @@
       {
         "gameId": 0,
         "ply": 32,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1Q2kb1r/p2n1ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 b k - 1 16",
         "fenAfter": "1n2kb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 w k - 0 17",
@@ -3798,6 +3830,7 @@
       {
         "gameId": 0,
         "ply": 33,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1n2kb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2KR4 w k - 0 17",
         "fenAfter": "1n1Rkb1r/p4ppp/4q3/4p1B1/4P3/8/PPP2PPP/2K5 b k - 1 17",
@@ -3937,6 +3970,7 @@
       {
         "gameId": 0,
         "ply": 1,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
@@ -4044,6 +4078,7 @@
       {
         "gameId": 0,
         "ply": 2,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
@@ -4155,6 +4190,7 @@
       {
         "gameId": 0,
         "ply": 3,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq - 0 2",
@@ -4258,6 +4294,7 @@
       {
         "gameId": 0,
         "ply": 4,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq - 0 2",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/8/4Pp2/8/PPPP2PP/RNBQKBNR w KQkq - 0 3",
@@ -4369,6 +4406,7 @@
       {
         "gameId": 0,
         "ply": 5,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/8/4Pp2/8/PPPP2PP/RNBQKBNR w KQkq - 0 3",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/8/2B1Pp2/8/PPPP2PP/RNBQK1NR b KQkq - 1 3",
@@ -4468,6 +4506,7 @@
       {
         "gameId": 0,
         "ply": 6,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/8/2B1Pp2/8/PPPP2PP/RNBQK1NR b KQkq - 1 3",
         "fenAfter": "rnb1kbnr/pppp1ppp/8/8/2B1Pp1q/8/PPPP2PP/RNBQK1NR w KQkq - 2 4",
@@ -4593,6 +4632,7 @@
       {
         "gameId": 0,
         "ply": 7,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kbnr/pppp1ppp/8/8/2B1Pp1q/8/PPPP2PP/RNBQK1NR w KQkq - 2 4",
         "fenAfter": "rnb1kbnr/pppp1ppp/8/8/2B1Pp1q/8/PPPP2PP/RNBQ1KNR b kq - 3 4",
@@ -4696,6 +4736,7 @@
       {
         "gameId": 0,
         "ply": 8,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kbnr/pppp1ppp/8/8/2B1Pp1q/8/PPPP2PP/RNBQ1KNR b kq - 3 4",
         "fenAfter": "rnb1kbnr/p1pp1ppp/8/1p6/2B1Pp1q/8/PPPP2PP/RNBQ1KNR w kq - 0 5",
@@ -4809,6 +4850,7 @@
       {
         "gameId": 0,
         "ply": 9,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kbnr/p1pp1ppp/8/1p6/2B1Pp1q/8/PPPP2PP/RNBQ1KNR w kq - 0 5",
         "fenAfter": "rnb1kbnr/p1pp1ppp/8/1B6/4Pp1q/8/PPPP2PP/RNBQ1KNR b kq - 0 5",
@@ -4930,6 +4972,7 @@
       {
         "gameId": 0,
         "ply": 10,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kbnr/p1pp1ppp/8/1B6/4Pp1q/8/PPPP2PP/RNBQ1KNR b kq - 0 5",
         "fenAfter": "rnb1kb1r/p1pp1ppp/5n2/1B6/4Pp1q/8/PPPP2PP/RNBQ1KNR w kq - 1 6",
@@ -5053,6 +5096,7 @@
       {
         "gameId": 0,
         "ply": 11,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/5n2/1B6/4Pp1q/8/PPPP2PP/RNBQ1KNR w kq - 1 6",
         "fenAfter": "rnb1kb1r/p1pp1ppp/5n2/1B6/4Pp1q/5N2/PPPP2PP/RNBQ1K1R b kq - 2 6",
@@ -5176,6 +5220,7 @@
       {
         "gameId": 0,
         "ply": 12,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/5n2/1B6/4Pp1q/5N2/PPPP2PP/RNBQ1K1R b kq - 2 6",
         "fenAfter": "rnb1kb1r/p1pp1ppp/5n1q/1B6/4Pp2/5N2/PPPP2PP/RNBQ1K1R w kq - 3 7",
@@ -5271,6 +5316,7 @@
       {
         "gameId": 0,
         "ply": 13,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/5n1q/1B6/4Pp2/5N2/PPPP2PP/RNBQ1K1R w kq - 3 7",
         "fenAfter": "rnb1kb1r/p1pp1ppp/5n1q/1B6/4Pp2/3P1N2/PPP3PP/RNBQ1K1R b kq - 0 7",
@@ -5378,6 +5424,7 @@
       {
         "gameId": 0,
         "ply": 14,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/5n1q/1B6/4Pp2/3P1N2/PPP3PP/RNBQ1K1R b kq - 0 7",
         "fenAfter": "rnb1kb1r/p1pp1ppp/7q/1B5n/4Pp2/3P1N2/PPP3PP/RNBQ1K1R w kq - 1 8",
@@ -5485,6 +5532,7 @@
       {
         "gameId": 0,
         "ply": 15,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/7q/1B5n/4Pp2/3P1N2/PPP3PP/RNBQ1K1R w kq - 1 8",
         "fenAfter": "rnb1kb1r/p1pp1ppp/7q/1B5n/4Pp1N/3P4/PPP3PP/RNBQ1K1R b kq - 2 8",
@@ -5600,6 +5648,7 @@
       {
         "gameId": 0,
         "ply": 16,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/7q/1B5n/4Pp1N/3P4/PPP3PP/RNBQ1K1R b kq - 2 8",
         "fenAfter": "rnb1kb1r/p1pp1ppp/8/1B4qn/4Pp1N/3P4/PPP3PP/RNBQ1K1R w kq - 3 9",
@@ -5719,6 +5768,7 @@
       {
         "gameId": 0,
         "ply": 17,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/8/1B4qn/4Pp1N/3P4/PPP3PP/RNBQ1K1R w kq - 3 9",
         "fenAfter": "rnb1kb1r/p1pp1ppp/8/1B3Nqn/4Pp2/3P4/PPP3PP/RNBQ1K1R b kq - 4 9",
@@ -5856,6 +5906,7 @@
       {
         "gameId": 0,
         "ply": 18,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p1pp1ppp/8/1B3Nqn/4Pp2/3P4/PPP3PP/RNBQ1K1R b kq - 4 9",
         "fenAfter": "rnb1kb1r/p2p1ppp/2p5/1B3Nqn/4Pp2/3P4/PPP3PP/RNBQ1K1R w kq - 0 10",
@@ -5967,6 +6018,7 @@
       {
         "gameId": 0,
         "ply": 19,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/2p5/1B3Nqn/4Pp2/3P4/PPP3PP/RNBQ1K1R w kq - 0 10",
         "fenAfter": "rnb1kb1r/p2p1ppp/2p5/1B3Nqn/4PpP1/3P4/PPP4P/RNBQ1K1R b kq g3 0 10",
@@ -6084,6 +6136,7 @@
       {
         "gameId": 0,
         "ply": 20,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/2p5/1B3Nqn/4PpP1/3P4/PPP4P/RNBQ1K1R b kq g3 0 10",
         "fenAfter": "rnb1kb1r/p2p1ppp/2p2n2/1B3Nq1/4PpP1/3P4/PPP4P/RNBQ1K1R w kq - 1 11",
@@ -6227,6 +6280,7 @@
       {
         "gameId": 0,
         "ply": 21,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/2p2n2/1B3Nq1/4PpP1/3P4/PPP4P/RNBQ1K1R w kq - 1 11",
         "fenAfter": "rnb1kb1r/p2p1ppp/2p2n2/1B3Nq1/4PpP1/3P4/PPP4P/RNBQ1KR1 b kq - 2 11",
@@ -6344,6 +6398,7 @@
       {
         "gameId": 0,
         "ply": 22,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/2p2n2/1B3Nq1/4PpP1/3P4/PPP4P/RNBQ1KR1 b kq - 2 11",
         "fenAfter": "rnb1kb1r/p2p1ppp/5n2/1p3Nq1/4PpP1/3P4/PPP4P/RNBQ1KR1 w kq - 0 12",
@@ -6473,6 +6528,7 @@
       {
         "gameId": 0,
         "ply": 23,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/5n2/1p3Nq1/4PpP1/3P4/PPP4P/RNBQ1KR1 w kq - 0 12",
         "fenAfter": "rnb1kb1r/p2p1ppp/5n2/1p3Nq1/4PpPP/3P4/PPP5/RNBQ1KR1 b kq - 0 12",
@@ -6598,6 +6654,7 @@
       {
         "gameId": 0,
         "ply": 24,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/5n2/1p3Nq1/4PpPP/3P4/PPP5/RNBQ1KR1 b kq - 0 12",
         "fenAfter": "rnb1kb1r/p2p1ppp/5nq1/1p3N2/4PpPP/3P4/PPP5/RNBQ1KR1 w kq - 1 13",
@@ -6717,6 +6774,7 @@
       {
         "gameId": 0,
         "ply": 25,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/5nq1/1p3N2/4PpPP/3P4/PPP5/RNBQ1KR1 w kq - 1 13",
         "fenAfter": "rnb1kb1r/p2p1ppp/5nq1/1p3N1P/4PpP1/3P4/PPP5/RNBQ1KR1 b kq - 0 13",
@@ -6830,6 +6888,7 @@
       {
         "gameId": 0,
         "ply": 26,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/5nq1/1p3N1P/4PpP1/3P4/PPP5/RNBQ1KR1 b kq - 0 13",
         "fenAfter": "rnb1kb1r/p2p1ppp/5n2/1p3NqP/4PpP1/3P4/PPP5/RNBQ1KR1 w kq - 1 14",
@@ -6963,6 +7022,7 @@
       {
         "gameId": 0,
         "ply": 27,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/5n2/1p3NqP/4PpP1/3P4/PPP5/RNBQ1KR1 w kq - 1 14",
         "fenAfter": "rnb1kb1r/p2p1ppp/5n2/1p3NqP/4PpP1/3P1Q2/PPP5/RNB2KR1 b kq - 2 14",
@@ -7072,6 +7132,7 @@
       {
         "gameId": 0,
         "ply": 28,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kb1r/p2p1ppp/5n2/1p3NqP/4PpP1/3P1Q2/PPP5/RNB2KR1 b kq - 2 14",
         "fenAfter": "rnb1kbnr/p2p1ppp/8/1p3NqP/4PpP1/3P1Q2/PPP5/RNB2KR1 w kq - 3 15",
@@ -7231,6 +7292,7 @@
       {
         "gameId": 0,
         "ply": 29,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kbnr/p2p1ppp/8/1p3NqP/4PpP1/3P1Q2/PPP5/RNB2KR1 w kq - 3 15",
         "fenAfter": "rnb1kbnr/p2p1ppp/8/1p3NqP/4PBP1/3P1Q2/PPP5/RN3KR1 b kq - 0 15",
@@ -7342,6 +7404,7 @@
       {
         "gameId": 0,
         "ply": 30,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnb1kbnr/p2p1ppp/8/1p3NqP/4PBP1/3P1Q2/PPP5/RN3KR1 b kq - 0 15",
         "fenAfter": "rnb1kbnr/p2p1ppp/5q2/1p3N1P/4PBP1/3P1Q2/PPP5/RN3KR1 w kq - 1 16",
@@ -7461,6 +7524,7 @@
       {
         "gameId": 0,
         "ply": 31,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnb1kbnr/p2p1ppp/5q2/1p3N1P/4PBP1/3P1Q2/PPP5/RN3KR1 w kq - 1 16",
         "fenAfter": "rnb1kbnr/p2p1ppp/5q2/1p3N1P/4PBP1/2NP1Q2/PPP5/R4KR1 b kq - 2 16",
@@ -7568,6 +7632,7 @@
       {
         "gameId": 0,
         "ply": 32,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "rnb1kbnr/p2p1ppp/5q2/1p3N1P/4PBP1/2NP1Q2/PPP5/R4KR1 b kq - 2 16",
         "fenAfter": "rnb1k1nr/p2p1ppp/5q2/1pb2N1P/4PBP1/2NP1Q2/PPP5/R4KR1 w kq - 3 17",
@@ -7663,6 +7728,7 @@
       {
         "gameId": 0,
         "ply": 33,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/5q2/1pb2N1P/4PBP1/2NP1Q2/PPP5/R4KR1 w kq - 3 17",
         "fenAfter": "rnb1k1nr/p2p1ppp/5q2/1pbN1N1P/4PBP1/3P1Q2/PPP5/R4KR1 b kq - 4 17",
@@ -7776,6 +7842,7 @@
       {
         "gameId": 0,
         "ply": 34,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/5q2/1pbN1N1P/4PBP1/3P1Q2/PPP5/R4KR1 b kq - 4 17",
         "fenAfter": "rnb1k1nr/p2p1ppp/8/1pbN1N1P/4PBP1/3P1Q2/PqP5/R4KR1 w kq - 0 18",
@@ -7883,6 +7950,7 @@
       {
         "gameId": 0,
         "ply": 35,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/8/1pbN1N1P/4PBP1/3P1Q2/PqP5/R4KR1 w kq - 0 18",
         "fenAfter": "rnb1k1nr/p2p1ppp/3B4/1pbN1N1P/4P1P1/3P1Q2/PqP5/R4KR1 b kq - 1 18",
@@ -8002,6 +8070,7 @@
       {
         "gameId": 0,
         "ply": 36,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/3B4/1pbN1N1P/4P1P1/3P1Q2/PqP5/R4KR1 b kq - 1 18",
         "fenAfter": "rnb1k1nr/p2p1ppp/3B4/1p1N1N1P/4P1P1/3P1Q2/PqP5/R4Kb1 w kq - 0 19",
@@ -8101,6 +8170,7 @@
       {
         "gameId": 0,
         "ply": 37,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/3B4/1p1N1N1P/4P1P1/3P1Q2/PqP5/R4Kb1 w kq - 0 19",
         "fenAfter": "rnb1k1nr/p2p1ppp/3B4/1p1NPN1P/6P1/3P1Q2/PqP5/R4Kb1 b kq - 0 19",
@@ -8214,6 +8284,7 @@
       {
         "gameId": 0,
         "ply": 38,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/3B4/1p1NPN1P/6P1/3P1Q2/PqP5/R4Kb1 b kq - 0 19",
         "fenAfter": "rnb1k1nr/p2p1ppp/3B4/1p1NPN1P/6P1/3P1Q2/P1P5/q4Kb1 w kq - 0 20",
@@ -8339,6 +8410,7 @@
       {
         "gameId": 0,
         "ply": 39,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/3B4/1p1NPN1P/6P1/3P1Q2/P1P5/q4Kb1 w kq - 0 20",
         "fenAfter": "rnb1k1nr/p2p1ppp/3B4/1p1NPN1P/6P1/3P1Q2/P1P1K3/q5b1 b kq - 1 20",
@@ -8458,6 +8530,7 @@
       {
         "gameId": 0,
         "ply": 40,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "rnb1k1nr/p2p1ppp/3B4/1p1NPN1P/6P1/3P1Q2/P1P1K3/q5b1 b kq - 1 20",
         "fenAfter": "r1b1k1nr/p2p1ppp/n2B4/1p1NPN1P/6P1/3P1Q2/P1P1K3/q5b1 w kq - 2 21",
@@ -8573,6 +8646,7 @@
       {
         "gameId": 0,
         "ply": 41,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "r1b1k1nr/p2p1ppp/n2B4/1p1NPN1P/6P1/3P1Q2/P1P1K3/q5b1 w kq - 2 21",
         "fenAfter": "r1b1k1nr/p2p1pNp/n2B4/1p1NP2P/6P1/3P1Q2/P1P1K3/q5b1 b kq - 0 21",
@@ -8660,6 +8734,7 @@
       {
         "gameId": 0,
         "ply": 42,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "r1b1k1nr/p2p1pNp/n2B4/1p1NP2P/6P1/3P1Q2/P1P1K3/q5b1 b kq - 0 21",
         "fenAfter": "r1bk2nr/p2p1pNp/n2B4/1p1NP2P/6P1/3P1Q2/P1P1K3/q5b1 w - - 1 22",
@@ -8707,6 +8782,7 @@
       {
         "gameId": 0,
         "ply": 43,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "r1bk2nr/p2p1pNp/n2B4/1p1NP2P/6P1/3P1Q2/P1P1K3/q5b1 w - - 1 22",
         "fenAfter": "r1bk2nr/p2p1pNp/n2B1Q2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 b - - 2 22",
@@ -8776,6 +8852,7 @@
       {
         "gameId": 0,
         "ply": 44,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "r1bk2nr/p2p1pNp/n2B1Q2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 b - - 2 22",
         "fenAfter": "r1bk3r/p2p1pNp/n2B1n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 w - - 0 23",
@@ -8833,6 +8910,7 @@
       {
         "gameId": 0,
         "ply": 45,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "r1bk3r/p2p1pNp/n2B1n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 w - - 0 23",
         "fenAfter": "r1bk3r/p2pBpNp/n4n2/1p1NP2P/6P1/3P4/P1P1K3/q5b1 b - - 1 23",
@@ -8996,6 +9074,7 @@
       {
         "gameId": 0,
         "ply": 1,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
@@ -9111,6 +9190,7 @@
       {
         "gameId": 0,
         "ply": 2,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
@@ -9244,6 +9324,7 @@
       {
         "gameId": 0,
         "ply": 3,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
@@ -9349,6 +9430,7 @@
       {
         "gameId": 0,
         "ply": 4,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
         "fenAfter": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
@@ -9476,6 +9558,7 @@
       {
         "gameId": 0,
         "ply": 5,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
         "fenAfter": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
@@ -9609,6 +9692,7 @@
       {
         "gameId": 0,
         "ply": 6,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
@@ -9760,6 +9844,7 @@
       {
         "gameId": 0,
         "ply": 7,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4",
@@ -9863,6 +9948,7 @@
       {
         "gameId": 0,
         "ply": 8,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - 0 4",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/5N2/P1PP1PPP/RNBQK2R w KQkq - 0 5",
@@ -9984,6 +10070,7 @@
       {
         "gameId": 0,
         "ply": 9,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/5N2/P1PP1PPP/RNBQK2R w KQkq - 0 5",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5",
@@ -10085,6 +10172,7 @@
       {
         "gameId": 0,
         "ply": 10,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/4p3/1bB1P3/2P2N2/P2P1PPP/RNBQK2R b KQkq - 0 5",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/b3p3/2B1P3/2P2N2/P2P1PPP/RNBQK2R w KQkq - 1 6",
@@ -10188,6 +10276,7 @@
       {
         "gameId": 0,
         "ply": 11,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/b3p3/2B1P3/2P2N2/P2P1PPP/RNBQK2R w KQkq - 1 6",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/b3p3/2BPP3/2P2N2/P4PPP/RNBQK2R b KQkq - 0 6",
@@ -10303,6 +10392,7 @@
       {
         "gameId": 0,
         "ply": 12,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/b3p3/2BPP3/2P2N2/P4PPP/RNBQK2R b KQkq - 0 6",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/b7/2BpP3/2P2N2/P4PPP/RNBQK2R w KQkq - 0 7",
@@ -10410,6 +10500,7 @@
       {
         "gameId": 0,
         "ply": 13,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/b7/2BpP3/2P2N2/P4PPP/RNBQK2R w KQkq - 0 7",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/b7/2BpP3/2P2N2/P4PPP/RNBQ1RK1 b kq - 1 7",
@@ -10547,6 +10638,7 @@
       {
         "gameId": 0,
         "ply": 14,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/b7/2BpP3/2P2N2/P4PPP/RNBQ1RK1 b kq - 1 7",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/b7/2B1P3/2Pp1N2/P4PPP/RNBQ1RK1 w kq - 0 8",
@@ -10692,6 +10784,7 @@
       {
         "gameId": 0,
         "ply": 15,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/b7/2B1P3/2Pp1N2/P4PPP/RNBQ1RK1 w kq - 0 8",
         "fenAfter": "r1bqk1nr/pppp1ppp/2n5/b7/2B1P3/1QPp1N2/P4PPP/RNB2RK1 b kq - 1 8",
@@ -10815,6 +10908,7 @@
       {
         "gameId": 0,
         "ply": 16,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1bqk1nr/pppp1ppp/2n5/b7/2B1P3/1QPp1N2/P4PPP/RNB2RK1 b kq - 1 8",
         "fenAfter": "r1b1k1nr/pppp1ppp/2n2q2/b7/2B1P3/1QPp1N2/P4PPP/RNB2RK1 w kq - 2 9",
@@ -10960,6 +11054,7 @@
       {
         "gameId": 0,
         "ply": 17,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1b1k1nr/pppp1ppp/2n2q2/b7/2B1P3/1QPp1N2/P4PPP/RNB2RK1 w kq - 2 9",
         "fenAfter": "r1b1k1nr/pppp1ppp/2n2q2/b3P3/2B5/1QPp1N2/P4PPP/RNB2RK1 b kq - 0 9",
@@ -11073,6 +11168,7 @@
       {
         "gameId": 0,
         "ply": 18,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1b1k1nr/pppp1ppp/2n2q2/b3P3/2B5/1QPp1N2/P4PPP/RNB2RK1 b kq - 0 9",
         "fenAfter": "r1b1k1nr/pppp1ppp/2n3q1/b3P3/2B5/1QPp1N2/P4PPP/RNB2RK1 w kq - 1 10",
@@ -11170,6 +11266,7 @@
       {
         "gameId": 0,
         "ply": 19,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1b1k1nr/pppp1ppp/2n3q1/b3P3/2B5/1QPp1N2/P4PPP/RNB2RK1 w kq - 1 10",
         "fenAfter": "r1b1k1nr/pppp1ppp/2n3q1/b3P3/2B5/1QPp1N2/P4PPP/RNB1R1K1 b kq - 2 10",
@@ -11297,6 +11394,7 @@
       {
         "gameId": 0,
         "ply": 20,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1b1k1nr/pppp1ppp/2n3q1/b3P3/2B5/1QPp1N2/P4PPP/RNB1R1K1 b kq - 2 10",
         "fenAfter": "r1b1k2r/ppppnppp/2n3q1/b3P3/2B5/1QPp1N2/P4PPP/RNB1R1K1 w kq - 3 11",
@@ -11388,6 +11486,7 @@
       {
         "gameId": 0,
         "ply": 21,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1b1k2r/ppppnppp/2n3q1/b3P3/2B5/1QPp1N2/P4PPP/RNB1R1K1 w kq - 3 11",
         "fenAfter": "r1b1k2r/ppppnppp/2n3q1/b3P3/2B5/BQPp1N2/P4PPP/RN2R1K1 b kq - 4 11",
@@ -11509,6 +11608,7 @@
       {
         "gameId": 0,
         "ply": 22,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1b1k2r/ppppnppp/2n3q1/b3P3/2B5/BQPp1N2/P4PPP/RN2R1K1 b kq - 4 11",
         "fenAfter": "r1b1k2r/p1ppnppp/2n3q1/bp2P3/2B5/BQPp1N2/P4PPP/RN2R1K1 w kq - 0 12",
@@ -11638,6 +11738,7 @@
       {
         "gameId": 0,
         "ply": 23,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "r1b1k2r/p1ppnppp/2n3q1/bp2P3/2B5/BQPp1N2/P4PPP/RN2R1K1 w kq - 0 12",
         "fenAfter": "r1b1k2r/p1ppnppp/2n3q1/bQ2P3/2B5/B1Pp1N2/P4PPP/RN2R1K1 b kq - 0 12",
@@ -11769,6 +11870,7 @@
       {
         "gameId": 0,
         "ply": 24,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "r1b1k2r/p1ppnppp/2n3q1/bQ2P3/2B5/B1Pp1N2/P4PPP/RN2R1K1 b kq - 0 12",
         "fenAfter": "1rb1k2r/p1ppnppp/2n3q1/bQ2P3/2B5/B1Pp1N2/P4PPP/RN2R1K1 w k - 1 13",
@@ -11916,6 +12018,7 @@
       {
         "gameId": 0,
         "ply": 25,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1rb1k2r/p1ppnppp/2n3q1/bQ2P3/2B5/B1Pp1N2/P4PPP/RN2R1K1 w k - 1 13",
         "fenAfter": "1rb1k2r/p1ppnppp/2n3q1/b3P3/Q1B5/B1Pp1N2/P4PPP/RN2R1K1 b k - 2 13",
@@ -12039,6 +12142,7 @@
       {
         "gameId": 0,
         "ply": 26,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1rb1k2r/p1ppnppp/2n3q1/b3P3/Q1B5/B1Pp1N2/P4PPP/RN2R1K1 b k - 2 13",
         "fenAfter": "1rb1k2r/p1ppnppp/1bn3q1/4P3/Q1B5/B1Pp1N2/P4PPP/RN2R1K1 w k - 3 14",
@@ -12184,6 +12288,7 @@
       {
         "gameId": 0,
         "ply": 27,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1rb1k2r/p1ppnppp/1bn3q1/4P3/Q1B5/B1Pp1N2/P4PPP/RN2R1K1 w k - 3 14",
         "fenAfter": "1rb1k2r/p1ppnppp/1bn3q1/4P3/Q1B5/B1Pp1N2/P2N1PPP/R3R1K1 b k - 4 14",
@@ -12341,6 +12446,7 @@
       {
         "gameId": 0,
         "ply": 28,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1rb1k2r/p1ppnppp/1bn3q1/4P3/Q1B5/B1Pp1N2/P2N1PPP/R3R1K1 b k - 4 14",
         "fenAfter": "1r2k2r/pbppnppp/1bn3q1/4P3/Q1B5/B1Pp1N2/P2N1PPP/R3R1K1 w k - 5 15",
@@ -12476,6 +12582,7 @@
       {
         "gameId": 0,
         "ply": 29,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnppp/1bn3q1/4P3/Q1B5/B1Pp1N2/P2N1PPP/R3R1K1 w k - 5 15",
         "fenAfter": "1r2k2r/pbppnppp/1bn3q1/4P3/Q1B1N3/B1Pp1N2/P4PPP/R3R1K1 b k - 6 15",
@@ -12599,6 +12706,7 @@
       {
         "gameId": 0,
         "ply": 30,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnppp/1bn3q1/4P3/Q1B1N3/B1Pp1N2/P4PPP/R3R1K1 b k - 6 15",
         "fenAfter": "1r2k2r/pbppnppp/1bn5/4Pq2/Q1B1N3/B1Pp1N2/P4PPP/R3R1K1 w k - 7 16",
@@ -12708,6 +12816,7 @@
       {
         "gameId": 0,
         "ply": 31,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnppp/1bn5/4Pq2/Q1B1N3/B1Pp1N2/P4PPP/R3R1K1 w k - 7 16",
         "fenAfter": "1r2k2r/pbppnppp/1bn5/4Pq2/Q3N3/B1PB1N2/P4PPP/R3R1K1 b k - 0 16",
@@ -12831,6 +12940,7 @@
       {
         "gameId": 0,
         "ply": 32,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnppp/1bn5/4Pq2/Q3N3/B1PB1N2/P4PPP/R3R1K1 b k - 0 16",
         "fenAfter": "1r2k2r/pbppnppp/1bn5/4P2q/Q3N3/B1PB1N2/P4PPP/R3R1K1 w k - 1 17",
@@ -12952,6 +13062,7 @@
       {
         "gameId": 0,
         "ply": 33,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnppp/1bn5/4P2q/Q3N3/B1PB1N2/P4PPP/R3R1K1 w k - 1 17",
         "fenAfter": "1r2k2r/pbppnppp/1bn2N2/4P2q/Q7/B1PB1N2/P4PPP/R3R1K1 b k - 2 17",
@@ -13051,6 +13162,7 @@
       {
         "gameId": 0,
         "ply": 34,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnppp/1bn2N2/4P2q/Q7/B1PB1N2/P4PPP/R3R1K1 b k - 2 17",
         "fenAfter": "1r2k2r/pbppnp1p/1bn2p2/4P2q/Q7/B1PB1N2/P4PPP/R3R1K1 w k - 0 18",
@@ -13172,6 +13284,7 @@
       {
         "gameId": 0,
         "ply": 35,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnp1p/1bn2p2/4P2q/Q7/B1PB1N2/P4PPP/R3R1K1 w k - 0 18",
         "fenAfter": "1r2k2r/pbppnp1p/1bn2P2/7q/Q7/B1PB1N2/P4PPP/R3R1K1 b k - 0 18",
@@ -13325,6 +13438,7 @@
       {
         "gameId": 0,
         "ply": 36,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k2r/pbppnp1p/1bn2P2/7q/Q7/B1PB1N2/P4PPP/R3R1K1 b k - 0 18",
         "fenAfter": "1r2k1r1/pbppnp1p/1bn2P2/7q/Q7/B1PB1N2/P4PPP/R3R1K1 w - - 1 19",
@@ -13496,6 +13610,7 @@
       {
         "gameId": 0,
         "ply": 37,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbppnp1p/1bn2P2/7q/Q7/B1PB1N2/P4PPP/R3R1K1 w - - 1 19",
         "fenAfter": "1r2k1r1/pbppnp1p/1bn2P2/7q/Q7/B1PB1N2/P4PPP/3RR1K1 b - - 2 19",
@@ -13637,6 +13752,7 @@
       {
         "gameId": 0,
         "ply": 38,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbppnp1p/1bn2P2/7q/Q7/B1PB1N2/P4PPP/3RR1K1 b - - 2 19",
         "fenAfter": "1r2k1r1/pbppnp1p/1bn2P2/8/Q7/B1PB1q2/P4PPP/3RR1K1 w - - 0 20",
@@ -13768,6 +13884,7 @@
       {
         "gameId": 0,
         "ply": 39,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbppnp1p/1bn2P2/8/Q7/B1PB1q2/P4PPP/3RR1K1 w - - 0 20",
         "fenAfter": "1r2k1r1/pbppRp1p/1bn2P2/8/Q7/B1PB1q2/P4PPP/3R2K1 b - - 0 20",
@@ -13893,6 +14010,7 @@
       {
         "gameId": 0,
         "ply": 40,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbppRp1p/1bn2P2/8/Q7/B1PB1q2/P4PPP/3R2K1 b - - 0 20",
         "fenAfter": "1r2k1r1/pbppnp1p/1b3P2/8/Q7/B1PB1q2/P4PPP/3R2K1 w - - 0 21",
@@ -14014,6 +14132,7 @@
       {
         "gameId": 0,
         "ply": 41,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbppnp1p/1b3P2/8/Q7/B1PB1q2/P4PPP/3R2K1 w - - 0 21",
         "fenAfter": "1r2k1r1/pbpQnp1p/1b3P2/8/8/B1PB1q2/P4PPP/3R2K1 b - - 0 21",
@@ -14089,6 +14208,7 @@
       {
         "gameId": 0,
         "ply": 42,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbpQnp1p/1b3P2/8/8/B1PB1q2/P4PPP/3R2K1 b - - 0 21",
         "fenAfter": "1r4r1/pbpknp1p/1b3P2/8/8/B1PB1q2/P4PPP/3R2K1 w - - 0 22",
@@ -14154,6 +14274,7 @@
       {
         "gameId": 0,
         "ply": 43,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r4r1/pbpknp1p/1b3P2/8/8/B1PB1q2/P4PPP/3R2K1 w - - 0 22",
         "fenAfter": "1r4r1/pbpknp1p/1b3P2/5B2/8/B1P2q2/P4PPP/3R2K1 b - - 1 22",
@@ -14233,6 +14354,7 @@
       {
         "gameId": 0,
         "ply": 44,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r4r1/pbpknp1p/1b3P2/5B2/8/B1P2q2/P4PPP/3R2K1 b - - 1 22",
         "fenAfter": "1r2k1r1/pbp1np1p/1b3P2/5B2/8/B1P2q2/P4PPP/3R2K1 w - - 2 23",
@@ -14294,6 +14416,7 @@
       {
         "gameId": 0,
         "ply": 45,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbp1np1p/1b3P2/5B2/8/B1P2q2/P4PPP/3R2K1 w - - 2 23",
         "fenAfter": "1r2k1r1/pbpBnp1p/1b3P2/8/8/B1P2q2/P4PPP/3R2K1 b - - 3 23",
@@ -14361,6 +14484,7 @@
       {
         "gameId": 0,
         "ply": 46,
+        "playerColor": "black",
         "phase": "middlegame",
         "fenBefore": "1r2k1r1/pbpBnp1p/1b3P2/8/8/B1P2q2/P4PPP/3R2K1 b - - 3 23",
         "fenAfter": "1r3kr1/pbpBnp1p/1b3P2/8/8/B1P2q2/P4PPP/3R2K1 w - - 4 24",
@@ -14418,6 +14542,7 @@
       {
         "gameId": 0,
         "ply": 47,
+        "playerColor": "white",
         "phase": "middlegame",
         "fenBefore": "1r3kr1/pbpBnp1p/1b3P2/8/8/B1P2q2/P4PPP/3R2K1 w - - 4 24",
         "fenAfter": "1r3kr1/pbpBBp1p/1b3P2/8/8/2P2q2/P4PPP/3R2K1 b - - 0 24",
@@ -14577,6 +14702,7 @@
       {
         "gameId": 0,
         "ply": 1,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
@@ -14712,6 +14838,7 @@
       {
         "gameId": 0,
         "ply": 2,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
@@ -14839,6 +14966,7 @@
       {
         "gameId": 0,
         "ply": 3,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
         "fenAfter": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
@@ -14956,6 +15084,7 @@
       {
         "gameId": 0,
         "ply": 4,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
         "fenAfter": "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3",
@@ -15075,6 +15204,7 @@
       {
         "gameId": 0,
         "ply": 5,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/ppp2ppp/3p4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 3",
         "fenAfter": "rnbqkbnr/ppp2ppp/3p4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 3",
@@ -15186,6 +15316,7 @@
       {
         "gameId": 0,
         "ply": 6,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rnbqkbnr/ppp2ppp/3p4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 1 3",
         "fenAfter": "rn1qkbnr/ppp2ppp/3p4/4p3/2B1P1b1/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
@@ -15291,6 +15422,7 @@
       {
         "gameId": 0,
         "ply": 7,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/3p4/4p3/2B1P1b1/5N2/PPPP1PPP/RNBQK2R w KQkq - 2 4",
         "fenAfter": "rn1qkbnr/ppp2ppp/3p4/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 3 4",
@@ -15406,6 +15538,7 @@
       {
         "gameId": 0,
         "ply": 8,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2ppp/3p4/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 3 4",
         "fenAfter": "rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5",
@@ -15539,6 +15672,7 @@
       {
         "gameId": 0,
         "ply": 9,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5",
         "fenAfter": "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P1b1/2N5/PPPP1PPP/R1BQK2R b KQkq - 0 5",
@@ -15652,6 +15786,7 @@
       {
         "gameId": 0,
         "ply": 10,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P1b1/2N5/PPPP1PPP/R1BQK2R b KQkq - 0 5",
         "fenAfter": "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6",
@@ -15745,6 +15880,7 @@
       {
         "gameId": 0,
         "ply": 11,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2p1p/3p2p1/4N3/2B1P3/2N5/PPPP1PPP/R1BbK2R w KQkq - 0 6",
         "fenAfter": "rn1qkbnr/ppp2B1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R b KQkq - 0 6",
@@ -15820,6 +15956,7 @@
       {
         "gameId": 0,
         "ply": 12,
+        "playerColor": "black",
         "phase": "opening",
         "fenBefore": "rn1qkbnr/ppp2B1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R b KQkq - 0 6",
         "fenAfter": "rn1q1bnr/ppp1kB1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R w KQ - 1 7",
@@ -15863,6 +16000,7 @@
       {
         "gameId": 0,
         "ply": 13,
+        "playerColor": "white",
         "phase": "opening",
         "fenBefore": "rn1q1bnr/ppp1kB1p/3p2p1/4N3/4P3/2N5/PPPP1PPP/R1BbK2R w KQ - 1 7",
         "fenAfter": "rn1q1bnr/ppp1kB1p/3p2p1/3NN3/4P3/8/PPPP1PPP/R1BbK2R b KQ - 2 7",

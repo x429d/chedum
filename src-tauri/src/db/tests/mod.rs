@@ -1,3 +1,4 @@
+mod aggregates;
 mod analysis;
 mod games;
 mod queue;

@@ -49,6 +49,13 @@ pub fn run() {
                 Ok(_) => {}
                 Err(err) => eprintln!("Chenal: не удалось пересчитать точность: {err}"),
             }
+            match analyses_repo::backfill_fen_accuracy(&db) {
+                Ok(count) if count > 0 => {
+                    eprintln!("Chenal: точность FEN-партий пересчитана — {count}");
+                }
+                Ok(_) => {}
+                Err(err) => eprintln!("Chenal: не удалось пересчитать точность FEN-партий: {err}"),
+            }
             match analyses_repo::backfill_summaries(&db) {
                 Ok(count) if count > 0 => {
                     eprintln!("Chenal: резюме партий пересобраны из метрик — {count}");

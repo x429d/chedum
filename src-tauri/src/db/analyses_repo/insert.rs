@@ -102,14 +102,16 @@ fn insert_move(conn: &Connection, mv: &MoveEvaluation) -> AppResult<()> {
     let pv_json = serde_json::to_string(&mv.pv_lines)?;
     conn.execute(
         "INSERT INTO move_evaluations (
-            game_id, ply, phase, fen_before, fen_after, played_uci, played_san, best_uci, best_san,
-            eval_cp, eval_mate, best_eval_cp, best_eval_mate, win_prob_white, win_prob_loss,
-            move_accuracy, classification, is_critical, is_key_moment, material_diff_white, clock_remaining_sec,
-            time_spent_sec, time_flag, explanation_tag, explanation_text, pv_lines_json, user_comment
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27)",
+            game_id, ply, player_color, phase, fen_before, fen_after, played_uci, played_san,
+            best_uci, best_san, eval_cp, eval_mate, best_eval_cp, best_eval_mate, win_prob_white,
+            win_prob_loss, move_accuracy, classification, is_critical, is_key_moment,
+            material_diff_white, clock_remaining_sec, time_spent_sec, time_flag, explanation_tag,
+            explanation_text, pv_lines_json, user_comment
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28)",
         params![
             mv.game_id,
             mv.ply,
+            mv.player_color.as_str(),
             mv.phase.as_str(),
             mv.fen_before,
             mv.fen_after,

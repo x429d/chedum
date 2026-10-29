@@ -53,6 +53,15 @@ export const api = {
     });
   },
 
+  confirmStopBatch(message: string): Promise<boolean> {
+    return confirmDialog(message, {
+      title: "Chenal",
+      kind: "warning",
+      okLabel: "Остановить и продолжить",
+      cancelLabel: "Отмена",
+    });
+  },
+
   toggleFavorite(gameId: number, favorite: boolean): Promise<void> {
     return invoke<void>("toggle_favorite", { gameId, favorite });
   },

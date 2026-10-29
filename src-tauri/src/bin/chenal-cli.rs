@@ -45,10 +45,13 @@ fn run() -> AppResult<()> {
             audit(&db)
         }
         "backfill" => {
+            let fen_accuracy = chenal_lib::db::analyses_repo::backfill_fen_accuracy(&db)?;
             let summaries = chenal_lib::db::analyses_repo::backfill_summaries(&db)?;
             let moments = chenal_lib::db::analyses_repo::backfill_key_moments(&db)?;
             let openings = openings::backfill_openings(&db)?;
-            println!("summaries: {summaries}, key moments: {moments}, openings: {openings}");
+            println!(
+                "fen accuracy: {fen_accuracy}, summaries: {summaries}, key moments: {moments}, openings: {openings}"
+            );
             audit(&db)
         }
         "hub" => hub(&db),

@@ -30,6 +30,21 @@ use super::*;
     }
 
     #[tokio::test]
+    async fn prepare_game_clears_state_without_desyncing_uci() {
+        let Some(path) = bundled_engine() else {
+            return;
+        };
+        let manager = EngineManager::spawn(&path).await.unwrap();
+        let _job = manager.begin_job().await.unwrap();
+        manager.analyze(START, 6, 1, |_| {}).await.unwrap();
+        manager.prepare_game().await.unwrap();
+        let update = manager.analyze(START, 6, 1, |_| {}).await.unwrap();
+        assert!(update.finished);
+        assert!(!update.lines.is_empty());
+        manager.shutdown().await;
+    }
+
+    #[tokio::test]
     async fn rejects_second_concurrent_job() {
         let Some(path) = bundled_engine() else {
             return;

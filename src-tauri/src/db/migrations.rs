@@ -177,6 +177,23 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         )?;
         conn.pragma_update(None, "user_version", 5)?;
     }
+    if version < 6 {
+        add_column_if_missing(
+            conn,
+            "move_evaluations",
+            "player_color",
+            "TEXT NOT NULL DEFAULT 'white'",
+        )?;
+        // Цвет берётся из FEN перед ходом: чётность полухода ошибается
+        // в партиях, начатых с нестандартной позиции.
+        conn.execute(
+            "UPDATE move_evaluations SET player_color = CASE
+                WHEN substr(fen_before, instr(fen_before, ' ') + 1, 1) = 'b' THEN 'black'
+                ELSE 'white' END",
+            [],
+        )?;
+        conn.pragma_update(None, "user_version", 6)?;
+    }
     Ok(())
 }
 

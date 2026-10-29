@@ -17,6 +17,7 @@ type Tab = "report" | "moves" | "moments";
 export function AnalysisView() {
   const [tab, setTab] = createSignal<Tab>("report");
   const [fullscreen, setFullscreen] = createSignal(false);
+  const [startingAnalysis, setStartingAnalysis] = createSignal(false);
 
   createEffect(
     on(
@@ -91,14 +92,20 @@ export function AnalysisView() {
   const detail = () => gameStore.detail();
   const analysis = () => gameStore.analysis();
   const startAnalysis = (): void => {
-    if (libraryStore.batch().running) {
-      ui.notify("Дождитесь завершения пакетного анализа", "info");
-      return;
-    }
-    analysisStore.setLiveEnabled(false);
+    if (startingAnalysis()) return;
+    setStartingAnalysis(true);
     void (async () => {
-      await analysisStore.stop();
-      await gameStore.runAnalysis();
+      try {
+        const confirmed = await libraryStore.stopBatchWithConfirm(
+          "Остановить текущий пакетный анализ и переанализировать эту партию?",
+        );
+        if (!confirmed) return;
+        analysisStore.setLiveEnabled(false);
+        await analysisStore.stop();
+        await gameStore.runAnalysis();
+      } finally {
+        setStartingAnalysis(false);
+      }
     })();
   };
 
@@ -133,8 +140,7 @@ export function AnalysisView() {
             <AnalysisHeader
               game={data().game}
               analysis={analysis()}
-              analyzing={gameStore.analyzing()}
-              busy={libraryStore.batch().running}
+              analyzing={gameStore.analyzing() || startingAnalysis()}
               onAnalyze={startAnalysis}
               onBack={() => ui.setView("library")}
             />
@@ -224,7 +230,7 @@ export function AnalysisView() {
                         <button
                           type="button"
                           class="btn btn-primary btn-sm"
-                          disabled={gameStore.analyzing() || libraryStore.batch().running}
+                          disabled={gameStore.analyzing() || startingAnalysis()}
                           onClick={startAnalysis}
                         >
                           <Icon name="analyze" size={12} />

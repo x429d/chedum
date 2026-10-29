@@ -113,6 +113,11 @@ mod tests {
         MoveEvaluation {
             game_id: 1,
             ply,
+            player_color: if ply % 2 == 1 {
+                Color::White
+            } else {
+                Color::Black
+            },
             phase: Phase::Middlegame,
             fen_before: "not a fen".to_string(),
             fen_after: "not a fen".to_string(),
