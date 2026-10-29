@@ -1,6 +1,7 @@
 [package]
 name = "chenal"
 version = "0.1.0"
+default-run = "chenal"
 description = "Chenal — native chess analytics studio"
 authors = ["Chenal Studio"]
 edition = "2021"
