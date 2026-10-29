@@ -12,11 +12,21 @@ import {
 import { Icon } from "../ui/Icon";
 import { Pagination } from "./Pagination";
 
-function accuracyClass(value: number | null): string {
-  if (value === null) return "";
-  if (value >= 90) return "accuracy-high";
-  if (value >= 75) return "accuracy-mid";
-  return "accuracy-low";
+/// Плавная шкала: 0 % — красный, 50 % — янтарный, 100 % — зелёный.
+function accuracyColor(value: number | null): string | undefined {
+  if (value === null) return undefined;
+  const clamped = Math.max(0, Math.min(100, value));
+  const hue = clamped <= 50 ? (clamped / 50) * 42 : 42 + ((clamped - 50) / 50) * 68;
+  return `hsl(${hue.toFixed(1)} 58% 65%)`;
+}
+
+function accuracyHint(game: GameListItem): string {
+  if (!game.hasAnalysis || !game.engineName) return "Партия не разобрана";
+  const method =
+    game.accuracyMethod === "lichess-v1"
+      ? "Lichess accuracy"
+      : (game.accuracyMethod ?? "метод неизвестен");
+  return `${game.engineName} · depth ${game.analysisDepth ?? "—"} · ${method}`;
 }
 
 function Row(props: { game: GameListItem }) {
@@ -32,7 +42,18 @@ function Row(props: { game: GameListItem }) {
       </td>
       <td style={{ "white-space": "nowrap" }}>
         <div class="game-title">{formatDate(props.game.playedAt)}</div>
-        <div class="game-meta">{timeClassLabel(props.game.timeClass)}</div>
+        <div class="game-meta">
+          {timeClassLabel(props.game.timeClass)}
+          <Show when={props.game.analysisAttempts >= 3}>
+            <span
+              style={{ color: "var(--danger)", "margin-left": "5px" }}
+              title={`Анализ падал ${props.game.analysisAttempts} раз: ${props.game.lastAnalysisError ?? "причина неизвестна"}`}
+              aria-label="Анализ партии не удался три раза"
+            >
+              ⚠
+            </span>
+          </Show>
+        </div>
       </td>
       <td>
         <div class="game-title">
@@ -58,12 +79,15 @@ function Row(props: { game: GameListItem }) {
           {props.game.openingName ?? "Без дебюта"}
         </span>
       </td>
-      <td style={{ "text-align": "right" }}>
+      <td style={{ "text-align": "right" }} title={accuracyHint(props.game)}>
         <Show
           when={props.game.userAccuracy !== null}
           fallback={<span class="dim">—</span>}
         >
-          <span class={`accuracy-cell ${accuracyClass(props.game.userAccuracy)}`}>
+          <span
+            class="accuracy-cell"
+            style={{ color: accuracyColor(props.game.userAccuracy) }}
+          >
             {formatNumber(props.game.userAccuracy, 1)}%
           </span>
         </Show>

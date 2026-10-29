@@ -1,10 +1,9 @@
-import { createMemo, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
 import type { MoveEvaluation, Phase } from "../../types/models";
 import { CATEGORY_META, PHASE_LABELS } from "../../types/models";
 import { formatClock, formatEval, formatNumber } from "../../utils/format";
 
-const W = 1000;
 const H = 214;
 const ML = 38;
 const MR = 14;
@@ -12,7 +11,6 @@ const MT = 12;
 const EH = 138;
 const HIST_TOP = 166;
 const HIST_H = 38;
-const PLOT_W = W - ML - MR;
 
 export function EvalChart(props: {
   moves: MoveEvaluation[];
@@ -21,8 +19,22 @@ export function EvalChart(props: {
   onSelect: (ply: number) => void;
 }) {
   const [hover, setHover] = createSignal<{ ply: number; left: number } | null>(null);
+  const [width, setWidth] = createSignal(1000);
+  let wrapRef: HTMLDivElement | undefined;
+
+  onMount(() => {
+    if (!wrapRef) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) setWidth(Math.max(360, Math.round(entry.contentRect.width)));
+    });
+    observer.observe(wrapRef);
+    onCleanup(() => observer.disconnect());
+  });
+
+  const plotW = () => width() - ML - MR;
   const total = () => Math.max(1, props.totalPlies);
-  const x = (ply: number): number => ML + (ply / total()) * PLOT_W;
+  const x = (ply: number): number => ML + (ply / total()) * plotW();
   const y = (win: number): number => MT + (1 - Math.max(0, Math.min(100, win)) / 100) * EH;
   const points = createMemo(() => {
     const list: { ply: number; x: number; y: number; win: number }[] = [
@@ -82,8 +94,8 @@ export function EvalChart(props: {
   // must subtract that offset, otherwise the cursor and the highlighted ply drift apart.
   const geometry = (target: SVGSVGElement): { rect: DOMRect; scale: number; padX: number } => {
     const rect = target.getBoundingClientRect();
-    const scale = Math.min(rect.width / W, rect.height / H) || 1;
-    return { rect, scale, padX: (rect.width - W * scale) / 2 };
+    const scale = Math.min(rect.width / width(), rect.height / H) || 1;
+    return { rect, scale, padX: (rect.width - width() * scale) / 2 };
   };
 
   const plyFromEvent = (event: PointerEvent | MouseEvent): number => {
@@ -91,7 +103,7 @@ export function EvalChart(props: {
     if (!(target instanceof SVGSVGElement)) return 0;
     const { rect, scale, padX } = geometry(target);
     const viewX = (event.clientX - rect.left - padX) / scale;
-    const raw = ((viewX - ML) / PLOT_W) * total();
+    const raw = ((viewX - ML) / plotW()) * total();
     return Math.max(0, Math.min(total(), Math.round(raw)));
   };
 
@@ -116,10 +128,10 @@ export function EvalChart(props: {
   });
 
   return (
-    <div class="chart-wrap">
+    <div class="chart-wrap" ref={wrapRef}>
       <svg
         class="chart-svg"
-        viewBox={`0 0 ${W} ${H}`}
+        viewBox={`0 0 ${width()} ${H}`}
         onPointerMove={handleMove}
         onPointerLeave={() => setHover(null)}
         onClick={(event) => props.onSelect(plyFromEvent(event))}
@@ -134,7 +146,7 @@ export function EvalChart(props: {
         <For each={[0, 25, 50, 75, 100]}>
           {(value) => (
             <>
-              <line x1={ML} x2={W - MR} y1={y(value)} y2={y(value)} stroke="#293123" stroke-width="0.7" />
+              <line x1={ML} x2={width() - MR} y1={y(value)} y2={y(value)} stroke="#293123" stroke-width="0.7" />
               <text x={ML - 7} y={y(value) + 3} text-anchor="end" fill="#868d78" font-size="9">
                 {value}
               </text>
@@ -166,7 +178,7 @@ export function EvalChart(props: {
 
         <path d={areaPath()} fill="url(#eval-fill)" />
         <path d={linePath()} fill="none" stroke="#e0bf7d" stroke-width="1.8" stroke-linejoin="round" />
-        <line x1={ML} x2={W - MR} y1={y(50)} y2={y(50)} stroke="#4a5344" stroke-width="0.7" stroke-dasharray="4 4" />
+        <line x1={ML} x2={width() - MR} y1={y(50)} y2={y(50)} stroke="#4a5344" stroke-width="0.7" stroke-dasharray="4 4" />
 
         <For each={markers()}>
           {(marker) => (
@@ -194,12 +206,12 @@ export function EvalChart(props: {
         <text x={ML - 7} y={HIST_TOP - 4} text-anchor="end" fill="#868d78" font-size="9">
           t
         </text>
-        <line x1={ML} x2={W - MR} y1={HIST_TOP + HIST_H} y2={HIST_TOP + HIST_H} stroke="#293123" stroke-width="0.7" />
+        <line x1={ML} x2={width() - MR} y1={HIST_TOP + HIST_H} y2={HIST_TOP + HIST_H} stroke="#293123" stroke-width="0.7" />
         <For each={props.moves}>
           {(move, index) => {
             const height = () =>
               move.timeSpentSec === null ? 0 : Math.max(1, (move.timeSpentSec / histMax()) * HIST_H);
-            const barWidth = PLOT_W / total() * 0.64;
+            const barWidth = plotW() / total() * 0.64;
             const color = () =>
               move.timeFlag === "time_trouble" || move.timeFlag === "impulsive_error"
                 ? "#e05c4f"

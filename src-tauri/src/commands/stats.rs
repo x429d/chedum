@@ -17,5 +17,6 @@ pub async fn get_app_info() -> AppResult<AppInfo> {
         name: "Chenal".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         eco_openings: EcoBook::global().count(),
+        max_analysis_workers: u32::try_from(crate::engine::default_workers()).unwrap_or(16),
     })
 }

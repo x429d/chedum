@@ -49,6 +49,27 @@ pub fn run() {
                 Ok(_) => {}
                 Err(err) => eprintln!("Chenal: не удалось пересчитать точность: {err}"),
             }
+            match analyses_repo::backfill_summaries(&db) {
+                Ok(count) if count > 0 => {
+                    eprintln!("Chenal: резюме партий пересобраны из метрик — {count}");
+                }
+                Ok(_) => {}
+                Err(err) => eprintln!("Chenal: не удалось пересобрать резюме: {err}"),
+            }
+            match analyses_repo::backfill_key_moments(&db) {
+                Ok(count) if count > 0 => {
+                    eprintln!("Chenal: ключевые моменты пересобраны — {count}");
+                }
+                Ok(_) => {}
+                Err(err) => eprintln!("Chenal: не удалось пересобрать ключевые моменты: {err}"),
+            }
+            match crate::service::openings::backfill_openings(&db) {
+                Ok(count) if count > 0 => {
+                    eprintln!("Chenal: дебюты пересчитаны по позициям — {count}");
+                }
+                Ok(_) => {}
+                Err(err) => eprintln!("Chenal: не удалось пересчитать дебюты: {err}"),
+            }
             let engine = EngineState::discover(app.handle());
             app.manage(AppState { db, engine });
             Ok(())

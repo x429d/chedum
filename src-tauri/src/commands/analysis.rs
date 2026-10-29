@@ -21,10 +21,10 @@ pub async fn analyze_game(
     let settings = settings_repo::get_settings(&state.db)?;
     let depth = depth.unwrap_or(settings.analysis_depth).clamp(6, 24);
     let multipv = multipv.unwrap_or(settings.multipv).clamp(1, 3);
-    let engine = state.engine.manager().await?;
+    let lease = state.engine.acquire(settings.analysis_threads).await?;
     analysis::analyze_game(
         &state.db,
-        engine,
+        lease.manager(),
         game_id,
         depth,
         multipv,
@@ -41,7 +41,9 @@ pub async fn analyze_position(
     multipv: Option<u32>,
     on_progress: Channel<EngineUpdate>,
 ) -> AppResult<EngineUpdate> {
-    let engine = state.engine.manager().await?;
+    let settings = settings_repo::get_settings(&state.db)?;
+    let lease = state.engine.acquire(settings.analysis_threads).await?;
+    let engine = lease.manager();
     let depth = depth.unwrap_or(16).clamp(6, 30);
     let multipv = multipv.unwrap_or(3).clamp(1, 3);
     let _job = engine.begin_job().await?;
@@ -54,12 +56,12 @@ pub async fn analyze_position(
 
 #[tauri::command]
 pub async fn stop_engine(state: State<'_, AppState>) -> AppResult<()> {
-    state.engine.request_stop();
+    state.engine.request_stop().await;
     Ok(())
 }
 
 #[tauri::command]
 pub async fn get_engine_status(state: State<'_, AppState>) -> AppResult<EngineStatus> {
-    let _ = state.engine.manager().await;
+    state.engine.probe().await;
     Ok(state.engine.status())
 }

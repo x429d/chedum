@@ -9,7 +9,7 @@ use shakmaty::Chess;
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameDraft, GameSource, TimeClass, UserColor};
 use crate::domain::position::{move_uci, parse_fen, position_fen, san_and_play};
-use crate::eco::EcoBook;
+use crate::pgn::opening::identify_opening;
 use crate::pgn::clocks::{parse_clock_comment, time_class_from_control};
 
 #[derive(Debug, Clone)]
@@ -245,15 +245,11 @@ pub fn build_draft(
     let time_control = parsed.tag("TimeControl").map(str::to_string);
     let time_class =
         time_class_override.or_else(|| time_class_from_control(time_control.as_deref()));
-    let computed = EcoBook::global().identify(&parsed.fens_after());
-    let eco = parsed
-        .tag("ECO")
-        .map(str::to_string)
-        .or_else(|| computed.as_ref().map(|(eco, _)| eco.clone()));
-    let opening_name = parsed
-        .tag("Opening")
-        .map(str::to_string)
-        .or_else(|| computed.map(|(_, name)| name));
+    let computed = identify_opening(parsed);
+    let eco = computed.eco;
+    let opening_name = computed.name;
+    let opening_ply = computed.ply;
+    let opening_source = computed.source;
     let played_at = parse_timestamp(
         parsed.tag("UTCDate").or_else(|| parsed.tag("Date")),
         parsed.tag("UTCTime"),
@@ -277,6 +273,8 @@ pub fn build_draft(
         time_class,
         eco,
         opening_name,
+        opening_ply,
+        opening_source,
         played_at,
         total_plies: parsed.moves.len() as i32,
         notes: String::new(),

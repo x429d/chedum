@@ -1,124 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Color {
-    White,
-    Black,
-}
-
-impl Color {
-    pub fn opposite(self) -> Color {
-        match self {
-            Color::White => Color::Black,
-            Color::Black => Color::White,
-        }
-    }
-
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Color::White => "white",
-            Color::Black => "black",
-        }
-    }
-
-    pub fn from_str_opt(value: &str) -> Option<Color> {
-        match value {
-            "white" => Some(Color::White),
-            "black" => Some(Color::Black),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum UserColor {
-    White,
-    Black,
-    None,
-}
-
-impl UserColor {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            UserColor::White => "white",
-            UserColor::Black => "black",
-            UserColor::None => "none",
-        }
-    }
-
-    pub fn from_str_opt(value: &str) -> Option<UserColor> {
-        match value {
-            "white" => Some(UserColor::White),
-            "black" => Some(UserColor::Black),
-            "none" => Some(UserColor::None),
-            _ => None,
-        }
-    }
-
-    pub fn color(self) -> Option<Color> {
-        match self {
-            UserColor::White => Some(Color::White),
-            UserColor::Black => Some(Color::Black),
-            UserColor::None => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum GameSource {
-    Chesscom,
-    Manual,
-}
-
-impl GameSource {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            GameSource::Chesscom => "chesscom",
-            GameSource::Manual => "manual",
-        }
-    }
-
-    pub fn from_str_opt(value: &str) -> Option<GameSource> {
-        match value {
-            "chesscom" => Some(GameSource::Chesscom),
-            "manual" => Some(GameSource::Manual),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum TimeClass {
-    Bullet,
-    Blitz,
-    Rapid,
-    Classical,
-}
-
-impl TimeClass {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            TimeClass::Bullet => "bullet",
-            TimeClass::Blitz => "blitz",
-            TimeClass::Rapid => "rapid",
-            TimeClass::Classical => "classical",
-        }
-    }
-
-    pub fn from_str_opt(value: &str) -> Option<TimeClass> {
-        match value {
-            "bullet" => Some(TimeClass::Bullet),
-            "blitz" => Some(TimeClass::Blitz),
-            "rapid" => Some(TimeClass::Rapid),
-            "classical" | "daily" => Some(TimeClass::Classical),
-            _ => None,
-        }
-    }
-}
+pub use crate::domain::enums::{Color, GameSource, TimeClass, UserColor};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -139,10 +21,14 @@ pub struct Game {
     pub time_class: Option<TimeClass>,
     pub eco: Option<String>,
     pub opening_name: Option<String>,
+    pub opening_ply: Option<i32>,
+    pub opening_source: Option<String>,
     pub played_at: i64,
     pub total_plies: i32,
     pub notes: String,
     pub is_favorite: bool,
+    pub analysis_attempts: u32,
+    pub last_analysis_error: Option<String>,
 }
 
 /// Партия до вставки в базу (id присваивает SQLite).
@@ -164,6 +50,10 @@ pub struct GameDraft {
     pub time_class: Option<TimeClass>,
     pub eco: Option<String>,
     pub opening_name: Option<String>,
+    #[serde(default)]
+    pub opening_ply: Option<i32>,
+    #[serde(default)]
+    pub opening_source: Option<String>,
     pub played_at: i64,
     pub total_plies: i32,
     pub notes: String,
@@ -210,10 +100,14 @@ impl GameDraft {
             time_class: self.time_class,
             eco: self.eco,
             opening_name: self.opening_name,
+            opening_ply: self.opening_ply,
+            opening_source: self.opening_source,
             played_at: self.played_at,
             total_plies: self.total_plies,
             notes: self.notes,
             is_favorite: self.is_favorite,
+            analysis_attempts: 0,
+            last_analysis_error: None,
         }
     }
 }
@@ -240,6 +134,13 @@ pub struct GameListItem {
     pub user_accuracy: Option<f64>,
     pub user_acpl: Option<f64>,
     pub key_moments_count: Option<i32>,
+    /// Происхождение точности для подсказки в библиотеке.
+    pub engine_name: Option<String>,
+    pub analysis_depth: Option<i32>,
+    pub accuracy_method: Option<String>,
+    /// Сколько раз анализ партии падал; после 3 она выходит из очереди.
+    pub analysis_attempts: u32,
+    pub last_analysis_error: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -279,6 +180,8 @@ pub struct PendingAnalysis {
     pub ids: Vec<i64>,
     /// Суммарное число позиций очереди — база для оценки времени.
     pub positions: u64,
+    /// Партии, исключённые после трёх неудачных попыток.
+    pub excluded: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

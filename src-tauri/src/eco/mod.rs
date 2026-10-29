@@ -1,11 +1,20 @@
+mod identify;
+mod line;
+
+pub use crate::eco::identify::{name_from_eco_url, normalize_opening_name};
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+mod tests;
+
+use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use serde::Deserialize;
-use shakmaty::{san::SanPlus, Chess, Position};
-
-use crate::domain::position::{book_key, position_fen};
+use crate::domain::position::book_key;
 use crate::domain::stats::OpeningEntry;
+use crate::eco::line::line_positions;
 
 static RAW_ECO: &str = include_str!("../../resources/eco.json");
 
@@ -16,12 +25,42 @@ struct RawEntry {
     pgn: String,
 }
 
-/// Встроенный дебютный словарь ECO. Строится лениво один раз за процесс.
-pub struct EcoBook {
-    by_fen: HashMap<String, (String, String)>,
-    entries: Vec<OpeningEntry>,
+/// Самое раннее точное описание позиции: минимальный остаток строки,
+/// затем максимальная глубина, затем устойчивый лексикографический порядок.
+#[derive(Debug, Clone)]
+struct Candidate {
+    eco: String,
+    name: String,
+    remaining: usize,
+    ply: usize,
 }
 
+impl Candidate {
+    fn better_than(&self, other: &Candidate) -> bool {
+        (self.remaining, Reverse(self.ply), &self.eco, &self.name)
+            < (
+                other.remaining,
+                Reverse(other.ply),
+                &other.eco,
+                &other.name,
+            )
+    }
+}
+
+/// Совпадение позиции с базой дебютов.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OpeningMatch {
+    pub eco: String,
+    pub name: String,
+    /// Полуход, на котором сделан последний ход найденной линии.
+    pub ply: usize,
+}
+
+/// Встроенный дебютный словарь ECO. Строится лениво один раз за процесс.
+pub struct EcoBook {
+    by_fen: HashMap<String, Candidate>,
+    entries: Vec<OpeningEntry>,
+}
 impl EcoBook {
     pub fn global() -> &'static EcoBook {
         static BOOK: OnceLock<EcoBook> = OnceLock::new();
@@ -30,12 +69,24 @@ impl EcoBook {
 
     fn build() -> EcoBook {
         let raw: Vec<RawEntry> = serde_json::from_str(RAW_ECO).unwrap_or_default();
-        let mut by_fen = HashMap::new();
+        let mut by_fen: HashMap<String, Candidate> = HashMap::new();
         let mut entries = Vec::with_capacity(raw.len());
         for entry in raw {
             let positions = line_positions(&entry.pgn);
-            for (fen, _ply) in positions {
-                by_fen.insert(fen, (entry.eco.clone(), entry.name.clone()));
+            let total = positions.len();
+            for (fen, ply) in positions {
+                let candidate = Candidate {
+                    eco: entry.eco.clone(),
+                    name: entry.name.clone(),
+                    remaining: total.saturating_sub(ply),
+                    ply,
+                };
+                match by_fen.get(&fen) {
+                    Some(current) if !candidate.better_than(current) => {}
+                    _ => {
+                        by_fen.insert(fen, candidate);
+                    }
+                }
             }
             entries.push(OpeningEntry {
                 eco: entry.eco,
@@ -50,19 +101,34 @@ impl EcoBook {
         self.entries.len()
     }
 
+    pub fn entries(&self) -> &[OpeningEntry] {
+        &self.entries
+    }
+
     pub fn lookup(&self, fen: &str) -> Option<(&str, &str)> {
         let key = book_key(fen);
         self.by_fen
             .get(&key)
-            .map(|(eco, name)| (eco.as_str(), name.as_str()))
+            .map(|candidate| (candidate.eco.as_str(), candidate.name.as_str()))
     }
 
     /// Самое глубокое совпадение по последовательности позиций партии.
     pub fn identify(&self, fens: &[String]) -> Option<(String, String)> {
-        let mut found: Option<(String, String)> = None;
-        for fen in fens {
-            if let Some((eco, name)) = self.lookup(fen) {
-                found = Some((eco.to_string(), name.to_string()));
+        self.identify_with_ply(fens)
+            .map(|found| (found.eco, found.name))
+    }
+
+    /// То же, что `identify`, но с полуходом найденной линии.
+    pub fn identify_with_ply(&self, fens: &[String]) -> Option<OpeningMatch> {
+        let mut found: Option<OpeningMatch> = None;
+        for (index, fen) in fens.iter().enumerate() {
+            let key = book_key(fen);
+            if let Some(candidate) = self.by_fen.get(&key) {
+                found = Some(OpeningMatch {
+                    eco: candidate.eco.clone(),
+                    name: candidate.name.clone(),
+                    ply: index + 1,
+                });
             }
         }
         found
@@ -86,77 +152,21 @@ impl EcoBook {
         out
     }
 }
-
-fn line_positions(pgn: &str) -> Vec<(String, usize)> {
-    let mut pos = Chess::default();
-    let mut out = Vec::new();
-    for token in pgn.split_whitespace() {
-        if token.ends_with('.') || matches!(token, "1-0" | "0-1" | "1/2-1/2" | "*") {
-            continue;
-        }
-        let clean = token.trim_start_matches(|ch: char| ch.is_ascii_digit() || ch == '.');
-        if clean.is_empty() {
-            continue;
-        }
-        let parsed = match SanPlus::from_ascii(clean.as_bytes()) {
-            Ok(parsed) => parsed,
-            Err(_) => break,
-        };
-        let mv = match parsed.san.to_move(&pos) {
-            Ok(mv) => mv,
-            Err(_) => break,
-        };
-        pos.play_unchecked(mv);
-        let ply = out.len() + 1;
-        out.push((book_key(&position_fen(&pos)), ply));
-    }
-    out
+pub fn dataset_version() -> String {
+    static VERSION: OnceLock<String> = OnceLock::new();
+    VERSION
+        .get_or_init(|| {
+            let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+            for byte in RAW_ECO.as_bytes() {
+                hash ^= u64::from(*byte);
+                hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+            }
+            format!("chess-openings-{hash:016x}")
+        })
+        .clone()
 }
 
 /// Удобный фасад для проверки дебютной теории.
 pub fn is_book_position(fen: &str) -> bool {
     EcoBook::global().lookup(fen).is_some()
-}
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn dictionary_has_at_least_three_hundred_lines() {
-        assert!(EcoBook::global().count() >= 300);
-    }
-
-    #[test]
-    fn opening_after_e4_e5_is_known() {
-        let fen = "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2";
-        assert!(is_book_position(fen));
-    }
-
-    #[test]
-    fn unknown_position_is_not_book() {
-        let fen = "8/8/8/8/8/8/8/K6k w - - 0 1";
-        assert!(!is_book_position(fen));
-    }
-
-    #[test]
-    fn search_finds_sicilian() {
-        let found = EcoBook::global().search("Sicilian", 10);
-        assert!(!found.is_empty());
-        assert!(found
-            .iter()
-            .all(|entry| entry.name.to_lowercase().contains("sicilian")
-                || entry.eco.starts_with('B')));
-    }
-
-    #[test]
-    fn identify_picks_deepest_line() {
-        let fens = vec![
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".to_string(),
-            "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2".to_string(),
-        ];
-        let identified = EcoBook::global().identify(&fens);
-        assert!(identified.is_some());
-    }
 }

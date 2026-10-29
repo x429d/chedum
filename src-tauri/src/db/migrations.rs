@@ -110,5 +110,97 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         conn.execute_batch(V1)?;
         conn.pragma_update(None, "user_version", 1)?;
     }
+    if version < 2 {
+        add_column_if_missing(conn, "games", "opening_ply", "INTEGER")?;
+        add_column_if_missing(conn, "games", "opening_source", "TEXT")?;
+        conn.pragma_update(None, "user_version", 2)?;
+    }
+    if version < 3 {
+        add_column_if_missing(
+            conn,
+            "move_evaluations",
+            "is_key_moment",
+            "INTEGER NOT NULL DEFAULT 0",
+        )?;
+        conn.pragma_update(None, "user_version", 3)?;
+    }
+    if version < 4 {
+        add_column_if_missing(conn, "game_analyses", "engine_version", "TEXT")?;
+        add_column_if_missing(
+            conn,
+            "game_analyses",
+            "classifier_version",
+            "TEXT NOT NULL DEFAULT 'classifier-v1'",
+        )?;
+        add_column_if_missing(
+            conn,
+            "game_analyses",
+            "accuracy_method_version",
+            "TEXT NOT NULL DEFAULT 'lichess-v1'",
+        )?;
+        add_column_if_missing(
+            conn,
+            "game_analyses",
+            "config_key",
+            "TEXT NOT NULL DEFAULT ''",
+        )?;
+        conn.execute(
+            "UPDATE game_analyses SET engine_version = '19'
+             WHERE engine_version IS NULL OR engine_version = ''",
+            [],
+        )?;
+        conn.execute(
+            "UPDATE game_analyses SET config_key =
+                engine_name || '|' || engine_version || '|' || depth || '|' || multipv
+                || '|' || classifier_version || '|' || accuracy_method_version",
+            [],
+        )?;
+        conn.pragma_update(None, "user_version", 4)?;
+    }
+    if version < 5 {
+        add_column_if_missing(
+            conn,
+            "games",
+            "analysis_attempts",
+            "INTEGER NOT NULL DEFAULT 0",
+        )?;
+        add_column_if_missing(conn, "games", "last_analysis_error", "TEXT")?;
+        // Новые установки получают автоанализ включённым (значение по
+        // умолчанию в AppSettings). У существующей базы, где пользователь
+        // ещё не выбирал, сохраняем прежнее поведение — выключено.
+        conn.execute(
+            "INSERT INTO app_settings (key, value)
+             SELECT 'auto_analyze', 'false'
+             WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'auto_analyze')
+               AND EXISTS (SELECT 1 FROM games)",
+            [],
+        )?;
+        conn.pragma_update(None, "user_version", 5)?;
+    }
     Ok(())
+}
+
+/// Идемпотентное добавление колонки: повторный запуск после сбоя не падает.
+pub fn add_column_if_missing(
+    conn: &Connection,
+    table: &str,
+    column: &str,
+    definition: &str,
+) -> AppResult<()> {
+    if column_exists(conn, table, column)? {
+        return Ok(());
+    }
+    conn.execute_batch(&format!("ALTER TABLE {table} ADD COLUMN {column} {definition}"))?;
+    Ok(())
+}
+
+fn column_exists(conn: &Connection, table: &str, column: &str) -> AppResult<bool> {
+    let mut stmt = conn.prepare(&format!("PRAGMA table_info({table})"))?;
+    let rows = stmt.query_map([], |row| row.get::<_, String>(1))?;
+    for row in rows {
+        if row? == column {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }

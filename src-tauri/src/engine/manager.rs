@@ -32,23 +32,36 @@ pub struct EngineManager {
     cancel: Arc<AtomicBool>,
     slot: Mutex<()>,
     name: String,
+    version: String,
 }
 
 impl EngineManager {
     pub async fn spawn(path: &Path) -> AppResult<Self> {
-        let process = EngineProcess::spawn(path).await?;
+        EngineManager::spawn_with(path, 2, 128).await
+    }
+
+    /// Один процесс пула: обычно `threads = 1` и умеренный `Hash`.
+    pub async fn spawn_with(path: &Path, threads: usize, hash_mb: u32) -> AppResult<Self> {
+        let process = EngineProcess::spawn_with(path, threads, hash_mb).await?;
         let name = process.name().to_string();
+        let version = version_from_name(&name);
         Ok(EngineManager {
             path: path.to_path_buf(),
             process: Arc::new(Mutex::new(process)),
             cancel: Arc::new(AtomicBool::new(false)),
             slot: Mutex::new(()),
             name,
+            version,
         })
     }
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Версия из `id name Stockfish 19` — «19». Хранится в записи анализа.
+    pub fn version(&self) -> &str {
+        &self.version
     }
 
     pub fn request_stop(&self) {
@@ -193,67 +206,18 @@ impl EngineManager {
     }
 }
 
+fn version_from_name(name: &str) -> String {
+    name.rsplit_once(' ')
+        .map(|(_, version)| version.trim().to_string())
+        .filter(|version| !version.is_empty())
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
 fn is_cancel_error(err: &AppError) -> bool {
     matches!(err, AppError::Engine(message) if message.as_str() == CANCELLED)
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
-mod tests {
-    use super::*;
-
-    const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-    fn bundled_engine() -> Option<PathBuf> {
-        let path =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
-        path.is_file().then_some(path)
-    }
-
-    #[tokio::test]
-    async fn analyzes_start_position_with_bundled_stockfish() {
-        let Some(path) = bundled_engine() else {
-            return;
-        };
-        let manager = EngineManager::spawn(&path).await.unwrap();
-        let _job = manager.begin_job().await.unwrap();
-        let mut updates = 0u32;
-        let update = manager
-            .analyze(START, 8, 2, |_| updates += 1)
-            .await
-            .unwrap();
-        assert!(update.finished);
-        assert!(!update.lines.is_empty());
-        assert!(update.best_move.is_some());
-        assert!(updates > 0);
-        assert!(update.depth >= 8);
-        manager.shutdown().await;
-    }
-
-    #[tokio::test]
-    async fn rejects_second_concurrent_job() {
-        let Some(path) = bundled_engine() else {
-            return;
-        };
-        let manager = EngineManager::spawn(&path).await.unwrap();
-        let job = manager.begin_job().await.unwrap();
-        let second = manager.begin_job().await;
-        assert!(matches!(second, Err(AppError::Busy(_))));
-        drop(job);
-        assert!(manager.begin_job().await.is_ok());
-        manager.shutdown().await;
-    }
-
-    #[tokio::test]
-    async fn new_job_clears_previous_cancellation() {
-        let Some(path) = bundled_engine() else {
-            return;
-        };
-        let manager = EngineManager::spawn(&path).await.unwrap();
-        manager.request_stop();
-        assert!(manager.is_cancelled());
-        let _job = manager.begin_job().await.unwrap();
-        assert!(!manager.is_cancelled());
-        manager.shutdown().await;
-    }
-}
+#[path = "manager_tests.rs"]
+mod tests;

@@ -4,170 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::game::Color;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum MoveCategory {
-    Book,
-    Forced,
-    Brilliant,
-    Great,
-    Best,
-    Excellent,
-    Good,
-    Miss,
-    Inaccuracy,
-    Mistake,
-    Blunder,
-}
+pub use crate::domain::move_category::MoveCategory;
+pub use crate::domain::phase::{Phase, TimeFlag};
 
-impl MoveCategory {
-    pub const ALL: [MoveCategory; 11] = [
-        MoveCategory::Brilliant,
-        MoveCategory::Great,
-        MoveCategory::Best,
-        MoveCategory::Excellent,
-        MoveCategory::Good,
-        MoveCategory::Book,
-        MoveCategory::Inaccuracy,
-        MoveCategory::Mistake,
-        MoveCategory::Miss,
-        MoveCategory::Blunder,
-        MoveCategory::Forced,
-    ];
-
-    pub fn as_str(self) -> &'static str {
-        match self {
-            MoveCategory::Book => "book",
-            MoveCategory::Forced => "forced",
-            MoveCategory::Brilliant => "brilliant",
-            MoveCategory::Great => "great",
-            MoveCategory::Best => "best",
-            MoveCategory::Excellent => "excellent",
-            MoveCategory::Good => "good",
-            MoveCategory::Miss => "miss",
-            MoveCategory::Inaccuracy => "inaccuracy",
-            MoveCategory::Mistake => "mistake",
-            MoveCategory::Blunder => "blunder",
-        }
-    }
-
-    pub fn from_str_opt(value: &str) -> Option<MoveCategory> {
-        MoveCategory::ALL
-            .iter()
-            .copied()
-            .find(|category| category.as_str() == value)
-    }
-
-    pub fn symbol(self) -> &'static str {
-        match self {
-            MoveCategory::Book => "📖",
-            MoveCategory::Forced => "□",
-            MoveCategory::Brilliant => "!!",
-            MoveCategory::Great => "!",
-            MoveCategory::Best => "★",
-            MoveCategory::Excellent => "👍",
-            MoveCategory::Good => "✓",
-            MoveCategory::Miss => "✕",
-            MoveCategory::Inaccuracy => "?!",
-            MoveCategory::Mistake => "?",
-            MoveCategory::Blunder => "??",
-        }
-    }
-
-    pub fn is_error(self) -> bool {
-        matches!(
-            self,
-            MoveCategory::Inaccuracy
-                | MoveCategory::Mistake
-                | MoveCategory::Miss
-                | MoveCategory::Blunder
-        )
-    }
-
-    pub fn is_mistake_or_blunder(self) -> bool {
-        matches!(self, MoveCategory::Mistake | MoveCategory::Blunder)
-    }
-
-    pub fn is_key_moment(self) -> bool {
-        matches!(
-            self,
-            MoveCategory::Brilliant
-                | MoveCategory::Great
-                | MoveCategory::Miss
-                | MoveCategory::Mistake
-                | MoveCategory::Blunder
-        )
-    }
-
-    pub fn needs_coach(self) -> bool {
-        matches!(
-            self,
-            MoveCategory::Brilliant
-                | MoveCategory::Great
-                | MoveCategory::Inaccuracy
-                | MoveCategory::Mistake
-                | MoveCategory::Miss
-                | MoveCategory::Blunder
-        )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Phase {
-    Opening,
-    Middlegame,
-    Endgame,
-}
-
-impl Phase {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            Phase::Opening => "opening",
-            Phase::Middlegame => "middlegame",
-            Phase::Endgame => "endgame",
-        }
-    }
-
-    pub fn from_str_opt(value: &str) -> Option<Phase> {
-        match value {
-            "opening" => Some(Phase::Opening),
-            "middlegame" => Some(Phase::Middlegame),
-            "endgame" => Some(Phase::Endgame),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum TimeFlag {
-    Normal,
-    TimeTrouble,
-    ImpulsiveError,
-    Overthink,
-}
-
-impl TimeFlag {
-    pub fn as_str(self) -> &'static str {
-        match self {
-            TimeFlag::Normal => "normal",
-            TimeFlag::TimeTrouble => "time_trouble",
-            TimeFlag::ImpulsiveError => "impulsive_error",
-            TimeFlag::Overthink => "overthink",
-        }
-    }
-
-    pub fn from_str_opt(value: &str) -> Option<TimeFlag> {
-        match value {
-            "normal" => Some(TimeFlag::Normal),
-            "time_trouble" => Some(TimeFlag::TimeTrouble),
-            "impulsive_error" => Some(TimeFlag::ImpulsiveError),
-            "overthink" => Some(TimeFlag::Overthink),
-            _ => None,
-        }
-    }
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -201,6 +40,8 @@ pub struct MoveEvaluation {
     pub move_accuracy: f64,
     pub classification: MoveCategory,
     pub is_critical: bool,
+    #[serde(default)]
+    pub is_key_moment: bool,
     pub material_diff_white: i32,
     pub clock_remaining_sec: Option<f64>,
     pub time_spent_sec: Option<f64>,
@@ -245,11 +86,34 @@ impl CategoryCounts {
     }
 }
 
+/// Версии методик, с которыми получены метрики конкретного анализа.
+pub const CLASSIFIER_VERSION: &str = "classifier-v1";
+pub const ACCURACY_METHOD_VERSION: &str = "lichess-v1";
+pub const DEFAULT_ENGINE_VERSION: &str = "19";
+
+fn default_engine_version() -> String {
+    DEFAULT_ENGINE_VERSION.to_string()
+}
+
+fn default_classifier_version() -> String {
+    CLASSIFIER_VERSION.to_string()
+}
+
+fn default_accuracy_method() -> String {
+    ACCURACY_METHOD_VERSION.to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GameAnalysis {
     pub game_id: i64,
     pub engine_name: String,
+    #[serde(default = "default_engine_version")]
+    pub engine_version: String,
+    #[serde(default = "default_classifier_version")]
+    pub classifier_version: String,
+    #[serde(default = "default_accuracy_method")]
+    pub accuracy_method_version: String,
     pub depth: i32,
     pub multipv: i32,
     pub analyzed_at: String,

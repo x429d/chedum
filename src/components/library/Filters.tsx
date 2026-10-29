@@ -1,4 +1,4 @@
-import { For } from "solid-js";
+import { For, Show } from "solid-js";
 
 import { libraryStore } from "../../stores/libraryStore";
 import type { TimeClass } from "../../types/models";
@@ -23,7 +23,8 @@ export function Filters() {
       libraryStore.updateFilter({ [key]: null });
       return;
     }
-    const timestamp = Math.floor(new Date(`${value}T00:00:00`).getTime() / 1000);
+    const endOfDay = key === "dateTo" ? 86_399 : 0;
+    const timestamp = Math.floor(new Date(`${value}T00:00:00`).getTime() / 1000) + endOfDay;
     libraryStore.updateFilter({ [key]: Number.isFinite(timestamp) ? timestamp : null });
   };
 
@@ -103,22 +104,50 @@ export function Filters() {
         }
       />
 
-      <input
-        class="input"
-        style={{ width: "132px" }}
-        type="date"
-        title="С даты"
-        value={dateValue(filter().dateFrom)}
-        onChange={(event) => setDate("dateFrom", event.currentTarget.value)}
-      />
-      <input
-        class="input"
-        style={{ width: "132px" }}
-        type="date"
-        title="По дату"
-        value={dateValue(filter().dateTo)}
-        onChange={(event) => setDate("dateTo", event.currentTarget.value)}
-      />
+      <div class="date-field">
+        <input
+          class="input"
+          style={{ width: "142px" }}
+          type="date"
+          title="С даты"
+          aria-label="Партии с даты"
+          value={dateValue(filter().dateFrom)}
+          onChange={(event) => setDate("dateFrom", event.currentTarget.value)}
+        />
+        <Show when={filter().dateFrom}>
+          <button
+            type="button"
+            class="date-clear"
+            title="Очистить дату начала"
+            aria-label="Очистить дату начала"
+            onClick={() => libraryStore.updateFilter({ dateFrom: null })}
+          >
+            ×
+          </button>
+        </Show>
+      </div>
+      <div class="date-field">
+        <input
+          class="input"
+          style={{ width: "142px" }}
+          type="date"
+          title="По дату"
+          aria-label="Партии по дату"
+          value={dateValue(filter().dateTo)}
+          onChange={(event) => setDate("dateTo", event.currentTarget.value)}
+        />
+        <Show when={filter().dateTo}>
+          <button
+            type="button"
+            class="date-clear"
+            title="Очистить дату окончания"
+            aria-label="Очистить дату окончания"
+            onClick={() => libraryStore.updateFilter({ dateTo: null })}
+          >
+            ×
+          </button>
+        </Show>
+      </div>
 
       <label class="chip" style={{ cursor: "pointer" }}>
         <input

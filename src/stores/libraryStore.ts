@@ -10,6 +10,7 @@ import type {
 } from "../types/models";
 import { EMPTY_BATCH } from "../types/models";
 import { toErrorMessage } from "../utils/format";
+import { createLibraryActions } from "./libraryActions";
 import { createBatchController } from "./libraryBatch";
 import { settingsStore } from "./settingsStore";
 import { ui } from "./uiStore";
@@ -26,9 +27,12 @@ const [syncResult, setSyncResult] = createSignal<SyncResult | null>(null);
 const [syncing, setSyncing] = createSignal(false);
 const [importing, setImporting] = createSignal(false);
 const [batch, setBatch] = createSignal<BatchState>(EMPTY_BATCH);
+const [queuePending, setQueuePending] = createSignal(0);
+const [queueExcluded, setQueueExcluded] = createSignal(0);
 const selectedCount = () => selected().length;
 let loadSequence = 0;
 let searchTimer: number | undefined;
+let autoResumeHandled = false;
 
 async function load(): Promise<void> {
   const sequence = ++loadSequence;
@@ -41,10 +45,37 @@ async function load(): Promise<void> {
     setAnalyzed(page.analyzed);
     setFavorites(page.favorites);
     setSelected((ids) => ids.filter((id) => page.games.some((game) => game.id === id)));
+    void refreshQueue();
   } catch (error) {
     ui.notify(toErrorMessage(error), "error");
   } finally {
     if (sequence === loadSequence) setLoading(false);
+  }
+}
+
+/// Очередь — производная состояния: партии без анализа текущей конфигурации,
+/// у которых меньше трёх неудачных попыток. Считает бэкенд.
+async function refreshQueue(): Promise<void> {
+  try {
+    const plan = await api.listPendingAnalysis(filter());
+    setQueuePending(plan.ids.length);
+    setQueueExcluded(plan.excluded);
+  } catch {
+    // Счётчик не критичен для загрузки библиотеки; ошибка придёт при запуске.
+  }
+}
+
+async function startAutoResume(): Promise<void> {
+  if (autoResumeHandled) return;
+  autoResumeHandled = true;
+  if (!settingsStore.settings().autoResumeAnalysis) return;
+  try {
+    const plan = await api.listPendingAnalysis({});
+    if (plan.ids.length === 0) return;
+    ui.notify(`Продолжаю разбор: ${plan.ids.length} партий`, "info");
+    await batchController.analyzeIds(plan.ids, "Продолжение разбора", plan.positions);
+  } catch (error) {
+    ui.notify(toErrorMessage(error), "error");
   }
 }
 function updateFilter(patch: Partial<GameFilter>): void {
@@ -96,6 +127,20 @@ const batchController = createBatchController({
   games,
   selected,
   reload: load,
+});
+
+const actions = createLibraryActions({
+  games,
+  total,
+  selected,
+  selectedGameId,
+  setGames,
+  setSelected,
+  setSelectedGameId,
+  setFilter,
+  pageIndex,
+  pageSize,
+  load,
 });
 
 function toggleSelect(id: number): void {
@@ -173,7 +218,7 @@ async function importText(text: string): Promise<void> {
 
 function maybeAutoAnalyze(imported: number): void {
   if (imported <= 0 || !settingsStore.settings().autoAnalyze) return;
-  void batchController.analyzePending(false);
+  void batchController.analyzePending(false, true);
 }
 
 function notifyImport(result: ImportSummary): void {
@@ -181,82 +226,12 @@ function notifyImport(result: ImportSummary): void {
   ui.notify(`Импортировано ${result.imported}, пропущено ${result.skipped}${details}`, "success");
 }
 
-async function exportSelection(): Promise<void> {
-  const ids = selected();
-  if (ids.length === 0 && total() === 0) {
-    ui.notify("Нет партий для экспорта", "info");
-    return;
-  }
-  try {
-    const path = await api.exportGames(ids);
-    if (path) ui.notify(`PGN сохранён: ${path}`, "success");
-  } catch (error) {
-    ui.notify(toErrorMessage(error), "error");
-  }
-}
-
-async function toggleFavorite(game: GameListItem): Promise<void> {
-  try {
-    await api.toggleFavorite(game.id, !game.isFavorite);
-    setGames((items) =>
-      items.map((item) => (item.id === game.id ? { ...item, isFavorite: !item.isFavorite } : item)),
-    );
-  } catch (error) {
-    ui.notify(toErrorMessage(error), "error");
-  }
-}
-
-async function deleteGames(ids: number[]): Promise<void> {
-  const unique = [...new Set(ids)];
-  if (unique.length === 0) return;
-  const message =
-    unique.length === 1
-      ? "Удалить партию вместе с анализом?"
-      : `Удалить ${unique.length} партий вместе с анализом?`;
-  let confirmed = false;
-  try {
-    confirmed = await api.confirmDelete(message);
-  } catch (error) {
-    ui.notify(toErrorMessage(error), "error");
-    return;
-  }
-  if (!confirmed) return;
-  try {
-    const deleted = await api.deleteGames(unique);
-    if (deleted === 0) {
-      ui.notify("Партии уже удалены", "info");
-      await load();
-      return;
-    }
-    setGames((items) => items.filter((game) => !unique.includes(game.id)));
-    setSelected((items) => items.filter((id) => !unique.includes(id)));
-    const current = selectedGameId();
-    if (current !== null && unique.includes(current)) {
-      setSelectedGameId(null);
-      ui.setView("library");
-    }
-    ui.notify(
-      unique.length === 1 ? "Партия удалена" : `Удалено партий: ${deleted}`,
-      "success",
-    );
-    if (games().length === 0 && pageIndex() > 0) {
-      setFilter((currentFilter) => ({
-        ...currentFilter,
-        offset: Math.max(0, (currentFilter.offset ?? 0) - pageSize()),
-      }));
-    }
-    await load();
-  } catch (error) {
-    ui.notify(toErrorMessage(error), "error");
-  }
-}
-
 function deleteGame(id: number): void {
-  void deleteGames([id]);
+  void actions.deleteGames([id]);
 }
 
 function deleteSelected(): void {
-  void deleteGames(selected());
+  void actions.deleteGames(selected());
 }
 
 export const libraryStore = {
@@ -264,7 +239,8 @@ export const libraryStore = {
   total,
   analyzed,
   favorites,
-  pendingAnalysis: () => Math.max(0, total() - analyzed()),
+  pendingAnalysis: queuePending,
+  queueExcluded,
   loading,
   filter,
   selected,
@@ -293,13 +269,17 @@ export const libraryStore = {
   syncChesscom,
   importFiles,
   importText,
-  exportSelection,
-  toggleFavorite,
-  deleteGames,
+  exportSelection: actions.exportSelection,
+  toggleFavorite: actions.toggleFavorite,
+  deleteGames: actions.deleteGames,
   deleteGame,
   deleteSelected,
   analyzeSelected: () => batchController.analyzeSelected(),
   analyzePending: () => batchController.analyzePending(),
   analyzeOne: (id: number) => batchController.analyzeOne(id),
+  analyzeIds: (ids: number[], label?: string) =>
+    batchController.analyzeIds(ids, label ?? "Пакетный анализ"),
+  refreshQueue,
+  startAutoResume,
   cancelBatch: () => batchController.cancel(),
 };

@@ -18,7 +18,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   boardTheme: "walnut",
   pieceSet: "cburnett",
   showArrows: true,
-  autoAnalyze: false,
+  autoAnalyze: true,
+  analysisThreads: 0,
+  autoResumeAnalysis: false,
 };
 
 const [settings, setSettings] = createSignal<AppSettings>(DEFAULT_SETTINGS);

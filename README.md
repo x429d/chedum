@@ -1,5 +1,7 @@
 # Chenal — native chess analytics studio
 
+[![CI](https://github.com/x429d/chenal/actions/workflows/ci.yml/badge.svg)](https://github.com/x429d/chenal/actions/workflows/ci.yml)
+
 Local-first macOS (Apple Silicon) chess analytics studio built with Tauri v2, Rust, SolidJS and
 Stockfish. Games are stored in local SQLite, analyzed offline, and presented in a Linear/Raycast
 inspired dark interface.

@@ -15,12 +15,15 @@ export interface AppSettings {
   pieceSet: PieceSet;
   showArrows: boolean;
   autoAnalyze: boolean;
+  analysisThreads: number;
+  autoResumeAnalysis: boolean;
 }
 
 export interface AppInfo {
   name: string;
   version: string;
   ecoOpenings: number;
+  maxAnalysisWorkers: number;
 }
 
 export interface OpeningEntry {
@@ -47,6 +50,7 @@ export interface HubKpis {
   avgAccuracy: number | null;
   avgAcpl: number | null;
   avgPerfElo: number | null;
+  avgPerfEloSpread: number | null;
   white: ColorRecord;
   black: ColorRecord;
 }
@@ -55,6 +59,7 @@ export interface OpeningStat {
   eco: string;
   name: string;
   games: number;
+  analyzed: number;
   wins: number;
   draws: number;
   losses: number;
@@ -62,12 +67,15 @@ export interface OpeningStat {
   accuracy: number | null;
   exitEval: number | null;
   exitWinProb: number | null;
+  price: number;
+  reliable: boolean;
 }
 
 export interface PhaseStat {
   phase: Phase;
   accuracy: number | null;
   moves: number;
+  games: number;
 }
 
 export interface AccuracyPoint {
@@ -87,12 +95,25 @@ export interface TimeStats {
   pressureAccuracy: number | null;
 }
 
+export interface AnalysisConfigView {
+  engineName: string;
+  engineVersion: string;
+  depth: number;
+  multipv: number;
+  classifierVersion: string;
+  accuracyMethodVersion: string;
+  included: number;
+  total: number;
+  mismatchedGameIds: number[];
+}
+
 export interface HubStats {
   kpis: HubKpis;
   openings: OpeningStat[];
   phases: PhaseStat[];
   trend: AccuracyPoint[];
   time: TimeStats;
+  config: AnalysisConfigView | null;
 }
 
 export interface ArchiveView {

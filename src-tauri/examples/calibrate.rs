@@ -63,6 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             parsed: &parsed,
             evaluations: &evaluations,
             engine_name: engine.name(),
+            engine_version: engine.version(),
             depth,
             multipv: 2,
         })?;

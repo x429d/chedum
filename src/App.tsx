@@ -12,8 +12,11 @@ import { SettingsView } from "./views/SettingsView";
 
 export default function App() {
   onMount(() => {
-    void settingsStore.load();
-    void libraryStore.load();
+    void (async () => {
+      await settingsStore.load();
+      await libraryStore.load();
+      await libraryStore.startAutoResume();
+    })();
   });
 
   return (
