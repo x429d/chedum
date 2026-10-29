@@ -3,12 +3,12 @@ use shakmaty::{Chess, Position};
 use chrono::Utc;
 
 use crate::analytics::{
-    average_cp_loss, build_summary, game_accuracy, performance_elo, phase_accuracy, spent_time,
-    time_flag, Score, SummaryInput, TimeContext,
+    average_cp_loss, game_accuracy, performance_elo, phase_accuracy, spent_time,
+    summary_from_analysis, time_flag, Score, SummaryContext, TimeContext,
 };
 use crate::domain::analysis::{CategoryCounts, GameAnalysis, MoveCategory, Phase, TimeFlag};
 use crate::domain::error::{AppError, AppResult};
-use crate::domain::game::{Color, Game, TimeClass, UserColor};
+use crate::domain::game::{Color, Game, TimeClass};
 use crate::domain::position::{
     is_checkmate, is_hanging_after, material_value, parse_fen, parse_uci, play_uci, side_to_move,
 };
@@ -214,29 +214,7 @@ pub fn finalize(input: AggregateInput<'_>) -> GameAnalysis {
     let white_acpl = average_cp_loss(input.white_cp);
     let black_acpl = average_cp_loss(input.black_cp);
     let [white_phase_acc, black_phase_acc] = phase_accuracy(&input.phase_samples, &input.phase_first);
-    let user_phases = match input.game.user_color {
-        UserColor::White => white_phase_acc,
-        UserColor::Black => black_phase_acc,
-        UserColor::None => [None, None, None],
-    };
-    let summary = build_summary(&SummaryInput {
-        white: &input.game.white_username,
-        black: &input.game.black_username,
-        result: &input.game.result,
-        user_color: input.game.user_color,
-        white_accuracy,
-        black_accuracy,
-        white_acpl,
-        black_acpl,
-        counts: &input.counts,
-        eco: input.game.eco.as_deref(),
-        opening: input.game.opening_name.as_deref(),
-        key_moments: input.key_moments,
-        user_phases,
-        time_trouble: input.user_time_trouble,
-        impulsive_errors: input.user_impulsive,
-    });
-    GameAnalysis {
+    let mut analysis = GameAnalysis {
         game_id: input.game.id,
         engine_name: input.engine_name.to_string(),
         depth: input.depth as i32,
@@ -255,7 +233,15 @@ pub fn finalize(input: AggregateInput<'_>) -> GameAnalysis {
         black_middlegame_acc: black_phase_acc[1],
         black_endgame_acc: black_phase_acc[2],
         counts: input.counts,
-        summary_text: summary,
+        summary_text: String::new(),
         key_moments_count: input.key_moments as i32,
-    }
+    };
+    let context = SummaryContext::from_game(input.game);
+    analysis.summary_text = summary_from_analysis(
+        &context,
+        &analysis,
+        input.user_time_trouble,
+        input.user_impulsive,
+    );
+    analysis
 }

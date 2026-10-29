@@ -12,6 +12,6 @@ pub use accuracy::{
 pub use classify::{classify, is_critical, ClassifyInput};
 pub use coach::{explain, CoachInput, Explanation};
 pub use phase::phase_for;
-pub use summary::{build_summary, SummaryInput};
+pub use summary::{summary_from_analysis, SummaryContext};
 pub use timemanage::{spent_time, time_flag, TimeContext};
 pub use winprob::{win_prob_cp, win_prob_mate, Score};

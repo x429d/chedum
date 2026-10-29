@@ -1,6 +1,7 @@
 use super::*;
 use crate::db::analyses_repo::{
-    backfill_lichess_accuracy, get_analysis, get_moves, insert_analysis_draft, save_move_comment,
+    backfill_lichess_accuracy, backfill_summaries, get_analysis, get_moves, insert_analysis_draft,
+    save_move_comment,
 };
 use crate::db::connection::Db;
 use crate::db::stats_repo::hub_stats;
@@ -327,4 +328,54 @@ fn backfills_accuracy_with_lichess_method() {
     assert_ne!(stored.black_accuracy, Some(80.0));
     // Повторный запуск идемпотентен.
     assert_eq!(backfill_lichess_accuracy(&db, false).unwrap(), 0);
+}
+
+#[test]
+fn summary_text_always_matches_accuracy_fields() {
+    let db = Db::in_memory().unwrap();
+    let game = draft(
+        "g1",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    // Старая запись хранит резюме, посчитанное до смены алгоритма.
+    let mut stale = analysis(
+        id,
+        63.4,
+        59.2,
+        vec![move_eval(
+            id,
+            1,
+            Phase::Opening,
+            MoveCategory::Blunder,
+            TimeFlag::TimeTrouble,
+        )],
+    );
+    stale.analysis.summary_text =
+        "Точность ваших ходов — 74.6%, ACPL 101.6.".to_string();
+    insert_analysis_draft(&db, &stale).unwrap();
+
+    let stored = get_analysis(&db, id).unwrap().unwrap();
+    assert!(stored.summary_text.contains("63.4%"), "{}", stored.summary_text);
+    assert!(!stored.summary_text.contains("74.6"), "{}", stored.summary_text);
+    assert!(stored.summary_text.contains("ACPL 20.0"), "{}", stored.summary_text);
+
+    assert_eq!(backfill_summaries(&db).unwrap(), 1);
+    let raw: String = db
+        .with(|conn| {
+            Ok(conn.query_row(
+                "SELECT summary_text FROM game_analyses WHERE game_id = ?1",
+                [id],
+                |row| row.get(0),
+            )?)
+        })
+        .unwrap();
+    assert!(raw.contains("63.4%"), "{raw}");
+    assert!(!raw.contains("74.6"), "{raw}");
+    assert_eq!(backfill_summaries(&db).unwrap(), 0);
 }

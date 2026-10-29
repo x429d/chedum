@@ -49,6 +49,13 @@ pub fn run() {
                 Ok(_) => {}
                 Err(err) => eprintln!("Chenal: не удалось пересчитать точность: {err}"),
             }
+            match analyses_repo::backfill_summaries(&db) {
+                Ok(count) if count > 0 => {
+                    eprintln!("Chenal: резюме партий пересобраны из метрик — {count}");
+                }
+                Ok(_) => {}
+                Err(err) => eprintln!("Chenal: не удалось пересобрать резюме: {err}"),
+            }
             let engine = EngineState::discover(app.handle());
             app.manage(AppState { db, engine });
             Ok(())
