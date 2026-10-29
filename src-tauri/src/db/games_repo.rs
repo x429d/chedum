@@ -9,7 +9,8 @@ use rusqlite::{params, params_from_iter, Connection, OptionalExtension, Row};
 
 const GAME_COLUMNS: &str = "g.id, g.external_id, g.source, g.pgn, g.initial_fen, g.white_username, \
     g.black_username, g.white_elo, g.black_elo, g.user_color, g.result, g.termination, \
-    g.time_control, g.time_class, g.eco, g.opening_name, g.played_at, g.total_plies, g.notes, g.is_favorite";
+    g.time_control, g.time_class, g.eco, g.opening_name, g.opening_ply, g.opening_source, \
+    g.played_at, g.total_plies, g.notes, g.is_favorite";
 
 const LIST_COLUMNS: &str = "g.id, g.white_username, g.black_username, g.white_elo, g.black_elo, \
     g.user_color, g.result, g.time_control, g.time_class, g.eco, g.opening_name, g.played_at, \
@@ -20,8 +21,8 @@ pub fn insert_game(conn: &Connection, draft: &GameDraft) -> AppResult<Option<i64
         "INSERT OR IGNORE INTO games (
             external_id, source, pgn, initial_fen, white_username, black_username, white_elo,
             black_elo, user_color, result, termination, time_control, time_class, eco,
-            opening_name, played_at, total_plies, notes, is_favorite
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)",
+            opening_name, opening_ply, opening_source, played_at, total_plies, notes, is_favorite
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)",
         params![
             draft.external_id,
             draft.source.as_str(),
@@ -38,6 +39,8 @@ pub fn insert_game(conn: &Connection, draft: &GameDraft) -> AppResult<Option<i64
             draft.time_class.map(TimeClass::as_str),
             draft.eco,
             draft.opening_name,
+            draft.opening_ply,
+            draft.opening_source,
             draft.played_at,
             draft.total_plies,
             draft.notes,
@@ -289,6 +292,8 @@ fn map_game(row: &Row<'_>) -> rusqlite::Result<Game> {
         time_class: time_class.and_then(|value| TimeClass::from_str_opt(&value)),
         eco: row.get("eco")?,
         opening_name: row.get("opening_name")?,
+        opening_ply: row.get("opening_ply")?,
+        opening_source: row.get("opening_source")?,
         played_at: row.get("played_at")?,
         total_plies: row.get("total_plies")?,
         notes: row.get("notes")?,

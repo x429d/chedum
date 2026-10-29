@@ -110,5 +110,35 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         conn.execute_batch(V1)?;
         conn.pragma_update(None, "user_version", 1)?;
     }
+    if version < 2 {
+        add_column_if_missing(conn, "games", "opening_ply", "INTEGER")?;
+        add_column_if_missing(conn, "games", "opening_source", "TEXT")?;
+        conn.pragma_update(None, "user_version", 2)?;
+    }
     Ok(())
+}
+
+/// Идемпотентное добавление колонки: повторный запуск после сбоя не падает.
+pub fn add_column_if_missing(
+    conn: &Connection,
+    table: &str,
+    column: &str,
+    definition: &str,
+) -> AppResult<()> {
+    if column_exists(conn, table, column)? {
+        return Ok(());
+    }
+    conn.execute_batch(&format!("ALTER TABLE {table} ADD COLUMN {column} {definition}"))?;
+    Ok(())
+}
+
+fn column_exists(conn: &Connection, table: &str, column: &str) -> AppResult<bool> {
+    let mut stmt = conn.prepare(&format!("PRAGMA table_info({table})"))?;
+    let rows = stmt.query_map([], |row| row.get::<_, String>(1))?;
+    for row in rows {
+        if row? == column {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }

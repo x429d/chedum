@@ -19,6 +19,8 @@ fn draft(external_id: &str, played_at: i64) -> GameDraft {
         time_class: Some(TimeClass::Rapid),
         eco: Some("C41".to_string()),
         opening_name: Some("Philidor Defense".to_string()),
+        opening_ply: Some(3),
+        opening_source: Some("position".to_string()),
         played_at,
         total_plies: 2,
         notes: String::new(),

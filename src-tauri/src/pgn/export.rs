@@ -38,6 +38,8 @@ mod tests {
             time_class: Some(TimeClass::Rapid),
             eco: None,
             opening_name: None,
+            opening_ply: None,
+            opening_source: None,
             played_at: 0,
             total_plies: 1,
             notes: String::new(),

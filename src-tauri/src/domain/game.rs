@@ -139,6 +139,8 @@ pub struct Game {
     pub time_class: Option<TimeClass>,
     pub eco: Option<String>,
     pub opening_name: Option<String>,
+    pub opening_ply: Option<i32>,
+    pub opening_source: Option<String>,
     pub played_at: i64,
     pub total_plies: i32,
     pub notes: String,
@@ -164,6 +166,10 @@ pub struct GameDraft {
     pub time_class: Option<TimeClass>,
     pub eco: Option<String>,
     pub opening_name: Option<String>,
+    #[serde(default)]
+    pub opening_ply: Option<i32>,
+    #[serde(default)]
+    pub opening_source: Option<String>,
     pub played_at: i64,
     pub total_plies: i32,
     pub notes: String,
@@ -210,6 +216,8 @@ impl GameDraft {
             time_class: self.time_class,
             eco: self.eco,
             opening_name: self.opening_name,
+            opening_ply: self.opening_ply,
+            opening_source: self.opening_source,
             played_at: self.played_at,
             total_plies: self.total_plies,
             notes: self.notes,

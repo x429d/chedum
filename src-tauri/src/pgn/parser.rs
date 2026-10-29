@@ -9,7 +9,7 @@ use shakmaty::Chess;
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameDraft, GameSource, TimeClass, UserColor};
 use crate::domain::position::{move_uci, parse_fen, position_fen, san_and_play};
-use crate::eco::EcoBook;
+use crate::eco::{name_from_eco_url, normalize_opening_name, EcoBook};
 use crate::pgn::clocks::{parse_clock_comment, time_class_from_control};
 
 #[derive(Debug, Clone)]
@@ -221,6 +221,51 @@ fn normalized_result(value: Option<&str>) -> String {
     }
 }
 
+/// Дебют партии: сначала позиция, затем — только при отсутствии совпадения —
+/// заголовки PGN (ECO/Opening/ECOUrl), нормализованные.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OpeningIdentification {
+    pub eco: Option<String>,
+    pub name: Option<String>,
+    pub ply: Option<i32>,
+    pub source: Option<String>,
+}
+
+pub fn identify_opening(parsed: &ParsedGame) -> OpeningIdentification {
+    let computed = EcoBook::global().identify_with_ply(&parsed.fens_after());
+    match computed {
+        Some(found) => OpeningIdentification {
+            eco: Some(found.eco),
+            name: Some(found.name),
+            ply: Some(found.ply as i32),
+            source: Some("position".to_string()),
+        },
+        None => {
+            // Запасной вариант — только заголовки PGN, причём ECO и имя
+            // берутся из одного источника, чтобы не склеить разные дебюты.
+            let name = parsed
+                .tag("Opening")
+                .and_then(normalize_opening_name)
+                .or_else(|| parsed.tag("ECOUrl").and_then(name_from_eco_url));
+            let eco = parsed
+                .tag("ECO")
+                .map(|value| value.trim().to_uppercase())
+                .filter(|value| !value.is_empty());
+            let source = if name.is_some() || eco.is_some() {
+                Some("pgn_header".to_string())
+            } else {
+                None
+            };
+            OpeningIdentification {
+                eco,
+                name,
+                ply: None,
+                source,
+            }
+        }
+    }
+}
+
 /// Собирает доменную модель партии из разобранного PGN.
 pub fn build_draft(
     parsed: &ParsedGame,
@@ -245,15 +290,11 @@ pub fn build_draft(
     let time_control = parsed.tag("TimeControl").map(str::to_string);
     let time_class =
         time_class_override.or_else(|| time_class_from_control(time_control.as_deref()));
-    let computed = EcoBook::global().identify(&parsed.fens_after());
-    let eco = parsed
-        .tag("ECO")
-        .map(str::to_string)
-        .or_else(|| computed.as_ref().map(|(eco, _)| eco.clone()));
-    let opening_name = parsed
-        .tag("Opening")
-        .map(str::to_string)
-        .or_else(|| computed.map(|(_, name)| name));
+    let computed = identify_opening(parsed);
+    let eco = computed.eco;
+    let opening_name = computed.name;
+    let opening_ply = computed.ply;
+    let opening_source = computed.source;
     let played_at = parse_timestamp(
         parsed.tag("UTCDate").or_else(|| parsed.tag("Date")),
         parsed.tag("UTCTime"),
@@ -277,6 +318,8 @@ pub fn build_draft(
         time_class,
         eco,
         opening_name,
+        opening_ply,
+        opening_source,
         played_at,
         total_plies: parsed.moves.len() as i32,
         notes: String::new(),
