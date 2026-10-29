@@ -247,11 +247,34 @@ impl CategoryCounts {
     }
 }
 
+/// Версии методик, с которыми получены метрики конкретного анализа.
+pub const CLASSIFIER_VERSION: &str = "classifier-v1";
+pub const ACCURACY_METHOD_VERSION: &str = "lichess-v1";
+pub const DEFAULT_ENGINE_VERSION: &str = "19";
+
+fn default_engine_version() -> String {
+    DEFAULT_ENGINE_VERSION.to_string()
+}
+
+fn default_classifier_version() -> String {
+    CLASSIFIER_VERSION.to_string()
+}
+
+fn default_accuracy_method() -> String {
+    ACCURACY_METHOD_VERSION.to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GameAnalysis {
     pub game_id: i64,
     pub engine_name: String,
+    #[serde(default = "default_engine_version")]
+    pub engine_version: String,
+    #[serde(default = "default_classifier_version")]
+    pub classifier_version: String,
+    #[serde(default = "default_accuracy_method")]
+    pub accuracy_method_version: String,
     pub depth: i32,
     pub multipv: i32,
     pub analyzed_at: String,

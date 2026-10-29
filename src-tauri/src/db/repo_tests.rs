@@ -104,6 +104,9 @@ fn analysis(
         analysis: GameAnalysis {
             game_id,
             engine_name: "Stockfish 19".to_string(),
+            engine_version: "19".to_string(),
+            classifier_version: crate::domain::analysis::CLASSIFIER_VERSION.to_string(),
+            accuracy_method_version: crate::domain::analysis::ACCURACY_METHOD_VERSION.to_string(),
             depth: 14,
             multipv: 2,
             analyzed_at: "2026-01-01T00:00:00Z".to_string(),
@@ -307,6 +310,87 @@ fn aggregates_hub_statistics() {
     // Меньше 20 разобранных партий — оценка силы по точности не показывается.
     assert!(stats.kpis.avg_perf_elo.is_none());
     assert!(stats.kpis.avg_perf_elo_spread.is_none());
+    let config = stats.config.as_ref().unwrap();
+    assert_eq!(config.depth, 14);
+    assert_eq!(config.included, 2);
+    assert_eq!(config.total, 2);
+    assert!(config.mismatched_game_ids.is_empty());
+}
+
+#[test]
+fn hub_ignores_analyses_from_another_configuration() {
+    let db = Db::in_memory().unwrap();
+    let mut ids = Vec::new();
+    for index in 0..2 {
+        let game = draft(
+            &format!("g{index}"),
+            "alice",
+            "bob",
+            UserColor::White,
+            "1-0",
+            TimeClass::Rapid,
+            index,
+        );
+        let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+        insert_analysis_draft(
+            &db,
+            &analysis(
+                id,
+                90.0,
+                80.0,
+                vec![move_eval(
+                    id,
+                    1,
+                    Phase::Opening,
+                    MoveCategory::Best,
+                    TimeFlag::Normal,
+                )],
+            ),
+        )
+        .unwrap();
+        ids.push(id);
+    }
+    let before = hub_stats(&db).unwrap();
+    let before_accuracy = before.kpis.avg_accuracy.unwrap();
+    assert_eq!(before.kpis.analyzed_games, 2);
+
+    let deep_game = draft(
+        "g-deep",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        5,
+    );
+    let deep_id = db
+        .with_tx(|tx| insert_game(tx, &deep_game))
+        .unwrap()
+        .unwrap();
+    let mut deep = analysis(
+        deep_id,
+        10.0,
+        10.0,
+        vec![move_eval(
+            deep_id,
+            1,
+            Phase::Opening,
+            MoveCategory::Blunder,
+            TimeFlag::Normal,
+        )],
+    );
+    deep.analysis.depth = 18;
+    insert_analysis_draft(&db, &deep).unwrap();
+
+    let after = hub_stats(&db).unwrap();
+    assert!((after.kpis.avg_accuracy.unwrap() - before_accuracy).abs() < 1e-9);
+    assert_eq!(after.kpis.analyzed_games, 2);
+    let config = after.config.as_ref().unwrap();
+    assert_eq!(config.depth, 14);
+    assert_eq!(config.included, 2);
+    assert_eq!(config.total, 3);
+    assert_eq!(config.mismatched_game_ids, vec![deep_id]);
+    assert_eq!(ids.len(), 2);
 }
 
 #[test]

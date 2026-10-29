@@ -85,6 +85,7 @@ pub async fn analyze_game(
         parsed: &parsed,
         evaluations: &evaluations,
         engine_name: engine.name(),
+        engine_version: engine.version(),
         depth,
         multipv,
     })?;

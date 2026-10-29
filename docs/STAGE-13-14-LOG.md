@@ -208,3 +208,37 @@ mistake/blunder/miss не проходила приёмку 3–8: значим�
   70.8 %; B02 39 / 7 / 65.5 %; C29 39 / 4 / 80.9 % (приглушена);
   D00 27 / 0; C25 26 / 3 / 55.5 % (приглушена).
 - Гейты: `cargo test` 113, clippy, `tsc`, `npm run build` — clean.
+
+## T13.6 — F-02: провенанс анализа и одна конфигурация в хабе
+
+**Воспроизведение.** В `game_analyses` не было версий движка/классификатора/
+методики, а SQL хаба соединял все анализы подряд. На живой базе: depth 14
+MultiPV 3 — 131, depth 14 MultiPV 2 — 21, depth 18 — 1, depth 22 — 1.
+
+**Сделано.**
+- Миграция `user_version 4`: `engine_version`, `classifier_version`,
+  `accuracy_method_version`, `config_key` (составной ключ
+  `движок|версия|depth|multipv|classifier|accuracy`). Старым записям
+  проставлены `Stockfish 19`, `19`, `classifier-v1`, `lichess-v1`.
+- `EngineManager::version()` берёт версию из `id name Stockfish 19`;
+  `GameAnalysis` хранит все поля, `insert_analysis` пишет `config_key`.
+- Хаб выбирает самую частую конфигурацию (`select_config`) и фильтрует по
+  `config_key` **все** агрегаты: KPI, точность по цветам, дебюты, фазы,
+  тренд, тайм-менеджмент, Performance Elo.
+- Над хабом — плашка «Конфигурация: Stockfish 19 · depth 14 · MultiPV 3 ·
+  учтено 131 из 154» и кнопка «Пересчитать на depth 14 (23)» для партий с
+  другой конфигурацией. Кнопка использует текущие настройки и не удаляет
+  старые анализы.
+
+**Проверено.**
+- `hub_ignores_analyses_from_another_configuration`: два анализа depth 14 +
+  один depth 18 → средняя точность не меняется, `analyzed=2`, `total=3`,
+  `mismatched_game_ids=[id3]`.
+- `aggregates_hub_statistics`: конфигурация depth 14, `included=2`.
+- Живая база: `hub` CLI — конфигурация Stockfish 19 · depth 14 · MultiPV 3,
+  учтено **131 из 154**, несовпадающие: 21 анализ MultiPV 2 + depth 18 + 22.
+- Гейты: `cargo test` 114, clippy, `tsc`, `npm run build` — clean.
+
+**Уточнение находки F-02.** Разнородность глубин оказалась шире: 21 анализ
+depth 14 сделан с MultiPV 2, остальные — с MultiPV 3. Строгий ключ
+конфигурации исключает и их; кнопка пересчёта покрывает все 23 партии.

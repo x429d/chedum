@@ -4,33 +4,104 @@ use crate::db::connection::Db;
 use crate::db::stats_extra::{time_stats, trend};
 use crate::domain::analysis::Phase;
 use crate::domain::error::AppResult;
-use crate::domain::stats::{ColorRecord, HubKpis, HubStats, OpeningStat, PhaseStat};
+use crate::domain::stats::{
+    AnalysisConfigView, ColorRecord, HubKpis, HubStats, OpeningStat, PhaseStat,
+};
+
+/// Минимальная выборка, при которой точность дебюта считается показательной.
+const MIN_RELIABLE_SAMPLE: u32 = 5;
+/// Оценка силы по точности показывается только на достаточной выборке.
+const MIN_PERF_SAMPLE: u32 = 20;
+
+struct ConfigSelection {
+    config_key: String,
+    view: AnalysisConfigView,
+}
 
 pub fn hub_stats(db: &Db) -> AppResult<HubStats> {
     db.with(|conn| {
+        let config = select_config(conn)?;
+        let key = config.as_ref().map(|value| value.config_key.as_str());
         Ok(HubStats {
-            kpis: kpis(conn)?,
-            openings: openings(conn)?,
-            phases: phases(conn)?,
-            trend: trend(conn)?,
-            time: time_stats(conn)?,
+            kpis: kpis(conn, key)?,
+            openings: openings(conn, key)?,
+            phases: phases(conn, key)?,
+            trend: trend(conn, key)?,
+            time: time_stats(conn, key)?,
+            config: config.map(|value| value.view),
         })
     })
 }
 
-fn kpis(conn: &Connection) -> AppResult<HubKpis> {
+/// Самая частая конфигурация среди разобранных партий. Остальные анализы
+/// не удаляются, но в агрегаты хаба не попадают.
+fn select_config(conn: &Connection) -> AppResult<Option<ConfigSelection>> {
+    let row = conn.query_row(
+        "SELECT engine_name, engine_version, depth, multipv, classifier_version,
+                accuracy_method_version, config_key, COUNT(*)
+         FROM game_analyses
+         GROUP BY config_key
+         ORDER BY COUNT(*) DESC, depth DESC, analyzed_at DESC
+         LIMIT 1",
+        [],
+        |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, i32>(2)?,
+                row.get::<_, i32>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
+                row.get::<_, i64>(7)?,
+            ))
+        },
+    );
+    let (engine_name, engine_version, depth, multipv, classifier, method, config_key, included) =
+        match row {
+            Ok(value) => value,
+            Err(rusqlite::Error::QueryReturnedNoRows) => return Ok(None),
+            Err(err) => return Err(err.into()),
+        };
+    let total: i64 = conn.query_row("SELECT COUNT(*) FROM game_analyses", [], |row| row.get(0))?;
+    let mut stmt = conn.prepare(
+        "SELECT game_id FROM game_analyses WHERE config_key <> ?1 ORDER BY game_id",
+    )?;
+    let rows = stmt.query_map([&config_key], |row| row.get::<_, i64>(0))?;
+    let mut mismatched = Vec::new();
+    for row in rows {
+        mismatched.push(row?);
+    }
+    Ok(Some(ConfigSelection {
+        config_key,
+        view: AnalysisConfigView {
+            engine_name,
+            engine_version,
+            depth,
+            multipv,
+            classifier_version: classifier,
+            accuracy_method_version: method,
+            included: included as u32,
+            total: total as u32,
+            mismatched_game_ids: mismatched,
+        },
+    }))
+}
+
+fn kpis(conn: &Connection, key: Option<&str>) -> AppResult<HubKpis> {
     let row = conn.query_row(
         "SELECT
             COUNT(*),
-            COALESCE(SUM(CASE WHEN a.game_id IS NOT NULL THEN 1 ELSE 0 END), 0),
+            COALESCE(SUM(CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN (g.user_color='white' AND g.result='1-0') OR (g.user_color='black' AND g.result='0-1') THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN g.result='1/2-1/2' THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN (g.user_color='white' AND g.result='0-1') OR (g.user_color='black' AND g.result='1-0') THEN 1 ELSE 0 END), 0),
             AVG(CASE WHEN g.user_color='white' THEN a.white_accuracy ELSE a.black_accuracy END),
             AVG(CASE WHEN g.user_color='white' THEN a.white_acpl ELSE a.black_acpl END)
-         FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
+         FROM games g LEFT JOIN game_analyses a
+              ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
          WHERE g.user_color IN ('white', 'black')",
-        [],
+        params![key],
         |row| {
             Ok((
                 row.get::<_, i64>(0)?,
@@ -46,7 +117,7 @@ fn kpis(conn: &Connection) -> AppResult<HubKpis> {
     let total = row.0 as u32;
     let analyzed = row.1 as u32;
     let wins = row.2 as u32;
-    let (avg_perf_elo, avg_perf_elo_spread) = performance_summary(conn, analyzed)?;
+    let (avg_perf_elo, avg_perf_elo_spread) = performance_summary(conn, analyzed, key)?;
     Ok(HubKpis {
         total_games: total,
         analyzed_games: analyzed,
@@ -62,25 +133,25 @@ fn kpis(conn: &Connection) -> AppResult<HubKpis> {
         avg_acpl: row.6,
         avg_perf_elo,
         avg_perf_elo_spread,
-        white: color_record(conn, "white")?,
-        black: color_record(conn, "black")?,
+        white: color_record(conn, "white", key)?,
+        black: color_record(conn, "black", key)?,
     })
 }
 
-/// Оценка силы по точности показывается только на достаточной выборке
-/// и всегда с разбросом: это экспериментальная величина, а не рейтинг.
-const MIN_PERF_SAMPLE: u32 = 20;
-
-fn performance_summary(conn: &Connection, analyzed: u32) -> AppResult<(Option<f64>, Option<f64>)> {
+fn performance_summary(
+    conn: &Connection,
+    analyzed: u32,
+    key: Option<&str>,
+) -> AppResult<(Option<f64>, Option<f64>)> {
     if analyzed < MIN_PERF_SAMPLE {
         return Ok((None, None));
     }
     let mut stmt = conn.prepare(
         "SELECT CASE WHEN g.user_color='white' THEN a.white_perf_elo ELSE a.black_perf_elo END
          FROM game_analyses a JOIN games g ON g.id = a.game_id
-         WHERE g.user_color IN ('white', 'black')",
+         WHERE g.user_color IN ('white', 'black') AND (?1 IS NULL OR a.config_key = ?1)",
     )?;
-    let rows = stmt.query_map([], |row| row.get::<_, Option<i32>>(0))?;
+    let rows = stmt.query_map(params![key], |row| row.get::<_, Option<i32>>(0))?;
     let mut values = Vec::new();
     for row in rows {
         if let Some(value) = row? {
@@ -100,7 +171,7 @@ fn performance_summary(conn: &Connection, analyzed: u32) -> AppResult<(Option<f6
     Ok((Some(mean), Some(variance.sqrt())))
 }
 
-fn color_record(conn: &Connection, color: &str) -> AppResult<ColorRecord> {
+fn color_record(conn: &Connection, color: &str, key: Option<&str>) -> AppResult<ColorRecord> {
     let (win_result, loss_result, accuracy_column) = if color == "white" {
         ("1-0", "0-1", "white_accuracy")
     } else {
@@ -112,10 +183,11 @@ fn color_record(conn: &Connection, color: &str) -> AppResult<ColorRecord> {
             COALESCE(SUM(CASE WHEN g.result = '1/2-1/2' THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN g.result = '{loss_result}' THEN 1 ELSE 0 END), 0),
             AVG(a.{accuracy_column})
-         FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
+         FROM games g LEFT JOIN game_analyses a
+              ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
          WHERE g.user_color = '{color}'"
     );
-    let row = conn.query_row(&sql, [], |row| {
+    let row = conn.query_row(&sql, params![key], |row| {
         Ok((
             row.get::<_, i64>(0)?,
             row.get::<_, i64>(1)?,
@@ -133,10 +205,7 @@ fn color_record(conn: &Connection, color: &str) -> AppResult<ColorRecord> {
     })
 }
 
-/// Минимальная выборка, при которой точность дебюта считается показательной.
-const MIN_RELIABLE_SAMPLE: u32 = 5;
-
-fn openings(conn: &Connection) -> AppResult<Vec<OpeningStat>> {
+fn openings(conn: &Connection, key: Option<&str>) -> AppResult<Vec<OpeningStat>> {
     let mut stmt = conn.prepare(
         "SELECT g.eco, COALESCE(g.opening_name, ''), COUNT(*),
             COALESCE(SUM(CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END), 0),
@@ -144,13 +213,14 @@ fn openings(conn: &Connection) -> AppResult<Vec<OpeningStat>> {
             COALESCE(SUM(CASE WHEN g.result='1/2-1/2' THEN 1 ELSE 0 END), 0),
             COALESCE(SUM(CASE WHEN (g.user_color='white' AND g.result='0-1') OR (g.user_color='black' AND g.result='1-0') THEN 1 ELSE 0 END), 0),
             AVG(CASE WHEN g.user_color='white' THEN a.white_accuracy ELSE a.black_accuracy END)
-         FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
+         FROM games g LEFT JOIN game_analyses a
+              ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
          WHERE g.user_color IN ('white', 'black') AND g.eco IS NOT NULL AND g.eco <> ''
          GROUP BY g.eco, COALESCE(g.opening_name, '')
          ORDER BY COUNT(*) DESC, g.eco ASC
          LIMIT 40",
     )?;
-    let rows = stmt.query_map([], |row| {
+    let rows = stmt.query_map(params![key], |row| {
         Ok((
             row.get::<_, String>(0)?,
             row.get::<_, String>(1)?,
@@ -165,7 +235,7 @@ fn openings(conn: &Connection) -> AppResult<Vec<OpeningStat>> {
     let mut stats = Vec::new();
     for row in rows {
         let (eco, name, games, analyzed, wins, draws, losses, accuracy) = row?;
-        let (exit_win_prob, exit_eval, avg_loss) = exit_metrics(conn, &eco, &name)?;
+        let (exit_win_prob, exit_eval, avg_loss) = exit_metrics(conn, &eco, &name, key)?;
         let analyzed = analyzed as u32;
         stats.push(OpeningStat {
             eco,
@@ -194,23 +264,28 @@ fn exit_metrics(
     conn: &Connection,
     eco: &str,
     name: &str,
+    key: Option<&str>,
 ) -> AppResult<(Option<f64>, Option<f64>, Option<f64>)> {
     conn.query_row(
         "SELECT
             AVG(CASE WHEN g.user_color='white' THEN me.win_prob_white ELSE 100.0 - me.win_prob_white END),
             AVG(CASE WHEN g.user_color='white' THEN me.eval_cp ELSE -me.eval_cp END),
             (SELECT AVG(me2.win_prob_loss)
-             FROM move_evaluations me2 JOIN games g2 ON g2.id = me2.game_id
+             FROM move_evaluations me2
+             JOIN games g2 ON g2.id = me2.game_id
+             JOIN game_analyses a2 ON a2.game_id = g2.id AND (?3 IS NULL OR a2.config_key = ?3)
              WHERE g2.eco = ?1 AND COALESCE(g2.opening_name, '') = ?2
                AND ((g2.user_color='white' AND me2.ply % 2 = 1)
                     OR (g2.user_color='black' AND me2.ply % 2 = 0)))
-         FROM move_evaluations me JOIN games g ON g.id = me.game_id
+         FROM move_evaluations me
+         JOIN games g ON g.id = me.game_id
+         JOIN game_analyses a ON a.game_id = g.id AND (?3 IS NULL OR a.config_key = ?3)
          WHERE g.eco = ?1 AND COALESCE(g.opening_name, '') = ?2 AND me.phase = 'opening'
            AND me.ply = (
                 SELECT MAX(m2.ply) FROM move_evaluations m2
                 WHERE m2.game_id = me.game_id AND m2.phase = 'opening'
            )",
-        params![eco, name],
+        params![eco, name, key],
         |row| {
             Ok((
                 row.get::<_, Option<f64>>(0)?,
@@ -222,7 +297,7 @@ fn exit_metrics(
     .map_err(Into::into)
 }
 
-fn phases(conn: &Connection) -> AppResult<Vec<PhaseStat>> {
+fn phases(conn: &Connection, key: Option<&str>) -> AppResult<Vec<PhaseStat>> {
     let row = conn.query_row(
         "SELECT
             AVG(CASE WHEN g.user_color='white' THEN a.white_opening_acc ELSE a.black_opening_acc END),
@@ -232,8 +307,8 @@ fn phases(conn: &Connection) -> AppResult<Vec<PhaseStat>> {
             COUNT(CASE WHEN g.user_color='white' THEN a.white_middlegame_acc ELSE a.black_middlegame_acc END),
             COUNT(CASE WHEN g.user_color='white' THEN a.white_endgame_acc ELSE a.black_endgame_acc END)
          FROM game_analyses a JOIN games g ON g.id = a.game_id
-         WHERE g.user_color IN ('white', 'black')",
-        [],
+         WHERE g.user_color IN ('white', 'black') AND (?1 IS NULL OR a.config_key = ?1)",
+        params![key],
         |row| {
             Ok((
                 row.get::<_, Option<f64>>(0)?,
@@ -245,7 +320,7 @@ fn phases(conn: &Connection) -> AppResult<Vec<PhaseStat>> {
             ))
         },
     )?;
-    let counts = phase_move_counts(conn)?;
+    let counts = phase_move_counts(conn, key)?;
     Ok(vec![
         PhaseStat {
             phase: Phase::Opening,
@@ -268,14 +343,16 @@ fn phases(conn: &Connection) -> AppResult<Vec<PhaseStat>> {
     ])
 }
 
-fn phase_move_counts(conn: &Connection) -> AppResult<(u32, u32, u32)> {
+fn phase_move_counts(conn: &Connection, key: Option<&str>) -> AppResult<(u32, u32, u32)> {
     let mut stmt = conn.prepare(
         "SELECT me.phase, COUNT(*)
-         FROM move_evaluations me JOIN games g ON g.id = me.game_id
+         FROM move_evaluations me
+         JOIN games g ON g.id = me.game_id
+         JOIN game_analyses a ON a.game_id = g.id AND (?1 IS NULL OR a.config_key = ?1)
          WHERE (g.user_color='white' AND me.ply % 2 = 1) OR (g.user_color='black' AND me.ply % 2 = 0)
          GROUP BY me.phase",
     )?;
-    let rows = stmt.query_map([], |row| {
+    let rows = stmt.query_map(params![key], |row| {
         Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
     })?;
     let mut opening = 0;

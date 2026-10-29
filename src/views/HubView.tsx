@@ -8,6 +8,7 @@ import { TimeStatsCard } from "../components/hub/TimeStatsCard";
 import { Icon } from "../components/ui/Icon";
 import { api } from "../services/api";
 import { libraryStore } from "../stores/libraryStore";
+import { settingsStore } from "../stores/settingsStore";
 import { ui } from "../stores/uiStore";
 import type { ColorRecord, HubStats } from "../types/models";
 import { formatNumber, toErrorMessage } from "../utils/format";
@@ -15,6 +16,7 @@ import { formatNumber, toErrorMessage } from "../utils/format";
 export function HubView() {
   const [stats, setStats] = createSignal<HubStats | null>(null);
   const [loading, setLoading] = createSignal(false);
+  const [reanalyzing, setReanalyzing] = createSignal(false);
 
   const load = async (): Promise<void> => {
     setLoading(true);
@@ -109,6 +111,44 @@ export function HubView() {
               </div>
             }
           >
+            <Show when={value().config}>
+              {(config) => (
+                <div class="config-strip">
+                  <div>
+                    <strong>
+                      Конфигурация: {config().engineName} · depth {" "}
+                      {config().depth} · MultiPV {config().multipv}
+                    </strong>
+                    <span class="dim">
+                      {" "}
+                      — учтено {config().included} из {config().total}
+                    </span>
+                  </div>
+                  <Show when={config().mismatchedGameIds.length > 0}>
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      disabled={reanalyzing() || libraryStore.batch().running}
+                      title={`Пересчитать ${config().mismatchedGameIds.length} партию на текущей глубине из настроек`}
+                      onClick={() => {
+                        const ids = config().mismatchedGameIds;
+                        setReanalyzing(true);
+                        void libraryStore
+                          .analyzeIds(ids, "Пересчёт конфигурации")
+                          .then(() => load())
+                          .finally(() => setReanalyzing(false));
+                      }}
+                    >
+                      <Icon name="analyze" size={12} />
+                      {reanalyzing()
+                        ? "Пересчитываю…"
+                        : `Пересчитать на depth ${settingsStore.settings().analysisDepth} (${config().mismatchedGameIds.length})`}
+                    </button>
+                  </Show>
+                </div>
+              )}
+            </Show>
+
             <KpiCards kpis={value().kpis} />
 
             <div class="hub-grid">

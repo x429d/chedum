@@ -194,6 +194,7 @@ pub fn time_info(
 pub struct AggregateInput<'a> {
     pub game: &'a Game,
     pub engine_name: &'a str,
+    pub engine_version: &'a str,
     pub depth: u32,
     pub multipv: u32,
     pub counts: CategoryCounts,
@@ -217,6 +218,9 @@ pub fn finalize(input: AggregateInput<'_>) -> GameAnalysis {
     let mut analysis = GameAnalysis {
         game_id: input.game.id,
         engine_name: input.engine_name.to_string(),
+        engine_version: input.engine_version.to_string(),
+        classifier_version: crate::domain::analysis::CLASSIFIER_VERSION.to_string(),
+        accuracy_method_version: crate::domain::analysis::ACCURACY_METHOD_VERSION.to_string(),
         depth: input.depth as i32,
         multipv: input.multipv as i32,
         analyzed_at: Utc::now().to_rfc3339(),

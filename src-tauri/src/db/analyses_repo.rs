@@ -12,12 +12,27 @@ use crate::domain::analysis::{
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{Color, UserColor};
 
+/// Ключ конфигурации анализа: агрегаты хаба смешивают только одинаковые.
+pub fn analysis_config_key(analysis: &GameAnalysis) -> String {
+    format!(
+        "{}|{}|{}|{}|{}|{}",
+        analysis.engine_name,
+        analysis.engine_version,
+        analysis.depth,
+        analysis.multipv,
+        analysis.classifier_version,
+        analysis.accuracy_method_version
+    )
+}
+
 const ANALYSIS_UPSERT: &str = "INSERT INTO game_analyses (
         game_id, engine_name, depth, multipv, analyzed_at, white_accuracy, black_accuracy,
         white_acpl, black_acpl, white_perf_elo, black_perf_elo, white_opening_acc,
         white_middlegame_acc, white_endgame_acc, black_opening_acc, black_middlegame_acc,
-        black_endgame_acc, counts_json, summary_text, key_moments_count
-    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20)
+        black_endgame_acc, counts_json, summary_text, key_moments_count,
+        engine_version, classifier_version, accuracy_method_version, config_key
+    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20,
+        ?21, ?22, ?23, ?24)
     ON CONFLICT(game_id) DO UPDATE SET
         engine_name = excluded.engine_name,
         depth = excluded.depth,
@@ -37,7 +52,11 @@ const ANALYSIS_UPSERT: &str = "INSERT INTO game_analyses (
         black_endgame_acc = excluded.black_endgame_acc,
         counts_json = excluded.counts_json,
         summary_text = excluded.summary_text,
-        key_moments_count = excluded.key_moments_count";
+        key_moments_count = excluded.key_moments_count,
+        engine_version = excluded.engine_version,
+        classifier_version = excluded.classifier_version,
+        accuracy_method_version = excluded.accuracy_method_version,
+        config_key = excluded.config_key";
 
 pub fn insert_analysis_draft(db: &Db, draft: &AnalysisDraft) -> AppResult<()> {
     db.with_tx(|tx| insert_analysis_conn(tx, draft))
@@ -47,6 +66,7 @@ pub fn insert_analysis_draft(db: &Db, draft: &AnalysisDraft) -> AppResult<()> {
 pub fn insert_analysis_conn(conn: &Connection, draft: &AnalysisDraft) -> AppResult<()> {
     let analysis = &draft.analysis;
     let counts_json = serde_json::to_string(&analysis.counts)?;
+    let config_key = analysis_config_key(analysis);
     conn.execute(
         ANALYSIS_UPSERT,
         params![
@@ -70,6 +90,10 @@ pub fn insert_analysis_conn(conn: &Connection, draft: &AnalysisDraft) -> AppResu
             counts_json,
             analysis.summary_text,
             analysis.key_moments_count,
+            analysis.engine_version,
+            analysis.classifier_version,
+            analysis.accuracy_method_version,
+            config_key,
         ],
     )?;
     conn.execute(
@@ -244,6 +268,9 @@ fn map_analysis(row: &Row<'_>) -> rusqlite::Result<GameAnalysis> {
     Ok(GameAnalysis {
         game_id: row.get("game_id")?,
         engine_name: row.get("engine_name")?,
+        engine_version: row.get("engine_version")?,
+        classifier_version: row.get("classifier_version")?,
+        accuracy_method_version: row.get("accuracy_method_version")?,
         depth: row.get("depth")?,
         multipv: row.get("multipv")?,
         analyzed_at: row.get("analyzed_at")?,
@@ -303,7 +330,6 @@ fn map_move(row: &Row<'_>) -> rusqlite::Result<MoveEvaluation> {
 }
 
 const ACCURACY_ALGO_KEY: &str = "accuracy_algo";
-const ACCURACY_ALGO_VERSION: &str = "lichess-v1";
 const SUMMARY_VERSION_KEY: &str = "summary_text_version";
 const SUMMARY_VERSION: &str = "single-source-v2";
 const KEY_MOMENTS_VERSION_KEY: &str = "key_moments_version";
@@ -440,7 +466,7 @@ pub fn backfill_lichess_accuracy(db: &Db, force: bool) -> AppResult<usize> {
                 |row| row.get(0),
             )
             .optional()?;
-        if !force && current.as_deref() == Some(ACCURACY_ALGO_VERSION) {
+        if !force && current.as_deref() == Some(crate::domain::analysis::ACCURACY_METHOD_VERSION) {
             return Ok(0);
         }
         let game_ids: Vec<i64> = {
@@ -456,7 +482,7 @@ pub fn backfill_lichess_accuracy(db: &Db, force: bool) -> AppResult<usize> {
         }
         tx.execute(
             "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?1, ?2)",
-            params![ACCURACY_ALGO_KEY, ACCURACY_ALGO_VERSION],
+            params![ACCURACY_ALGO_KEY, crate::domain::analysis::ACCURACY_METHOD_VERSION],
         )?;
         Ok(updated)
     })

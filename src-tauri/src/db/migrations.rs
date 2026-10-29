@@ -124,6 +124,39 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         )?;
         conn.pragma_update(None, "user_version", 3)?;
     }
+    if version < 4 {
+        add_column_if_missing(conn, "game_analyses", "engine_version", "TEXT")?;
+        add_column_if_missing(
+            conn,
+            "game_analyses",
+            "classifier_version",
+            "TEXT NOT NULL DEFAULT 'classifier-v1'",
+        )?;
+        add_column_if_missing(
+            conn,
+            "game_analyses",
+            "accuracy_method_version",
+            "TEXT NOT NULL DEFAULT 'lichess-v1'",
+        )?;
+        add_column_if_missing(
+            conn,
+            "game_analyses",
+            "config_key",
+            "TEXT NOT NULL DEFAULT ''",
+        )?;
+        conn.execute(
+            "UPDATE game_analyses SET engine_version = '19'
+             WHERE engine_version IS NULL OR engine_version = ''",
+            [],
+        )?;
+        conn.execute(
+            "UPDATE game_analyses SET config_key =
+                engine_name || '|' || engine_version || '|' || depth || '|' || multipv
+                || '|' || classifier_version || '|' || accuracy_method_version",
+            [],
+        )?;
+        conn.pragma_update(None, "user_version", 4)?;
+    }
     Ok(())
 }
 

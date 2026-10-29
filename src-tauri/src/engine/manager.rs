@@ -32,23 +32,31 @@ pub struct EngineManager {
     cancel: Arc<AtomicBool>,
     slot: Mutex<()>,
     name: String,
+    version: String,
 }
 
 impl EngineManager {
     pub async fn spawn(path: &Path) -> AppResult<Self> {
         let process = EngineProcess::spawn(path).await?;
         let name = process.name().to_string();
+        let version = version_from_name(&name);
         Ok(EngineManager {
             path: path.to_path_buf(),
             process: Arc::new(Mutex::new(process)),
             cancel: Arc::new(AtomicBool::new(false)),
             slot: Mutex::new(()),
             name,
+            version,
         })
     }
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    /// Версия из `id name Stockfish 19` — «19». Хранится в записи анализа.
+    pub fn version(&self) -> &str {
+        &self.version
     }
 
     pub fn request_stop(&self) {
@@ -191,6 +199,13 @@ impl EngineManager {
         let mut process = self.process.lock().await;
         process.shutdown().await;
     }
+}
+
+fn version_from_name(name: &str) -> String {
+    name.rsplit_once(' ')
+        .map(|(_, version)| version.trim().to_string())
+        .filter(|version| !version.is_empty())
+        .unwrap_or_else(|| "unknown".to_string())
 }
 
 fn is_cancel_error(err: &AppError) -> bool {

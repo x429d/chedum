@@ -19,6 +19,7 @@ pub struct BuildInput<'a> {
     pub parsed: &'a ParsedGame,
     pub evaluations: &'a [PositionEval],
     pub engine_name: &'a str,
+    pub engine_version: &'a str,
     pub depth: u32,
     pub multipv: u32,
 }
@@ -262,6 +263,7 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
     let analysis = finalize(AggregateInput {
         game: input.game,
         engine_name: input.engine_name,
+        engine_version: input.engine_version,
         depth: input.depth,
         multipv: input.multipv,
         counts,

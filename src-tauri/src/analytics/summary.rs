@@ -192,6 +192,9 @@ mod tests {
         GameAnalysis {
             game_id: 1,
             engine_name: "Stockfish 19".to_string(),
+            engine_version: "19".to_string(),
+            classifier_version: crate::domain::analysis::CLASSIFIER_VERSION.to_string(),
+            accuracy_method_version: crate::domain::analysis::ACCURACY_METHOD_VERSION.to_string(),
             depth: 14,
             multipv: 2,
             analyzed_at: String::new(),

@@ -92,12 +92,25 @@ export interface TimeStats {
   pressureAccuracy: number | null;
 }
 
+export interface AnalysisConfigView {
+  engineName: string;
+  engineVersion: string;
+  depth: number;
+  multipv: number;
+  classifierVersion: string;
+  accuracyMethodVersion: string;
+  included: number;
+  total: number;
+  mismatchedGameIds: number[];
+}
+
 export interface HubStats {
   kpis: HubKpis;
   openings: OpeningStat[];
   phases: PhaseStat[];
   trend: AccuracyPoint[];
   time: TimeStats;
+  config: AnalysisConfigView | null;
 }
 
 export interface ArchiveView {

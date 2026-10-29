@@ -301,5 +301,7 @@ export const libraryStore = {
   analyzeSelected: () => batchController.analyzeSelected(),
   analyzePending: () => batchController.analyzePending(),
   analyzeOne: (id: number) => batchController.analyzeOne(id),
+  analyzeIds: (ids: number[], label?: string) =>
+    batchController.analyzeIds(ids, label ?? "Пакетный анализ"),
   cancelBatch: () => batchController.cancel(),
 };

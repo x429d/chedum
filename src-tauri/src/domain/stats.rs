@@ -83,6 +83,24 @@ pub struct TimeStats {
     pub pressure_accuracy: Option<f64>,
 }
 
+/// Конфигурация, по которой собраны агрегаты хаба.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnalysisConfigView {
+    pub engine_name: String,
+    pub engine_version: String,
+    pub depth: i32,
+    pub multipv: i32,
+    pub classifier_version: String,
+    pub accuracy_method_version: String,
+    /// Сколько анализов этой конфигурации вошло в агрегаты.
+    pub included: u32,
+    /// Сколько анализов всего в базе.
+    pub total: u32,
+    /// Партии с анализом другой конфигурации — их можно пересчитать.
+    pub mismatched_game_ids: Vec<i64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HubStats {
@@ -91,6 +109,7 @@ pub struct HubStats {
     pub phases: Vec<PhaseStat>,
     pub trend: Vec<AccuracyPoint>,
     pub time: TimeStats,
+    pub config: Option<AnalysisConfigView>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

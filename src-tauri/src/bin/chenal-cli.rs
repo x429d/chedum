@@ -48,8 +48,9 @@ fn run() -> AppResult<()> {
             println!("summaries: {summaries}, key moments: {moments}, openings: {openings}");
             audit(&db)
         }
+        "hub" => hub(&db),
         other => {
-            eprintln!("Неизвестная команда «{other}»: audit | openings | backfill");
+            eprintln!("Неизвестная команда «{other}»: audit | openings | backfill | hub");
             Ok(())
         }
     }
@@ -80,4 +81,50 @@ fn audit(db: &Db) -> AppResult<()> {
         }
         Ok(())
     })
+}
+
+fn hub(db: &Db) -> AppResult<()> {
+    let stats = chenal_lib::db::stats_repo::hub_stats(db)?;
+    if let Some(config) = &stats.config {
+        println!(
+            "config: {} {} · depth {} · MultiPV {} · classifier {} · accuracy {} · included {} of {}",
+            config.engine_name,
+            config.engine_version,
+            config.depth,
+            config.multipv,
+            config.classifier_version,
+            config.accuracy_method_version,
+            config.included,
+            config.total
+        );
+        println!("mismatched: {:?}", config.mismatched_game_ids);
+    }
+    println!(
+        "kpis: total={} analyzed={} accuracy={:?} acpl={:?} perf={:?}",
+        stats.kpis.total_games,
+        stats.kpis.analyzed_games,
+        stats.kpis.avg_accuracy,
+        stats.kpis.avg_acpl,
+        stats.kpis.avg_perf_elo
+    );
+    println!("trend points: {}", stats.trend.len());
+    if let (Some(first), Some(last)) = (stats.trend.first(), stats.trend.last()) {
+        println!(
+            "trend: first {} at {}, last {} at {}",
+            first.accuracy, first.played_at, last.accuracy, last.played_at
+        );
+    }
+    for opening in stats.openings.iter().take(5) {
+        println!(
+            "opening: {} {} games={} analyzed={} acc={:?} price={:.1} reliable={}",
+            opening.eco,
+            opening.name,
+            opening.games,
+            opening.analyzed,
+            opening.accuracy,
+            opening.price,
+            opening.reliable
+        );
+    }
+    Ok(())
 }

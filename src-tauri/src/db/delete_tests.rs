@@ -36,6 +36,9 @@ fn analysis(game_id: i64) -> AnalysisDraft {
         analysis: GameAnalysis {
             game_id,
             engine_name: "Stockfish 19".to_string(),
+            engine_version: "19".to_string(),
+            classifier_version: crate::domain::analysis::CLASSIFIER_VERSION.to_string(),
+            accuracy_method_version: crate::domain::analysis::ACCURACY_METHOD_VERSION.to_string(),
             depth: 14,
             multipv: 2,
             analyzed_at: "2026-01-01T00:00:00Z".to_string(),
