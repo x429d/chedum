@@ -10,3 +10,7 @@ pub mod stats_extra;
 pub mod stats_repo;
 
 pub use connection::Db;
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
+mod tests;

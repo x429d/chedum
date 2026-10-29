@@ -125,10 +125,5 @@ pub fn all_games(db: &Db) -> AppResult<Vec<Game>> {
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
-#[path = "../repo_tests.rs"]
-mod tests;
-
-#[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 #[path = "../pagination_tests.rs"]
 mod pagination_tests;
