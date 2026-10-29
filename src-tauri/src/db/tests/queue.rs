@@ -70,6 +70,42 @@ fn pending_queue_is_derived_from_the_target_configuration() {
 }
 
 #[test]
+fn pending_queue_respects_library_filters() {
+    let db = Db::in_memory().unwrap();
+    let white = draft(
+        "white",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        10,
+    );
+    let black = draft(
+        "black",
+        "bob",
+        "alice",
+        UserColor::Black,
+        "0-1",
+        TimeClass::Rapid,
+        20,
+    );
+    let white_id = db.with_tx(|tx| insert_game(tx, &white)).unwrap().unwrap();
+    db.with_tx(|tx| insert_game(tx, &black)).unwrap().unwrap();
+    let key = "Stockfish 19|19|14|2|classifier-v1|lichess-v1";
+    let filtered = pending_analysis(
+        &db,
+        &GameFilter {
+            color: Some(UserColor::White),
+            ..GameFilter::default()
+        },
+        key,
+    )
+    .unwrap();
+    assert_eq!(filtered.ids, vec![white_id]);
+}
+
+#[test]
 fn pending_queue_puts_new_games_first() {
     let db = Db::in_memory().unwrap();
     let mut ids = Vec::new();

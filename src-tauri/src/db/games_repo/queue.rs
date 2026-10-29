@@ -15,10 +15,8 @@ pub fn pending_analysis(
         let mut filter = filter.clone();
         filter.analyzed_only = false;
         let (where_sql, values) = filter_clause(&filter);
-        let base = format!(
-            "FROM games g LEFT JOIN game_analyses a
-                 ON a.game_id = g.id AND a.config_key = ?1 {where_sql}"
-        );
+        let base = "FROM games g LEFT JOIN game_analyses a
+                 ON a.game_id = g.id AND a.config_key = ?1";
         let condition = if where_sql.is_empty() {
             "WHERE a.id IS NULL".to_string()
         } else {
