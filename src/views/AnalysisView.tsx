@@ -213,7 +213,7 @@ export function AnalysisView() {
                     fallback={
                       <div class="empty-state" style={{ padding: "26px 14px" }}>
                         <div class="empty-icon">
-                          <Icon name="sparkles" size={20} />
+                          <Icon name="analyze" size={20} />
                         </div>
                         <div style={{ "font-weight": "600", color: "var(--text)" }}>
                           Партия ещё не разобрана
@@ -227,7 +227,7 @@ export function AnalysisView() {
                           disabled={gameStore.analyzing() || libraryStore.batch().running}
                           onClick={startAnalysis}
                         >
-                          <Icon name="sparkles" size={12} />
+                          <Icon name="analyze" size={12} />
                           Анализировать
                         </button>
                       </div>
@@ -260,19 +260,19 @@ export function AnalysisView() {
                 <div class="chart-header">
                   <div>
                     <div class="card-title">Двойная аналитика</div>
-                    <div class="card-subtitle">Win% и время на ход · клик переводит доску</div>
+                    <div class="card-subtitle">Win% и время на ход. Клик переводит доску.</div>
                   </div>
                   <div class="chart-legend">
                     <span>
-                      <span class="legend-dot" style={{ background: "#2dd4bf" }} />
+                      <span class="legend-dot" style={{ background: "#e0bf7d" }} />
                       Win% белых
                     </span>
                     <span>
-                      <span class="legend-dot" style={{ background: "#ef4444" }} />
+                      <span class="legend-dot" style={{ background: "#e05c4f" }} />
                       цейтнот / поспешность
                     </span>
                     <span>
-                      <span class="legend-dot" style={{ background: "#475569" }} />
+                      <span class="legend-dot" style={{ background: "#4a5344" }} />
                       время
                     </span>
                   </div>

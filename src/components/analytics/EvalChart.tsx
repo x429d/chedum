@@ -126,16 +126,16 @@ export function EvalChart(props: {
       >
         <defs>
           <linearGradient id="eval-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#14b8a6" stop-opacity="0.3" />
-            <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.01" />
+            <stop offset="0%" stop-color="#c6a15b" stop-opacity="0.24" />
+            <stop offset="100%" stop-color="#c6a15b" stop-opacity="0.01" />
           </linearGradient>
         </defs>
 
         <For each={[0, 25, 50, 75, 100]}>
           {(value) => (
             <>
-              <line x1={ML} x2={W - MR} y1={y(value)} y2={y(value)} stroke="#232a3b" stroke-width="0.7" />
-              <text x={ML - 7} y={y(value) + 3} text-anchor="end" fill="#6b7280" font-size="9">
+              <line x1={ML} x2={W - MR} y1={y(value)} y2={y(value)} stroke="#293123" stroke-width="0.7" />
+              <text x={ML - 7} y={y(value) + 3} text-anchor="end" fill="#868d78" font-size="9">
                 {value}
               </text>
             </>
@@ -150,23 +150,23 @@ export function EvalChart(props: {
                 x2={mark.x}
                 y1={MT}
                 y2={H - 4}
-                stroke="#2e3850"
+                stroke="#3a4432"
                 stroke-width="0.8"
                 stroke-dasharray="3 4"
               />
-              <text x={mark.x + 5} y={MT + 10} fill="#9ca3af" font-size="9">
+              <text x={mark.x + 5} y={MT + 10} fill="#a4a794" font-size="9">
                 {PHASE_LABELS[mark.phase]}
               </text>
             </>
           )}
         </For>
-        <text x={ML + 5} y={MT + 10} fill="#9ca3af" font-size="9">
+        <text x={ML + 5} y={MT + 10} fill="#a4a794" font-size="9">
           {PHASE_LABELS.opening}
         </text>
 
         <path d={areaPath()} fill="url(#eval-fill)" />
-        <path d={linePath()} fill="none" stroke="#2dd4bf" stroke-width="1.8" stroke-linejoin="round" />
-        <line x1={ML} x2={W - MR} y1={y(50)} y2={y(50)} stroke="#475569" stroke-width="0.7" stroke-dasharray="4 4" />
+        <path d={linePath()} fill="none" stroke="#e0bf7d" stroke-width="1.8" stroke-linejoin="round" />
+        <line x1={ML} x2={W - MR} y1={y(50)} y2={y(50)} stroke="#4a5344" stroke-width="0.7" stroke-dasharray="4 4" />
 
         <For each={markers()}>
           {(marker) => (
@@ -175,7 +175,7 @@ export function EvalChart(props: {
               cy={y(marker.move.winProbWhite)}
               r="3.6"
               fill={CATEGORY_META[marker.move.classification].color}
-              stroke="#0b0e14"
+              stroke="#0c110b"
               stroke-width="1.2"
             />
           )}
@@ -186,15 +186,15 @@ export function EvalChart(props: {
           x2={x(props.currentPly)}
           y1={MT}
           y2={H - 4}
-          stroke="#2dd4bf"
+          stroke="#e0bf7d"
           stroke-width="1.1"
           opacity="0.8"
         />
 
-        <text x={ML - 7} y={HIST_TOP - 4} text-anchor="end" fill="#6b7280" font-size="9">
+        <text x={ML - 7} y={HIST_TOP - 4} text-anchor="end" fill="#868d78" font-size="9">
           t
         </text>
-        <line x1={ML} x2={W - MR} y1={HIST_TOP + HIST_H} y2={HIST_TOP + HIST_H} stroke="#232a3b" stroke-width="0.7" />
+        <line x1={ML} x2={W - MR} y1={HIST_TOP + HIST_H} y2={HIST_TOP + HIST_H} stroke="#293123" stroke-width="0.7" />
         <For each={props.moves}>
           {(move, index) => {
             const height = () =>
@@ -202,12 +202,12 @@ export function EvalChart(props: {
             const barWidth = PLOT_W / total() * 0.64;
             const color = () =>
               move.timeFlag === "time_trouble" || move.timeFlag === "impulsive_error"
-                ? "#ef4444"
+                ? "#e05c4f"
                 : move.timeFlag === "overthink"
-                  ? "#f97316"
+                  ? "#e08a3c"
                   : index() + 1 === props.currentPly
-                    ? "#2dd4bf"
-                    : "#475569";
+                    ? "#e0bf7d"
+                    : "#4a5344";
             return (
               <rect
                 x={x(index() + 1) - barWidth / 2}
@@ -236,8 +236,8 @@ export function EvalChart(props: {
                 cx={x(state().ply)}
                 cy={y(state().win)}
                 r="4"
-                fill="#2dd4bf"
-                stroke="#0b0e14"
+                fill="#e0bf7d"
+                stroke="#0c110b"
                 stroke-width="1.4"
               />
             </>
@@ -269,8 +269,8 @@ export function EvalChart(props: {
                     </span>
                   </div>
                   <div class="mono" style={{ color: "var(--muted)" }}>
-                    {formatEval(move().evalCp, move().evalMate)} · Win{" "}
-                    {formatNumber(move().winProbWhite, 1)}% · {formatClock(move().timeSpentSec)}
+                    {formatEval(move().evalCp, move().evalMate)}, Win{" "}
+                    {formatNumber(move().winProbWhite, 1)}%, {formatClock(move().timeSpentSec)}
                   </div>
                 </div>
               )}

@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   playerUsername: "",
   analysisDepth: 14,
   multipv: 2,
-  boardTheme: "midnight",
+  boardTheme: "walnut",
   pieceSet: "cburnett",
   showArrows: true,
   autoAnalyze: false,

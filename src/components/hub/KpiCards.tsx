@@ -1,7 +1,7 @@
 import { For } from "solid-js";
 
 import type { HubKpis } from "../../types/models";
-import { formatNumber } from "../../utils/format";
+import { formatNumber, pluralRu } from "../../utils/format";
 
 export function KpiCards(props: { kpis: HubKpis }) {
   const cards = () => [
@@ -11,9 +11,9 @@ export function KpiCards(props: { kpis: HubKpis }) {
       hint: `${props.kpis.analyzedGames} с анализом`,
     },
     {
-      label: "Win rate",
+      label: "Доля побед",
       value: `${formatNumber(props.kpis.winRate, 1)}%`,
-      hint: `${props.kpis.wins}W · ${props.kpis.draws}D · ${props.kpis.losses}L`,
+      hint: `${props.kpis.wins} ${pluralRu(props.kpis.wins, "победа", "победы", "побед")}, ${props.kpis.draws} ${pluralRu(props.kpis.draws, "ничья", "ничьи", "ничьих")}, ${props.kpis.losses} ${pluralRu(props.kpis.losses, "поражение", "поражения", "поражений")}`,
     },
     {
       label: "Средняя точность",

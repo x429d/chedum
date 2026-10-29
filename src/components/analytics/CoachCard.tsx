@@ -35,7 +35,7 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
                 {formatEval(move().evalCp, move().evalMate)}
               </span>
               <span style={{ "margin-left": "auto", "font-size": "10.5px", color: "var(--muted)" }}>
-                {formatClock(move().timeSpentSec)} · Δ{" "}
+                {formatClock(move().timeSpentSec)}, Δ{" "}
                 {move().winProbLoss.toFixed(1)}%
               </span>
             </div>

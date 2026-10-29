@@ -17,14 +17,11 @@ export function OpeningMatrix(props: { openings: OpeningStat[] }) {
           when={props.openings.length > 0}
           fallback={<div class="empty-state" style={{ padding: "20px" }}>Нет данных по дебютам.</div>}
         >
-          <div
-            class="opening-row"
-            style={{ "font-size": "9.5px", color: "var(--muted)", "text-transform": "uppercase" }}
-          >
+          <div class="opening-row" style={{ "font-size": "10px", color: "var(--dim)" }}>
             <span>ECO</span>
             <span>Дебют</span>
             <span>Партии</span>
-            <span>Win rate</span>
+            <span>Победы</span>
             <span>Точность</span>
           </div>
           <For each={props.openings}>
@@ -39,7 +36,7 @@ export function OpeningMatrix(props: { openings: OpeningStat[] }) {
                   <div class="mini-bar">
                     <div
                       class="mini-bar-fill"
-                      style={{ width: `${opening.winRate}%`, background: "#2dd4bf" }}
+                      style={{ width: `${opening.winRate}%`, background: "#c6a15b" }}
                     />
                   </div>
                   <span class="dim" style={{ "font-size": "9px" }}>

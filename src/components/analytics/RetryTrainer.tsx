@@ -163,12 +163,12 @@ export function RetryTrainer() {
               <span class="muted">Ход ещё не сделан. Попыток: {attempts()}.</span>
             </Show>
             <Show when={status() === "correct"}>
-              <span style={{ color: "#4ade80" }}>
+              <span style={{ color: "#9ccf8f" }}>
                 Верно! Лучший ход — {move().bestSan ?? "найден"}.
               </span>
             </Show>
             <Show when={status() === "wrong"}>
-              <span style={{ color: "#f87171" }}>
+              <span style={{ color: "#e79a90" }}>
                 Неверно. Лучший ход: {move().bestSan ?? "—"}.
               </span>
             </Show>

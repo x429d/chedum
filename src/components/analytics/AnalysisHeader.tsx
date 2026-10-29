@@ -38,13 +38,10 @@ export function AnalysisHeader(props: {
           </Show>
         </div>
         <div class="analysis-meta">
-          <span>{formatDate(props.game.playedAt)}</span>
-          <span>·</span>
-          <span>{timeClassLabel(props.game.timeClass)}</span>
-          <span>·</span>
+          <span>{formatDate(props.game.playedAt)},</span>
+          <span>{timeClassLabel(props.game.timeClass)},</span>
           <span>{props.game.timeControl ?? "—"}</span>
           <Show when={props.game.eco}>
-            <span>·</span>
             <span class="eco-code">{props.game.eco}</span>
             <span class="opening-name" style={{ "max-width": "320px" }}>
               {props.game.openingName}
@@ -53,7 +50,7 @@ export function AnalysisHeader(props: {
           <Show when={props.analysis}>
             {(value) => (
               <span class="chip" style={{ height: "22px", "font-size": "10px" }}>
-                {value().engineName} · depth {value().depth}
+                {value().engineName}, depth {value().depth}
               </span>
             )}
           </Show>
@@ -66,7 +63,7 @@ export function AnalysisHeader(props: {
           disabled={props.analyzing || props.busy}
           onClick={props.onAnalyze}
         >
-          <Show when={props.analyzing} fallback={<Icon name="sparkles" size={14} />}>
+          <Show when={props.analyzing} fallback={<Icon name="analyze" size={14} />}>
             <span class="spinner" style={{ width: "13px", height: "13px" }} />
           </Show>
           {props.analysis ? "Переанализировать" : "Анализировать"}

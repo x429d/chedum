@@ -181,7 +181,7 @@ export function Board(props: BoardProps) {
         onPointerCancel={pointer.handleCancel}
         onPointerLeave={pointer.clearHover}
       >
-        <rect x="-0.25" y="-0.25" width="8.5" height="8.5" fill="var(--board-frame, #10141d)" />
+        <rect x="-0.25" y="-0.25" width="8.5" height="8.5" fill="var(--board-frame, #10150e)" />
         <rect x="0" y="0" width="8" height="8" class="board-sq-dark" />
         <For each={cells()}>
           {(cell) => (

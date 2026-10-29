@@ -31,6 +31,8 @@ inspired dark interface.
   `src/assets/pieces/ATTRIBUTION.md` and `src-tauri/resources/CHESS-PIECE-LICENSES.txt`.
 - Demo games use classic games with fictional local handles and generated clock comments; all
   evaluations are produced locally by Stockfish at depth 14.
+- Interface typeface: [Spectral](https://github.com/productiontype/Spectral) (SIL OFL 1.1),
+  bundled locally with its license at `src/assets/fonts/OFL.txt`.
 
 ## Stack
 

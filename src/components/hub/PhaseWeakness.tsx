@@ -39,7 +39,7 @@ export function PhaseWeakness(props: { phases: PhaseStat[] }) {
                   class="phase-fill"
                   style={{
                     width: `${phase.accuracy === null ? 0 : Math.max(2, phase.accuracy)}%`,
-                    background: weakest() === phase.phase ? "#f97316" : undefined,
+                    background: weakest() === phase.phase ? "#e08a3c" : undefined,
                   }}
                 />
               </div>
@@ -47,7 +47,7 @@ export function PhaseWeakness(props: { phases: PhaseStat[] }) {
                 class="mono"
                 style={{
                   "font-size": "11px",
-                  color: weakest() === phase.phase ? "#f97316" : "var(--text)",
+                  color: weakest() === phase.phase ? "#e08a3c" : "var(--text)",
                 }}
               >
                 {phase.accuracy === null ? "—" : `${formatNumber(phase.accuracy, 0)}%`}

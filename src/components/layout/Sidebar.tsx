@@ -44,7 +44,7 @@ export function Sidebar() {
         </div>
         <div class="brand-text">
           <div class="brand-title">Chenal</div>
-          <div class="brand-subtitle">Chess Studio</div>
+          <div class="brand-subtitle">шахматная студия</div>
         </div>
         <Show when={!ui.navSidebarCollapsed()}>
           <button
@@ -98,7 +98,7 @@ export function Sidebar() {
           <span>{engineOnline() ? "Stockfish готов" : "Stockfish не найден"}</span>
         </div>
         <div class="mono" style={{ "font-size": "9.5px", color: "var(--dim)" }}>
-          {settingsStore.engine()?.name ?? "local engine"} · v
+          {settingsStore.engine()?.name ?? "local engine"}, v
           {settingsStore.info()?.version ?? "0.1.0"}
         </div>
       </div>

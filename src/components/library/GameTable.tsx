@@ -127,13 +127,13 @@ export function GameTable() {
             gap: "8px",
             padding: "9px 14px",
             "border-bottom": "1px solid var(--border)",
-            background: "rgba(20,184,166,0.06)",
+            background: "rgba(198,161,91,0.06)",
             "font-size": "11.5px",
           }}
         >
           <span>Выбрано: {libraryStore.selectedCount()}</span>
           <button type="button" class="btn btn-sm" onClick={() => libraryStore.analyzeSelected()}>
-            <Icon name="sparkles" size={12} />
+            <Icon name="analyze" size={12} />
             Анализировать выбранные
           </button>
           <button type="button" class="btn btn-ghost btn-sm" onClick={() => libraryStore.clearSelection()}>

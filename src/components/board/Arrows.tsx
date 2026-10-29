@@ -4,7 +4,7 @@ import type { ArrowSpec, Color } from "../../types/models";
 import { squareCoords } from "../../utils/chess";
 
 /** Outline that separates arrows from the board and from each other. */
-const ARROW_BORDER = "#111827";
+const ARROW_BORDER = "#0c110b";
 /** Outline thickness in board cells. */
 const BORDER_WIDTH = 0.06;
 

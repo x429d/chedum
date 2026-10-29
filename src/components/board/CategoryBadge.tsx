@@ -32,11 +32,11 @@ export function CategoryBadge(props: {
         cy={cy()}
         r={RADIUS}
         fill={meta().color}
-        stroke="#0b0e14"
+        stroke="#0c110b"
         stroke-width="0.026"
       />
       <g
-        color="#0b0e14"
+        color="#0c110b"
         transform={`translate(${cx()} ${cy()}) scale(${GLYPH / 24}) translate(-12 -12)`}
       >
         <CategoryGlyph category={props.category} size={24} />

@@ -46,7 +46,8 @@
     "resources": [
       "binaries/stockfish-aarch64-apple-darwin",
       "resources/STOCKFISH-COPYING.txt",
-      "resources/CHESS-PIECE-LICENSES.txt"
+      "resources/CHESS-PIECE-LICENSES.txt",
+      "resources/SPECTRAL-OFL.txt"
     ],
     "macOS": {
       "minimumSystemVersion": "12.0"

@@ -44,12 +44,12 @@ export function ReportTab(props: {
       <div class="ring-row">
         <AccuracyRing
           value={props.analysis.whiteAccuracy}
-          color={isWhiteUser() ? "#2dd4bf" : "#cbd5e1"}
+          color={isWhiteUser() ? "#e0bf7d" : "#9a9f8d"}
           label="Белые"
         />
         <AccuracyRing
           value={props.analysis.blackAccuracy}
-          color={!isWhiteUser() ? "#2dd4bf" : "#64748b"}
+          color={!isWhiteUser() ? "#e0bf7d" : "#9a9f8d"}
           label="Чёрные"
         />
       </div>

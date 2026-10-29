@@ -138,14 +138,14 @@ export function HubView() {
                         gap: "12px",
                         "align-items": "center",
                         padding: "9px 0",
-                        "border-bottom": "1px solid rgba(35,42,59,0.55)",
+                        "border-bottom": "1px solid var(--border)",
                       }}
                     >
                       <span style={{ "font-weight": "600", "font-size": "12px" }}>{item.color}</span>
                       <div style={{ display: "flex", gap: "8px", "align-items": "center" }}>
-                        <span class="badge outcome-win">{item.record.wins}W</span>
-                        <span class="badge outcome-draw">{item.record.draws}D</span>
-                        <span class="badge outcome-loss">{item.record.losses}L</span>
+                        <span class="badge outcome-win">Победы {item.record.wins}</span>
+                        <span class="badge outcome-draw">Ничьи {item.record.draws}</span>
+                        <span class="badge outcome-loss">Поражения {item.record.losses}</span>
                         <span class="dim" style={{ "font-size": "10.5px" }}>
                           {item.record.games} партий
                         </span>

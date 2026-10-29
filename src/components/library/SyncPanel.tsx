@@ -35,7 +35,7 @@ export function SyncPanel() {
         </label>
         <button
           type="button"
-          class="btn btn-primary"
+          class="btn"
           disabled={libraryStore.syncing()}
           onClick={() => void libraryStore.syncChesscom(username(), force())}
         >
@@ -55,7 +55,7 @@ export function SyncPanel() {
                 <Show when={state().archivesTotal > 0}>
                   <span>
                     {" "}
-                    · архив {state().archivesDone}/{state().archivesTotal}
+                    , архив {state().archivesDone}/{state().archivesTotal}
                   </span>
                 </Show>
               </div>

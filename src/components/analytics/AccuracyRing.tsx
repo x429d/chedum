@@ -6,7 +6,7 @@ export function AccuracyRing(props: { value: number | null; color: string; label
   return (
     <div class="ring-wrap">
       <svg viewBox="0 0 104 104" width="104" height="104">
-        <circle cx="52" cy="52" r={radius} fill="none" stroke="#232a3b" stroke-width="7" />
+        <circle cx="52" cy="52" r={radius} fill="none" stroke="#293123" stroke-width="7" />
         <circle
           cx="52"
           cy="52"

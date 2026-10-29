@@ -119,7 +119,7 @@ impl Default for AppSettings {
             player_username: String::new(),
             analysis_depth: 14,
             multipv: 2,
-            board_theme: "midnight".to_string(),
+            board_theme: "walnut".to_string(),
             piece_set: "cburnett".to_string(),
             show_arrows: true,
             auto_analyze: false,

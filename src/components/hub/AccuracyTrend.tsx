@@ -48,14 +48,14 @@ export function AccuracyTrend(props: { points: AccuracyPoint[] }) {
                     x2={W - MR}
                     y1={MT + (1 - value / 100) * PH}
                     y2={MT + (1 - value / 100) * PH}
-                    stroke="#232a3b"
+                    stroke="#293123"
                     stroke-width="0.7"
                   />
                   <text
                     x={ML - 6}
                     y={MT + (1 - value / 100) * PH + 3}
                     text-anchor="end"
-                    fill="#6b7280"
+                    fill="#868d78"
                     font-size="9"
                   >
                     {value}
@@ -63,7 +63,7 @@ export function AccuracyTrend(props: { points: AccuracyPoint[] }) {
                 </>
               )}
             </For>
-            <path d={path()} fill="none" stroke="#2dd4bf" stroke-width="1.8" />
+            <path d={path()} fill="none" stroke="#e0bf7d" stroke-width="1.8" />
             <For each={points()}>
               {(item) => (
                 <circle
@@ -72,16 +72,16 @@ export function AccuracyTrend(props: { points: AccuracyPoint[] }) {
                   r="4"
                   fill={
                     item.point.result === "win"
-                      ? "#4ade80"
+                      ? "#9ccf8f"
                       : item.point.result === "loss"
-                        ? "#f87171"
-                        : "#facc15"
+                        ? "#e79a90"
+                        : "#d9c47f"
                   }
-                  stroke="#0b0e14"
+                  stroke="#0c110b"
                   stroke-width="1.4"
                 >
                   <title>
-                    {formatDate(item.point.playedAt)} · {item.point.opponent} ·{" "}
+                    {formatDate(item.point.playedAt)}, {item.point.opponent},{" "}
                     {item.point.accuracy.toFixed(1)}%
                   </title>
                 </circle>
@@ -90,15 +90,15 @@ export function AccuracyTrend(props: { points: AccuracyPoint[] }) {
           </svg>
           <div class="chart-legend" style={{ "margin-top": "4px" }}>
             <span>
-              <span class="legend-dot" style={{ background: "#4ade80" }} />
+              <span class="legend-dot" style={{ background: "#9ccf8f" }} />
               победа
             </span>
             <span>
-              <span class="legend-dot" style={{ background: "#facc15" }} />
+              <span class="legend-dot" style={{ background: "#d9c47f" }} />
               ничья
             </span>
             <span>
-              <span class="legend-dot" style={{ background: "#f87171" }} />
+              <span class="legend-dot" style={{ background: "#e79a90" }} />
               поражение
             </span>
           </div>

@@ -185,7 +185,7 @@ export function SettingsView() {
               </div>
               <Show when={settingsStore.engine()?.error}>
                 {(error) => (
-                  <div class="sync-log" style={{ color: "#f87171" }}>
+                  <div class="sync-log" style={{ color: "var(--danger)" }}>
                     {error()}
                   </div>
                 )}
@@ -267,7 +267,7 @@ export function SettingsView() {
             </div>
             <div class="card-pad">
               <div class="form-hint" style={{ "line-height": "1.7" }}>
-                Версия {settingsStore.info()?.version ?? "0.1.0"} · встроенный словарь ECO:{" "}
+                Версия {settingsStore.info()?.version ?? "0.1.0"}. Встроенный словарь ECO:{" "}
                 {settingsStore.info()?.ecoOpenings ?? "—"} линий.
               </div>
             </div>

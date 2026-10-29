@@ -41,8 +41,8 @@ export function LibraryView() {
           <h1 class="view-title">Библиотека партий</h1>
           <div class="view-subtitle">
             {libraryStore.total()}{" "}
-            {pluralRu(libraryStore.total(), "партия", "партии", "партий")} · {libraryStore.analyzed()} с
-            анализом
+            {pluralRu(libraryStore.total(), "партия", "партии", "партий")}, из них{" "}
+            {libraryStore.analyzed()} с анализом
           </div>
         </div>
         <div class="header-actions">
@@ -54,6 +54,7 @@ export function LibraryView() {
         <div class="stat-card">
           <div class="stat-label">Всего партий</div>
           <div class="stat-value">{libraryStore.total()}</div>
+          <div class="stat-hint">в локальной базе</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">С анализом</div>
@@ -126,7 +127,7 @@ export function LibraryView() {
               aria-label="Глубокий разбор"
               onClick={() => expandSidebar("deep")}
             >
-              <Icon name="sparkles" size={16} />
+              <Icon name="target" size={16} />
             </button>
           </div>
 
@@ -154,7 +155,7 @@ export function LibraryView() {
               <div class="card card-pad">
                 <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
                   <div class="empty-icon" style={{ width: "32px", height: "32px", "margin": "0" }}>
-                    <Icon name="sparkles" size={15} />
+                    <Icon name="target" size={15} />
                   </div>
                   <div>
                     <div class="card-title">Глубокий разбор</div>

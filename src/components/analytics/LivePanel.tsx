@@ -49,7 +49,7 @@ export function LivePanel(props: { fen: string; depth: number; multipv: number }
           <For each={analysisStore.liveUpdate()?.lines ?? []}>
             {(line) => (
               <div class="live-line">
-                <span class="live-eval" style={{ color: line.winProb >= 50 ? "#4ade80" : "#f87171" }}>
+                <span class="live-eval" style={{ color: line.winProb >= 50 ? "#9ccf8f" : "#e79a90" }}>
                   {formatEval(line.cp, line.mate)}
                 </span>
                 <span class="live-san">

@@ -18,7 +18,7 @@ export function AnalysisQueue() {
         <div>
           <div class="card-title">Очередь анализа</div>
           <div class="card-subtitle">
-            depth {settingsStore.settings().analysisDepth} · MultiPV{" "}
+            depth {settingsStore.settings().analysisDepth}, MultiPV{" "}
             {settingsStore.settings().multipv}
           </div>
         </div>
@@ -32,7 +32,7 @@ export function AnalysisQueue() {
             disabled={batch().running || (selected() === 0 && pending() === 0)}
             onClick={() => libraryStore.analyzeSelected()}
           >
-            <Icon name="sparkles" size={12} />
+            <Icon name="analyze" size={12} />
             {selected() > 0 ? `Анализ (${selected()})` : `Разобрать новые (${pending()})`}
           </button>
           <Show when={selected() > 0 && pending() > 0 && !batch().running}>
@@ -91,7 +91,7 @@ export function AnalysisQueue() {
             <Show when={batch().plyTotal > 0}>
               <div class="queue-submessage">
                 позиция {batch().ply} из {batch().plyTotal}
-                {perGame() === null ? "" : ` · ~${formatDuration(perGame())} на партию`}
+                {perGame() === null ? "" : `, ~${formatDuration(perGame())} на партию`}
               </div>
             </Show>
           </div>

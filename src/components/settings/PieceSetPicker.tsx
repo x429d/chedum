@@ -26,7 +26,7 @@ export function PieceSetPicker() {
         <div>
           <div class="card-title">Набор фигур</div>
         </div>
-        <Icon name="sparkles" size={16} />
+        <Icon name="board" size={16} />
       </div>
       <div class="card-pad">
         <div class="piece-set-grid">
@@ -37,7 +37,7 @@ export function PieceSetPicker() {
                 class="piece-set-card"
                 classList={{ selected: settingsStore.settings().pieceSet === set.id }}
                 aria-pressed={settingsStore.settings().pieceSet === set.id}
-                title={`${set.author} · ${set.license}`}
+                title={`${set.author}, ${set.license}`}
                 onClick={() => void settingsStore.setPieceSet(set.id)}
               >
                 <span
@@ -60,7 +60,7 @@ export function PieceSetPicker() {
           </For>
         </div>
         <div class="form-hint" style={{ "margin-top": "9px" }}>
-          {pieceSetMeta(settingsStore.settings().pieceSet).author} ·{" "}
+          {pieceSetMeta(settingsStore.settings().pieceSet).author},{" "}
           {pieceSetMeta(settingsStore.settings().pieceSet).license}
         </div>
       </div>
