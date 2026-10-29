@@ -56,6 +56,13 @@ pub fn run() {
                 Ok(_) => {}
                 Err(err) => eprintln!("Chenal: не удалось пересобрать резюме: {err}"),
             }
+            match analyses_repo::backfill_key_moments(&db) {
+                Ok(count) if count > 0 => {
+                    eprintln!("Chenal: ключевые моменты пересобраны — {count}");
+                }
+                Ok(_) => {}
+                Err(err) => eprintln!("Chenal: не удалось пересобрать ключевые моменты: {err}"),
+            }
             match crate::service::openings::backfill_openings(&db) {
                 Ok(count) if count > 0 => {
                     eprintln!("Chenal: дебюты пересчитаны по позициям — {count}");

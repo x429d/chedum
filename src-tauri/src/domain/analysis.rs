@@ -201,6 +201,8 @@ pub struct MoveEvaluation {
     pub move_accuracy: f64,
     pub classification: MoveCategory,
     pub is_critical: bool,
+    #[serde(default)]
+    pub is_key_moment: bool,
     pub material_diff_white: i32,
     pub clock_remaining_sec: Option<f64>,
     pub time_spent_sec: Option<f64>,

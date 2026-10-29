@@ -6,11 +6,7 @@ import { formatEval } from "../../utils/format";
 import { CategoryGlyph } from "../ui/CategoryGlyph";
 
 export function KeyMoments(props: { moves: MoveEvaluation[]; onSelect: (ply: number) => void }) {
-  const moments = createMemo(() =>
-    props.moves.filter((move) => move.isCritical || move.classification === "brilliant" ||
-      move.classification === "great" || move.classification === "miss" ||
-      move.classification === "mistake" || move.classification === "blunder"),
-  );
+  const moments = createMemo(() => props.moves.filter((move) => move.isKeyMoment));
   return (
     <Show
       when={moments().length > 0}

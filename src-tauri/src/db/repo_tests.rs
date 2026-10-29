@@ -1,7 +1,7 @@
 use super::*;
 use crate::db::analyses_repo::{
-    backfill_lichess_accuracy, backfill_summaries, get_analysis, get_moves, insert_analysis_draft,
-    save_move_comment,
+    backfill_key_moments, backfill_lichess_accuracy, backfill_summaries, get_analysis, get_moves,
+    insert_analysis_draft, save_move_comment,
 };
 use crate::db::connection::Db;
 use crate::db::stats_repo::hub_stats;
@@ -72,6 +72,7 @@ fn move_eval(
         move_accuracy: 97.0,
         classification,
         is_critical: false,
+        is_key_moment: false,
         material_diff_white: 0,
         clock_remaining_sec: Some(500.0),
         time_spent_sec: Some(5.0),
@@ -370,6 +371,87 @@ fn backfills_accuracy_with_lichess_method() {
     assert_ne!(stored.black_accuracy, Some(80.0));
     // Повторный запуск идемпотентен.
     assert_eq!(backfill_lichess_accuracy(&db, false).unwrap(), 0);
+}
+
+#[test]
+fn backfill_selects_key_moments_and_updates_summary() {
+    let db = Db::in_memory().unwrap();
+    let game = draft(
+        "g1",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    let mut moves = Vec::new();
+    for ply in 1..=30 {
+        let white_moment = ply % 4 == 1;
+        let mut mv = move_eval(
+            id,
+            ply,
+            Phase::Middlegame,
+            if white_moment {
+                MoveCategory::Blunder
+            } else {
+                MoveCategory::Best
+            },
+            TimeFlag::Normal,
+        );
+        mv.win_prob_loss = if white_moment { 25.0 } else { 0.0 };
+        mv.pv_lines[0].win_prob = if white_moment { 70.0 } else { 50.0 };
+        moves.push(mv);
+    }
+    insert_analysis_draft(&db, &analysis(id, 70.0, 80.0, moves)).unwrap();
+    assert_eq!(backfill_key_moments(&db).unwrap(), 1);
+    let selected: Vec<_> = get_moves(&db, id)
+        .unwrap()
+        .into_iter()
+        .filter(|mv| mv.is_key_moment)
+        .collect();
+    assert_eq!(selected.len(), 8);
+    for pair in selected.windows(2) {
+        assert!(pair[1].ply - pair[0].ply >= 3);
+    }
+    let stored = get_analysis(&db, id).unwrap().unwrap();
+    assert_eq!(stored.key_moments_count, 8);
+    assert!(stored.summary_text.contains("Ключевых моментов: 8"));
+    assert_eq!(backfill_key_moments(&db).unwrap(), 0);
+}
+
+#[test]
+fn backfill_keeps_zero_key_moments_for_a_clean_game() {
+    let db = Db::in_memory().unwrap();
+    let game = draft(
+        "g1",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    let moves = (1..=20)
+        .map(|ply| {
+            move_eval(
+                id,
+                ply,
+                Phase::Middlegame,
+                MoveCategory::Best,
+                TimeFlag::Normal,
+            )
+        })
+        .collect();
+    let mut draft = analysis(id, 95.0, 90.0, moves);
+    draft.analysis.key_moments_count = 7;
+    insert_analysis_draft(&db, &draft).unwrap();
+    assert_eq!(backfill_key_moments(&db).unwrap(), 1);
+    let stored = get_analysis(&db, id).unwrap().unwrap();
+    assert_eq!(stored.key_moments_count, 0);
+    assert!(!get_moves(&db, id).unwrap().iter().any(|mv| mv.is_key_moment));
 }
 
 #[test]

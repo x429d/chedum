@@ -1,5 +1,6 @@
 use crate::analytics::{
-    classify, explain, is_critical, move_accuracy, phase_for, ClassifyInput, CoachInput, Score,
+    classify, explain, is_critical, move_accuracy, phase_for, select_key_moments, ClassifyInput,
+    CoachInput, Score,
 };
 use crate::domain::analysis::{AnalysisDraft, CategoryCounts, MoveCategory, MoveEvaluation};
 use crate::domain::error::{AppError, AppResult};
@@ -67,7 +68,7 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
     let mut first_color: Option<Color> = None;
     let mut white_cp: Vec<f64> = Vec::new();
     let mut black_cp: Vec<f64> = Vec::new();
-    let mut key_moments = 0u32;
+    let mut players: Vec<Color> = Vec::with_capacity(total);
     let mut user_time_trouble = 0u32;
     let mut user_impulsive = 0u32;
     let user_color = input.game.user_color.color();
@@ -205,9 +206,7 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
             Color::Black => black_cp.push(cp_loss),
         }
         counts.increment(player, classification);
-        if classification.is_key_moment() || critical {
-            key_moments += 1;
-        }
+        players.push(player);
         if user_color == Some(player) {
             if flag == crate::domain::analysis::TimeFlag::TimeTrouble {
                 user_time_trouble += 1;
@@ -239,6 +238,7 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
             move_accuracy: accuracy,
             classification,
             is_critical: critical,
+            is_key_moment: false,
             material_diff_white: after_pos.as_ref().map(material_diff_white).unwrap_or(0),
             clock_remaining_sec: mv.clock_after,
             time_spent_sec: spent,
@@ -252,6 +252,13 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
         prev_category = Some(classification);
     }
 
+    let selected = select_key_moments(&moves, user_color, |mv| {
+        players.get(mv.ply.saturating_sub(1) as usize).copied()
+    });
+    for (index, mv) in moves.iter_mut().enumerate() {
+        mv.is_key_moment = selected.contains(&index);
+    }
+    let key_moments = selected.len() as u32;
     let analysis = finalize(AggregateInput {
         game: input.game,
         engine_name: input.engine_name,

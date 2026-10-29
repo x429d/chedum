@@ -2,7 +2,7 @@ import { createEffect, createMemo, createSignal, on, Show } from "solid-js";
 
 import { gameStore } from "../../stores/gameStore";
 import { settingsStore } from "../../stores/settingsStore";
-import type { Color, MoveCategory, MoveEvaluation } from "../../types/models";
+import type { Color, MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { applyUci, checkSquare, playMove } from "../../utils/chess";
 import { formatEval } from "../../utils/format";
@@ -11,7 +11,6 @@ import { CategoryGlyph } from "../ui/CategoryGlyph";
 import { Icon } from "../ui/Icon";
 
 type RetryStatus = "idle" | "correct" | "wrong";
-const RETRY_CATEGORIES: MoveCategory[] = ["mistake", "blunder", "miss"];
 
 export function RetryTrainer() {
   const [index, setIndex] = createSignal(0);
@@ -21,17 +20,14 @@ export function RetryTrainer() {
   const [resultFen, setResultFen] = createSignal<string | null>(null);
   const userColor = (): Color =>
     gameStore.detail()?.game.userColor === "black" ? "black" : "white";
-  const mistakes = createMemo<MoveEvaluation[]>(() => {
-    const color = userColor();
-    return gameStore
+  // Retry работает только с отобранными ключевыми моментами игрока,
+  // а не со всеми ошибками партии.
+  const mistakes = createMemo<MoveEvaluation[]>(() =>
+    gameStore
       .moves()
-      .filter(
-        (move) =>
-          RETRY_CATEGORIES.includes(move.classification) &&
-          (color === "white" ? move.ply % 2 === 1 : move.ply % 2 === 0),
-      )
-      .sort((left, right) => right.winProbLoss - left.winProbLoss);
-  });
+      .filter((move) => move.isKeyMoment)
+      .sort((left, right) => right.winProbLoss - left.winProbLoss),
+  );
   const active = createMemo(() => mistakes()[index()] ?? null);
 
   createEffect(

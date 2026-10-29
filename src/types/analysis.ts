@@ -29,6 +29,7 @@ export interface MoveEvaluation {
   moveAccuracy: number;
   classification: MoveCategory;
   isCritical: boolean;
+  isKeyMoment: boolean;
   materialDiffWhite: number;
   clockRemainingSec: number | null;
   timeSpentSec: number | null;

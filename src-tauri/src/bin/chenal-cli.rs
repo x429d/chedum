@@ -41,8 +41,15 @@ fn run() -> AppResult<()> {
             println!("openings: обновлено партий — {updated}");
             audit(&db)
         }
+        "backfill" => {
+            let summaries = chenal_lib::db::analyses_repo::backfill_summaries(&db)?;
+            let moments = chenal_lib::db::analyses_repo::backfill_key_moments(&db)?;
+            let openings = openings::backfill_openings(&db)?;
+            println!("summaries: {summaries}, key moments: {moments}, openings: {openings}");
+            audit(&db)
+        }
         other => {
-            eprintln!("Неизвестная команда «{other}»: audit | openings");
+            eprintln!("Неизвестная команда «{other}»: audit | openings | backfill");
             Ok(())
         }
     }

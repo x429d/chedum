@@ -88,9 +88,9 @@ fn insert_move(conn: &Connection, mv: &MoveEvaluation) -> AppResult<()> {
         "INSERT INTO move_evaluations (
             game_id, ply, phase, fen_before, fen_after, played_uci, played_san, best_uci, best_san,
             eval_cp, eval_mate, best_eval_cp, best_eval_mate, win_prob_white, win_prob_loss,
-            move_accuracy, classification, is_critical, material_diff_white, clock_remaining_sec,
+            move_accuracy, classification, is_critical, is_key_moment, material_diff_white, clock_remaining_sec,
             time_spent_sec, time_flag, explanation_tag, explanation_text, pv_lines_json, user_comment
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26)",
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27)",
         params![
             mv.game_id,
             mv.ply,
@@ -110,6 +110,7 @@ fn insert_move(conn: &Connection, mv: &MoveEvaluation) -> AppResult<()> {
             mv.move_accuracy,
             mv.classification.as_str(),
             i32::from(mv.is_critical),
+            i32::from(mv.is_key_moment),
             mv.material_diff_white,
             mv.clock_remaining_sec,
             mv.time_spent_sec,
@@ -289,6 +290,7 @@ fn map_move(row: &Row<'_>) -> rusqlite::Result<MoveEvaluation> {
         move_accuracy: row.get("move_accuracy")?,
         classification: MoveCategory::from_str_opt(&classification).unwrap_or(MoveCategory::Good),
         is_critical: row.get::<_, i64>("is_critical")? != 0,
+        is_key_moment: row.get::<_, i64>("is_key_moment")? != 0,
         material_diff_white: row.get("material_diff_white")?,
         clock_remaining_sec: row.get("clock_remaining_sec")?,
         time_spent_sec: row.get("time_spent_sec")?,
@@ -304,6 +306,82 @@ const ACCURACY_ALGO_KEY: &str = "accuracy_algo";
 const ACCURACY_ALGO_VERSION: &str = "lichess-v1";
 const SUMMARY_VERSION_KEY: &str = "summary_text_version";
 const SUMMARY_VERSION: &str = "single-source-v2";
+const KEY_MOMENTS_VERSION_KEY: &str = "key_moments_version";
+const KEY_MOMENTS_VERSION: &str = "errors-gap3-v2";
+
+/// Пересчитывает ключевые моменты по сохранённым оценкам. Движок не нужен:
+/// после смены алгоритма отбора достаточно пересмотреть ходы.
+pub fn backfill_key_moments(db: &Db) -> AppResult<usize> {
+    db.with_tx(|tx| {
+        let current: Option<String> = tx
+            .query_row(
+                "SELECT value FROM app_settings WHERE key = ?1",
+                [KEY_MOMENTS_VERSION_KEY],
+                |row| row.get(0),
+            )
+            .optional()?;
+        if current.as_deref() == Some(KEY_MOMENTS_VERSION) {
+            return Ok(0);
+        }
+        let game_ids: Vec<i64> = {
+            let mut stmt = tx.prepare("SELECT game_id FROM game_analyses ORDER BY game_id")?;
+            let rows = stmt.query_map([], |row| row.get(0))?;
+            rows.collect::<rusqlite::Result<Vec<i64>>>()?
+        };
+        let mut updated = 0;
+        for game_id in game_ids {
+            let user_color: String = tx.query_row(
+                "SELECT user_color FROM games WHERE id = ?1",
+                [game_id],
+                |row| row.get(0),
+            )?;
+            let moves = load_moves_conn(tx, game_id)?;
+            let selected = crate::analytics::select_key_moments(
+                &moves,
+                Color::from_str_opt(&user_color),
+                crate::analytics::moments::player_from_fen,
+            );
+            for (index, mv) in moves.iter().enumerate() {
+                tx.execute(
+                    "UPDATE move_evaluations SET is_key_moment = ?2
+                     WHERE game_id = ?1 AND ply = ?3",
+                    params![game_id, i32::from(selected.contains(&index)), mv.ply],
+                )?;
+            }
+            tx.execute(
+                "UPDATE game_analyses SET key_moments_count = ?2 WHERE game_id = ?1",
+                params![game_id, selected.len() as i32],
+            )?;
+            let analysis = tx.query_row(
+                "SELECT * FROM game_analyses WHERE game_id = ?1",
+                params![game_id],
+                map_analysis,
+            )?;
+            let summary = summary_for_conn(tx, game_id, &analysis)?;
+            tx.execute(
+                "UPDATE game_analyses SET summary_text = ?2 WHERE game_id = ?1",
+                params![game_id, summary],
+            )?;
+            updated += 1;
+        }
+        tx.execute(
+            "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?1, ?2)",
+            params![KEY_MOMENTS_VERSION_KEY, KEY_MOMENTS_VERSION],
+        )?;
+        Ok(updated)
+    })
+}
+
+fn load_moves_conn(conn: &Connection, game_id: i64) -> AppResult<Vec<MoveEvaluation>> {
+    let mut stmt =
+        conn.prepare("SELECT * FROM move_evaluations WHERE game_id = ?1 ORDER BY ply ASC")?;
+    let rows = stmt.query_map(params![game_id], map_move)?;
+    let mut moves = Vec::new();
+    for row in rows {
+        moves.push(row?);
+    }
+    Ok(moves)
+}
 
 /// Пересобирает сохранённый текст резюме из сохранённых метрик анализа.
 /// Нужен один раз после перехода на единый источник чисел; движок не требуется.

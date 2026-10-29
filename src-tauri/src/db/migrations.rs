@@ -115,6 +115,15 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         add_column_if_missing(conn, "games", "opening_source", "TEXT")?;
         conn.pragma_update(None, "user_version", 2)?;
     }
+    if version < 3 {
+        add_column_if_missing(
+            conn,
+            "move_evaluations",
+            "is_key_moment",
+            "INTEGER NOT NULL DEFAULT 0",
+        )?;
+        conn.pragma_update(None, "user_version", 3)?;
+    }
     Ok(())
 }
 
