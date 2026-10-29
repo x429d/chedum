@@ -9,7 +9,7 @@ use crate::domain::analysis::{
     AnalysisDraft, CategoryCounts, GameAnalysis, MoveCategory, MoveEvaluation, Phase, PvLine,
     TimeFlag,
 };
-use crate::domain::game::{Color, GameDraft, GameSource, TimeClass, UserColor};
+use crate::domain::game::{Color, GameDraft, GameFilter, GameSource, TimeClass, UserColor};
 const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 fn draft(
