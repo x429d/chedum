@@ -15,6 +15,8 @@ import { settingsStore } from "./settingsStore";
 import { ui } from "./uiStore";
 const [games, setGames] = createSignal<GameListItem[]>([]);
 const [total, setTotal] = createSignal(0);
+const [analyzed, setAnalyzed] = createSignal(0);
+const [favorites, setFavorites] = createSignal(0);
 const [loading, setLoading] = createSignal(false);
 const [filter, setFilter] = createSignal<GameFilter>({ limit: 25, offset: 0 });
 const [selected, setSelected] = createSignal<number[]>([]);
@@ -36,6 +38,8 @@ async function load(): Promise<void> {
     if (sequence !== loadSequence) return;
     setGames(page.games);
     setTotal(page.total);
+    setAnalyzed(page.analyzed);
+    setFavorites(page.favorites);
     setSelected((ids) => ids.filter((id) => page.games.some((game) => game.id === id)));
   } catch (error) {
     ui.notify(toErrorMessage(error), "error");
@@ -88,6 +92,7 @@ function setPageSize(size: number): void {
 const batchController = createBatchController({
   batch,
   setBatch,
+  filter,
   games,
   selected,
   reload: load,
@@ -168,10 +173,7 @@ async function importText(text: string): Promise<void> {
 
 function maybeAutoAnalyze(imported: number): void {
   if (imported <= 0 || !settingsStore.settings().autoAnalyze) return;
-  const ids = games()
-    .filter((game) => !game.hasAnalysis)
-    .map((game) => game.id);
-  if (ids.length > 0) void batchController.analyzeIds(ids, "Автоанализ");
+  void batchController.analyzePending(false);
 }
 
 function notifyImport(result: ImportSummary): void {
@@ -260,6 +262,9 @@ function deleteSelected(): void {
 export const libraryStore = {
   games,
   total,
+  analyzed,
+  favorites,
+  pendingAnalysis: () => Math.max(0, total() - analyzed()),
   loading,
   filter,
   selected,
@@ -294,6 +299,7 @@ export const libraryStore = {
   deleteGame,
   deleteSelected,
   analyzeSelected: () => batchController.analyzeSelected(),
+  analyzePending: () => batchController.analyzePending(),
   analyzeOne: (id: number) => batchController.analyzeOne(id),
   cancelBatch: () => batchController.cancel(),
 };

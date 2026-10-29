@@ -19,6 +19,8 @@ pub enum AppError {
     Validation(String),
     #[error("Превышен лимит запросов: {0}")]
     RateLimited(String),
+    #[error("Движок занят: {0}")]
+    Busy(String),
     #[error("Внутренняя ошибка: {0}")]
     Internal(String),
 }
@@ -35,6 +37,7 @@ impl AppError {
             AppError::NotFound(_) => "not_found",
             AppError::Validation(_) => "validation",
             AppError::RateLimited(_) => "rate_limited",
+            AppError::Busy(_) => "busy",
             AppError::Internal(_) => "internal",
         }
     }

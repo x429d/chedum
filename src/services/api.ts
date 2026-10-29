@@ -14,6 +14,7 @@ import type {
   ImportSummary,
   OpeningEntry,
   PagedGames,
+  PendingAnalysis,
   SyncProgress,
   SyncResult,
 } from "../types/models";
@@ -29,6 +30,10 @@ function channel<T>(handler: (message: T) => void): Channel<T> {
 export const api = {
   listGames(filter: GameFilter): Promise<PagedGames> {
     return invoke<PagedGames>("list_games", { filter });
+  },
+
+  listPendingAnalysis(filter: GameFilter): Promise<PendingAnalysis> {
+    return invoke<PendingAnalysis>("list_pending_analysis", { filter });
   },
 
   getGame(gameId: number): Promise<GameDetail> {

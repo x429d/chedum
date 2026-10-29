@@ -20,6 +20,17 @@ export function formatDateTime(timestamp: number): string {
   }).format(date);
 }
 
+export function formatDuration(totalSeconds: number | null): string {
+  if (totalSeconds === null || !Number.isFinite(totalSeconds) || totalSeconds <= 0) return "0 с";
+  const seconds = Math.round(totalSeconds);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const rest = seconds % 60;
+  if (hours > 0) return `${hours} ч ${String(minutes).padStart(2, "0")} мин`;
+  if (minutes > 0) return `${minutes} мин ${String(rest).padStart(2, "0")} с`;
+  return `${rest} с`;
+}
+
 export function formatClock(seconds: number | null): string {
   if (seconds === null || !Number.isFinite(seconds)) return "—";
   const total = Math.max(0, Math.round(seconds));
@@ -125,4 +136,13 @@ export function toErrorMessage(error: unknown): string {
     if (typeof message === "string" && message.length > 0) return message;
   }
   return "Неизвестная ошибка";
+}
+
+/** Машинный код ошибки из `AppError` (`{ code, message }`). */
+export function toErrorCode(error: unknown): string | null {
+  if (error && typeof error === "object" && "code" in error) {
+    const code = (error as { code?: unknown }).code;
+    if (typeof code === "string" && code.length > 0) return code;
+  }
+  return null;
 }

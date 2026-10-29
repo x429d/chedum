@@ -1,4 +1,4 @@
-import { createMemo, onCleanup, Show } from "solid-js";
+import { createMemo, onCleanup, onMount, Show } from "solid-js";
 
 import { libraryStore } from "../stores/libraryStore";
 import { ui } from "../stores/uiStore";
@@ -13,6 +13,7 @@ import { SyncPanel } from "../components/library/SyncPanel";
 type SideSection = "sync" | "queue" | "deep";
 
 export function LibraryView() {
+  onMount(() => void libraryStore.load());
   onCleanup(() => libraryStore.cancelPendingSearch());
   let sideSync: HTMLDivElement | undefined;
   let sideQueue: HTMLDivElement | undefined;
@@ -25,8 +26,6 @@ export function LibraryView() {
       target?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
   };
-  const analyzed = createMemo(() => libraryStore.games().filter((game) => game.hasAnalysis).length);
-  const favorites = createMemo(() => libraryStore.games().filter((game) => game.isFavorite).length);
   const averageAccuracy = createMemo(() => {
     const values = libraryStore
       .games()
@@ -42,7 +41,7 @@ export function LibraryView() {
           <h1 class="view-title">Библиотека партий</h1>
           <div class="view-subtitle">
             {libraryStore.total()}{" "}
-            {pluralRu(libraryStore.total(), "партия", "партии", "партий")} · {analyzed()} с
+            {pluralRu(libraryStore.total(), "партия", "партии", "партий")} · {libraryStore.analyzed()} с
             анализом
           </div>
         </div>
@@ -58,8 +57,8 @@ export function LibraryView() {
         </div>
         <div class="stat-card">
           <div class="stat-label">С анализом</div>
-          <div class="stat-value">{analyzed()}</div>
-          <div class="stat-hint">Stockfish + классификатор</div>
+          <div class="stat-value">{libraryStore.analyzed()}</div>
+          <div class="stat-hint">по всей выборке</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Средняя точность</div>
@@ -70,8 +69,8 @@ export function LibraryView() {
         </div>
         <div class="stat-card">
           <div class="stat-label">Избранные</div>
-          <div class="stat-value">{favorites()}</div>
-          <div class="stat-hint">отмечены звездой</div>
+          <div class="stat-value">{libraryStore.favorites()}</div>
+          <div class="stat-hint">по всей выборке</div>
         </div>
       </div>
 

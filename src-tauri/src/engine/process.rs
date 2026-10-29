@@ -8,12 +8,21 @@ use tokio::time::timeout;
 
 use crate::domain::error::{AppError, AppResult};
 
-const READ_TIMEOUT: Duration = Duration::from_secs(120);
+/// Stockfish печатает прогресс не реже раза в секунду, поэтому долгая тишина
+/// означает зависший процесс. Короткий таймаут не даёт очереди анализа
+/// застрять на одной позиции на минуты.
+const READ_TIMEOUT: Duration = Duration::from_secs(30);
+/// Защита от бесконечной строки, если движок начнёт печатать мусор.
+const MAX_LINE_BYTES: usize = 1024 * 1024;
 
 pub struct EngineProcess {
     child: Child,
     stdin: ChildStdin,
     reader: BufReader<ChildStdout>,
+    /// Байты, уже прочитанные из канала, но ещё не составившие строку.
+    /// Хранятся в структуре, иначе таймаут выбрасывал бы половину строки
+    /// и весь UCI-поток после него был бы сдвинут.
+    pending: Vec<u8>,
     name: String,
 }
 
@@ -44,6 +53,7 @@ impl EngineProcess {
             child,
             stdin,
             reader: BufReader::new(stdout),
+            pending: Vec::new(),
             name: "Stockfish".to_string(),
         };
         process.send("uci").await?;
@@ -92,16 +102,44 @@ impl EngineProcess {
             .map_err(|err| AppError::Engine(format!("Ошибка flush Stockfish: {err}")))
     }
 
+    /// Читает одну строку, сохраняя частично полученные данные между вызовами.
     pub async fn read_line(&mut self) -> AppResult<String> {
-        let mut line = String::new();
-        match timeout(READ_TIMEOUT, self.reader.read_line(&mut line)).await {
-            Ok(Ok(0)) => Err(AppError::Engine(
-                "Stockfish закрыл поток вывода".to_string(),
-            )),
-            Ok(Ok(_)) => Ok(line.trim_end().to_string()),
-            Ok(Err(err)) => Err(AppError::Engine(format!("Ошибка чтения Stockfish: {err}"))),
-            Err(_) => Err(AppError::Engine("Таймаут ответа Stockfish".to_string())),
+        loop {
+            if let Some(index) = self.pending.iter().position(|byte| *byte == b'\n') {
+                let mut line: Vec<u8> = self.pending.drain(..=index).collect();
+                line.pop();
+                if line.last() == Some(&b'\r') {
+                    line.pop();
+                }
+                return Ok(String::from_utf8_lossy(&line).to_string());
+            }
+            if self.pending.len() > MAX_LINE_BYTES {
+                self.pending.clear();
+                return Err(AppError::Engine(
+                    "Слишком длинная строка вывода Stockfish".to_string(),
+                ));
+            }
+            let mut chunk: Vec<u8> = Vec::new();
+            match timeout(READ_TIMEOUT, self.reader.fill_buf()).await {
+                Ok(Ok([])) => {
+                    return Err(AppError::Engine(
+                        "Stockfish закрыл поток вывода".to_string(),
+                    ))
+                }
+                Ok(Ok(buffer)) => chunk.extend_from_slice(buffer),
+                Ok(Err(err)) => {
+                    return Err(AppError::Engine(format!("Ошибка чтения Stockfish: {err}")))
+                }
+                Err(_) => return Err(AppError::Engine("Таймаут ответа Stockfish".to_string())),
+            }
+            self.reader.consume(chunk.len());
+            self.pending.extend_from_slice(&chunk);
         }
+    }
+
+    /// Процесс ещё жив и готов принимать команды.
+    pub fn is_running(&mut self) -> bool {
+        matches!(self.child.try_wait(), Ok(None))
     }
 
     pub async fn set_option(&mut self, name: &str, value: &str) -> AppResult<()> {

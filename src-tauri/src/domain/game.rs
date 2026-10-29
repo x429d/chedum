@@ -265,8 +265,20 @@ pub struct GameFilter {
 pub struct PagedGames {
     pub games: Vec<GameListItem>,
     pub total: u32,
+    /// Сколько партий выборки уже имеют анализ (по всей выборке, не по странице).
+    pub analyzed: u32,
+    /// Сколько партий выборки отмечено избранными.
+    pub favorites: u32,
     pub limit: u32,
     pub offset: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PendingAnalysis {
+    pub ids: Vec<i64>,
+    /// Суммарное число позиций очереди — база для оценки времени.
+    pub positions: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

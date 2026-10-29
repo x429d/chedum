@@ -67,6 +67,8 @@ export interface GameFilter {
 export interface PagedGames {
   games: GameListItem[];
   total: number;
+  analyzed: number;
+  favorites: number;
   limit: number;
   offset: number;
 }
@@ -93,12 +95,27 @@ export interface ImportSummary {
   errors: string[];
 }
 
+export interface PendingAnalysis {
+  ids: number[];
+  positions: number;
+}
+
 export interface BatchState {
   running: boolean;
+  /** Индекс партии, которая обрабатывается сейчас (с нуля). */
   current: number;
   total: number;
   percent: number;
   label: string;
+  /** Позиция внутри текущей партии и их общее число. */
+  ply: number;
+  plyTotal: number;
+  /** Успешно разобранные и упавшие партии текущего запуска. */
+  done: number;
+  failed: number;
+  elapsedSec: number;
+  /** Оценка остатка в секундах; null, пока нет ни одной готовой партии. */
+  etaSec: number | null;
 }
 
 export const EMPTY_BATCH: BatchState = {
@@ -107,4 +124,10 @@ export const EMPTY_BATCH: BatchState = {
   total: 0,
   percent: 0,
   label: "",
+  ply: 0,
+  plyTotal: 0,
+  done: 0,
+  failed: 0,
+  elapsedSec: 0,
+  etaSec: null,
 };

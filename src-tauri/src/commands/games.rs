@@ -2,7 +2,7 @@ use tauri::State;
 
 use crate::db::{analyses_repo, games_delete, games_repo, settings_repo};
 use crate::domain::error::AppResult;
-use crate::domain::game::{GameDetail, GameFilter, ImportSummary, PagedGames};
+use crate::domain::game::{GameDetail, GameFilter, ImportSummary, PagedGames, PendingAnalysis};
 use crate::domain::stats::{AppSettings, OpeningEntry};
 use crate::eco::EcoBook;
 use crate::service::import;
@@ -11,6 +11,14 @@ use crate::state::AppState;
 #[tauri::command]
 pub async fn list_games(state: State<'_, AppState>, filter: GameFilter) -> AppResult<PagedGames> {
     games_repo::list_games(&state.db, &filter)
+}
+
+#[tauri::command]
+pub async fn list_pending_analysis(
+    state: State<'_, AppState>,
+    filter: GameFilter,
+) -> AppResult<PendingAnalysis> {
+    games_repo::pending_analysis(&state.db, &filter)
 }
 
 #[tauri::command]

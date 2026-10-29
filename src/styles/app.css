@@ -1024,6 +1024,84 @@ tr:hover .row-actions,
   gap: 10px;
 }
 
+.queue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.queue-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.queue-progress .progress-track {
+  height: 8px;
+}
+
+.queue-progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.queue-percent {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-counter {
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+}
+
+.queue-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.queue-metric strong {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.queue-metric.is-warn strong {
+  color: #f59e0b;
+}
+
+.queue-message {
+  min-height: 15px;
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.queue-submessage {
+  font-size: 10px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- analysis ---------- */
 
 .analysis-header {

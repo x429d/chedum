@@ -2,11 +2,16 @@ import { Show } from "solid-js";
 
 import { libraryStore } from "../../stores/libraryStore";
 import { settingsStore } from "../../stores/settingsStore";
+import { formatDuration } from "../../utils/format";
 import { Icon } from "../ui/Icon";
 
 export function AnalysisQueue() {
   const batch = () => libraryStore.batch();
-  const pending = () => libraryStore.games().filter((game) => !game.hasAnalysis).length;
+  const pending = () => libraryStore.pendingAnalysis();
+  const selected = () => libraryStore.selectedCount();
+  const percent = () => Math.round(batch().percent);
+  const processed = () => batch().done + batch().failed;
+  const perGame = () => (processed() > 0 ? batch().elapsedSec / processed() : null);
   return (
     <div class="card queue-card">
       <div class="card-header">
@@ -20,18 +25,25 @@ export function AnalysisQueue() {
         <Icon name="cpu" size={16} />
       </div>
       <div class="card-pad">
-        <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap" }}>
+        <div class="queue-actions">
           <button
             type="button"
             class="btn btn-primary btn-sm"
-            disabled={batch().running}
+            disabled={batch().running || (selected() === 0 && pending() === 0)}
             onClick={() => libraryStore.analyzeSelected()}
           >
             <Icon name="sparkles" size={12} />
-            {libraryStore.selectedCount() > 0
-              ? `Анализ (${libraryStore.selectedCount()})`
-              : "Анализ новых"}
+            {selected() > 0 ? `Анализ (${selected()})` : `Разобрать новые (${pending()})`}
           </button>
+          <Show when={selected() > 0 && pending() > 0 && !batch().running}>
+            <button
+              type="button"
+              class="btn btn-sm"
+              onClick={() => void libraryStore.analyzePending()}
+            >
+              Все новые ({pending()})
+            </button>
+          </Show>
           <Show when={batch().running}>
             <button
               type="button"
@@ -43,18 +55,54 @@ export function AnalysisQueue() {
             </button>
           </Show>
         </div>
+
         <Show when={batch().running || batch().percent > 0}>
-          <div>
+          <div class="queue-progress">
+            <div class="queue-progress-head">
+              <span class="queue-percent">{percent()}%</span>
+              <span class="queue-counter">
+                {Math.min(batch().current + 1, batch().total)} / {batch().total}
+              </span>
+            </div>
             <div class="progress-track">
               <div class="progress-fill" style={{ width: `${batch().percent}%` }} />
             </div>
-            <div class="sync-log">{batch().label}</div>
+            <div class="queue-metrics">
+              <div class="queue-metric">
+                <span>Прошло</span>
+                <strong>{formatDuration(batch().elapsedSec)}</strong>
+              </div>
+              <div class="queue-metric">
+                <span>Осталось</span>
+                <strong>
+                  {batch().etaSec === null ? "—" : `~${formatDuration(batch().etaSec)}`}
+                </strong>
+              </div>
+              <div class="queue-metric">
+                <span>Готово</span>
+                <strong>{batch().done}</strong>
+              </div>
+              <div class="queue-metric" classList={{ "is-warn": batch().failed > 0 }}>
+                <span>Ошибок</span>
+                <strong>{batch().failed}</strong>
+              </div>
+            </div>
+            <div class="queue-message">{batch().label}</div>
+            <Show when={batch().plyTotal > 0}>
+              <div class="queue-submessage">
+                позиция {batch().ply} из {batch().plyTotal}
+                {perGame() === null ? "" : ` · ~${formatDuration(perGame())} на партию`}
+              </div>
+            </Show>
           </div>
         </Show>
+
         <div class="form-hint">
-          {pending() > 0
-            ? `Без анализа: ${pending()} партий. Очередь выполняется последовательно, по одной партии.`
-            : "Все партии в текущей выборке проанализированы."}
+          {batch().running
+            ? "Очередь идёт последовательно, по одной партии."
+            : pending() > 0
+              ? `Без анализа: ${pending()} по текущему фильтру.`
+              : "Все партии в текущей выборке проанализированы."}
         </div>
       </div>
     </div>

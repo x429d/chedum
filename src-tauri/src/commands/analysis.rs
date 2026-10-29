@@ -44,6 +44,7 @@ pub async fn analyze_position(
     let engine = state.engine.manager().await?;
     let depth = depth.unwrap_or(16).clamp(6, 30);
     let multipv = multipv.unwrap_or(3).clamp(1, 3);
+    let _job = engine.begin_job().await?;
     engine
         .analyze(&fen, depth, multipv, |update| {
             let _ = on_progress.send(update.clone());

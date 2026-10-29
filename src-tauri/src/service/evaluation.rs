@@ -1,6 +1,6 @@
 use crate::domain::analysis::PvLine;
 use crate::domain::error::AppResult;
-use crate::engine::EngineManager;
+use crate::engine::{EngineManager, EngineUpdate};
 
 #[derive(Debug, Clone)]
 pub struct PositionEval {
@@ -24,7 +24,7 @@ where
     let total = fens.len();
     let mut evaluations = Vec::with_capacity(total);
     for (index, fen) in fens.iter().enumerate() {
-        let update = engine.analyze(fen, depth, multipv, |_| {}).await?;
+        let update = evaluate_position(engine, fen, depth, multipv).await?;
         let lines = update
             .lines
             .iter()
@@ -46,4 +46,22 @@ where
         on_progress(index + 1, total);
     }
     Ok(evaluations)
+}
+
+/// Одна позиция с одним повтором: менеджер уже перезапустил движок,
+/// поэтому повтор после сбоя обычно проходит и партия не теряется.
+async fn evaluate_position(
+    engine: &EngineManager,
+    fen: &str,
+    depth: u32,
+    multipv: u32,
+) -> AppResult<EngineUpdate> {
+    match engine.analyze(fen, depth, multipv, |_| {}).await {
+        Ok(update) => Ok(update),
+        Err(first) if !engine.is_cancelled() => {
+            eprintln!("Chenal: повтор оценки позиции после сбоя движка: {first}");
+            engine.analyze(fen, depth, multipv, |_| {}).await
+        }
+        Err(err) => Err(err),
+    }
 }

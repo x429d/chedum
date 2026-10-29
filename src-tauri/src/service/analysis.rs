@@ -38,6 +38,8 @@ pub async fn analyze_game(
     multipv: u32,
     progress: Option<&Channel<AnalysisProgress>>,
 ) -> AppResult<GameDetail> {
+    // Одна задача на движок: отмена больше не сбрасывается каждой позицией.
+    let _job = engine.begin_job().await?;
     let game = games_repo::get_game(db, game_id)?;
     emit_progress(
         progress,
