@@ -30,6 +30,8 @@ pub fn set_setting(db: &Db, key: &str, value: &str) -> AppResult<()> {
         "piece_set",
         "show_arrows",
         "auto_analyze",
+        "analysis_threads",
+        "auto_resume_analysis",
     ];
     if !allowed.contains(&key) {
         return Err(AppError::Validation(format!(
@@ -53,6 +55,16 @@ pub fn set_setting(db: &Db, key: &str, value: &str) -> AppResult<()> {
         if !(1..=3).contains(&multipv) {
             return Err(AppError::Validation(
                 "MultiPV должен быть от 1 до 3".to_string(),
+            ));
+        }
+    }
+    if key == "analysis_threads" {
+        let threads: u32 = value
+            .parse()
+            .map_err(|_| AppError::Validation("Потоки анализа должны быть числом".to_string()))?;
+        if threads > 64 {
+            return Err(AppError::Validation(
+                "Потоки анализа: допустимо 0 (авто) или 1…64".to_string(),
             ));
         }
     }
@@ -81,6 +93,11 @@ pub fn set_many(db: &Db, settings: &AppSettings) -> AppResult<()> {
             ("piece_set", settings.piece_set.clone()),
             ("show_arrows", settings.show_arrows.to_string()),
             ("auto_analyze", settings.auto_analyze.to_string()),
+            ("analysis_threads", settings.analysis_threads.to_string()),
+            (
+                "auto_resume_analysis",
+                settings.auto_resume_analysis.to_string(),
+            ),
         ];
         for (key, value) in values {
             upsert_conn(tx, key, &value)?;
@@ -126,6 +143,18 @@ fn settings_from_map(map: &HashMap<String, String>) -> AppSettings {
     if let Some(value) = map.get("auto_analyze").and_then(|value| value.parse().ok()) {
         settings.auto_analyze = value;
     }
+    if let Some(value) = map
+        .get("analysis_threads")
+        .and_then(|value| value.parse().ok())
+    {
+        settings.analysis_threads = value;
+    }
+    if let Some(value) = map
+        .get("auto_resume_analysis")
+        .and_then(|value| value.parse().ok())
+    {
+        settings.auto_resume_analysis = value;
+    }
     settings
 }
 
@@ -143,6 +172,12 @@ mod tests {
         };
         set_many(&db, &settings).unwrap();
         assert_eq!(get_settings(&db).unwrap().piece_set, "celtic");
+    }
+
+    #[test]
+    fn new_install_defaults_to_auto_analyze_on() {
+        let db = Db::in_memory().unwrap();
+        assert!(get_settings(&db).unwrap().auto_analyze);
     }
 
     #[test]

@@ -62,9 +62,11 @@ fn paginates_game_history_with_limit_and_offset() {
 fn analyze(db: &Db, game_id: i64) {
     db.with_tx(|tx| {
         tx.execute(
-            "INSERT INTO game_analyses (game_id, engine_name, depth, multipv, analyzed_at, \
+            "INSERT INTO game_analyses (game_id, engine_name, engine_version, depth, multipv, \
+             classifier_version, accuracy_method_version, config_key, analyzed_at, \
              counts_json, summary_text, key_moments_count) \
-             VALUES (?1, 'test', 10, 1, '2026-01-01', '{}', 'x', 0)",
+             VALUES (?1, 'Stockfish 19', '19', 14, 2, 'classifier-v1', 'lichess-v1', \
+             'Stockfish 19|19|14|2|classifier-v1|lichess-v1', '2026-01-01', '{}', 'x', 0)",
             [game_id],
         )?;
         Ok(())
@@ -97,7 +99,8 @@ fn counts_analyzed_and_favorites_for_whole_selection() {
     assert_eq!(page.analyzed, 1);
     assert_eq!(page.favorites, 1);
 
-    let pending = pending_analysis(&db, &GameFilter::default()).unwrap();
+    let key = "Stockfish 19|19|14|2|classifier-v1|lichess-v1";
+    let pending = pending_analysis(&db, &GameFilter::default(), key).unwrap();
     assert_eq!(pending.ids.len(), 2);
     assert!(!pending.ids.contains(&ids[1]));
     // По две партии по три позиции: стартовая + два полухода.

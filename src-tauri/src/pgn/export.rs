@@ -72,6 +72,8 @@ mod tests {
             total_plies: 1,
             notes: String::new(),
             is_favorite: false,
+            analysis_attempts: 0,
+            last_analysis_error: None,
         }
     }
 

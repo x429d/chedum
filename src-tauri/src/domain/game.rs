@@ -145,6 +145,8 @@ pub struct Game {
     pub total_plies: i32,
     pub notes: String,
     pub is_favorite: bool,
+    pub analysis_attempts: u32,
+    pub last_analysis_error: Option<String>,
 }
 
 /// Партия до вставки в базу (id присваивает SQLite).
@@ -222,6 +224,8 @@ impl GameDraft {
             total_plies: self.total_plies,
             notes: self.notes,
             is_favorite: self.is_favorite,
+            analysis_attempts: 0,
+            last_analysis_error: None,
         }
     }
 }
@@ -252,6 +256,9 @@ pub struct GameListItem {
     pub engine_name: Option<String>,
     pub analysis_depth: Option<i32>,
     pub accuracy_method: Option<String>,
+    /// Сколько раз анализ партии падал; после 3 она выходит из очереди.
+    pub analysis_attempts: u32,
+    pub last_analysis_error: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -291,6 +298,8 @@ pub struct PendingAnalysis {
     pub ids: Vec<i64>,
     /// Суммарное число позиций очереди — база для оценки времени.
     pub positions: u64,
+    /// Партии, исключённые после трёх неудачных попыток.
+    pub excluded: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

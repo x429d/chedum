@@ -38,6 +38,33 @@ pub async fn analyze_game(
     multipv: u32,
     progress: Option<&Channel<AnalysisProgress>>,
 ) -> AppResult<GameDetail> {
+    let outcome = analyze_game_inner(db, engine, game_id, depth, multipv, progress).await;
+    match &outcome {
+        Ok(_) => {
+            if let Err(err) = games_repo::reset_analysis_attempts(db, game_id) {
+                eprintln!("Chenal: не удалось сбросить попытки анализа #{game_id}: {err}");
+            }
+        }
+        Err(err) if !engine.is_cancelled() && !matches!(err, AppError::Busy(_)) => {
+            if let Err(record) =
+                games_repo::record_analysis_failure(db, game_id, &err.to_string())
+            {
+                eprintln!("Chenal: не удалось записать ошибку анализа #{game_id}: {record}");
+            }
+        }
+        Err(_) => {}
+    }
+    outcome
+}
+
+async fn analyze_game_inner(
+    db: &Db,
+    engine: &EngineManager,
+    game_id: i64,
+    depth: u32,
+    multipv: u32,
+    progress: Option<&Channel<AnalysisProgress>>,
+) -> AppResult<GameDetail> {
     // Одна задача на движок: отмена больше не сбрасывается каждой позицией.
     let _job = engine.begin_job().await?;
     let game = games_repo::get_game(db, game_id)?;

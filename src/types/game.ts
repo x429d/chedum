@@ -49,6 +49,8 @@ export interface GameListItem {
   engineName: string | null;
   analysisDepth: number | null;
   accuracyMethod: string | null;
+  analysisAttempts: number;
+  lastAnalysisError: string | null;
 }
 
 export interface GameFilter {
@@ -101,6 +103,7 @@ export interface ImportSummary {
 export interface PendingAnalysis {
   ids: number[];
   positions: number;
+  excluded: number;
 }
 
 export interface BatchState {

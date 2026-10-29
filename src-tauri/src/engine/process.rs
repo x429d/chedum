@@ -28,6 +28,14 @@ pub struct EngineProcess {
 
 impl EngineProcess {
     pub async fn spawn(path: &Path) -> AppResult<Self> {
+        let threads = std::thread::available_parallelism()
+            .map(|value| value.get().clamp(1, 4))
+            .unwrap_or(2);
+        EngineProcess::spawn_with(path, threads, 128).await
+    }
+
+    /// `threads` — потоков на процесс, `hash_mb` — размер хеш-таблицы.
+    pub async fn spawn_with(path: &Path, threads: usize, hash_mb: u32) -> AppResult<Self> {
         if !path.is_file() {
             return Err(AppError::Engine(format!(
                 "Исполняемый файл Stockfish не найден: {}",
@@ -68,11 +76,12 @@ impl EngineProcess {
             }
         }
         process.name = name.unwrap_or_else(|| "Stockfish".to_string());
-        let threads = std::thread::available_parallelism()
-            .map(|value| value.get().clamp(1, 4))
-            .unwrap_or(2);
-        process.set_option("Threads", &threads.to_string()).await?;
-        process.set_option("Hash", "128").await?;
+        process
+            .set_option("Threads", &threads.clamp(1, 64).to_string())
+            .await?;
+        process
+            .set_option("Hash", &hash_mb.clamp(16, 1024).to_string())
+            .await?;
         process.send("isready").await?;
         loop {
             let line = process.read_line().await?;

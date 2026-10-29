@@ -33,7 +33,7 @@ export function AnalysisQueue() {
             onClick={() => libraryStore.analyzeSelected()}
           >
             <Icon name="analyze" size={12} />
-            {selected() > 0 ? `Анализ (${selected()})` : `Разобрать новые (${pending()})`}
+            {selected() > 0 ? `Анализ (${selected()})` : `Продолжить разбор (${pending()})`}
           </button>
           <Show when={selected() > 0 && pending() > 0 && !batch().running}>
             <button
@@ -61,7 +61,7 @@ export function AnalysisQueue() {
             <div class="queue-progress-head">
               <span class="queue-percent">{percent()}%</span>
               <span class="queue-counter">
-                {Math.min(batch().current + 1, batch().total)} / {batch().total}
+                {Math.min(processed(), batch().total)} / {batch().total}
               </span>
             </div>
             <div class="progress-track">
@@ -90,7 +90,7 @@ export function AnalysisQueue() {
             <div class="queue-message">{batch().label}</div>
             <Show when={batch().plyTotal > 0}>
               <div class="queue-submessage">
-                позиция {batch().ply} из {batch().plyTotal}
+                позиций: {batch().ply} из {batch().plyTotal}
                 {perGame() === null ? "" : `, ~${formatDuration(perGame())} на партию`}
               </div>
             </Show>
@@ -99,10 +99,13 @@ export function AnalysisQueue() {
 
         <div class="form-hint">
           {batch().running
-            ? "Очередь идёт последовательно, по одной партии."
+            ? "Партии идут параллельно; остановка завершает текущие и не берёт новые."
             : pending() > 0
-              ? `Без анализа: ${pending()} по текущему фильтру.`
-              : "Все партии в текущей выборке проанализированы."}
+              ? `Без анализа текущей конфигурации: ${pending()} по фильтру.`
+              : "Все партии текущей конфигурации разобраны."}
+          {libraryStore.queueExcluded() > 0
+            ? ` Исключено после 3 ошибок: ${libraryStore.queueExcluded()}.`
+            : ""}
         </div>
       </div>
     </div>

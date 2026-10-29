@@ -26,9 +26,12 @@ const [syncResult, setSyncResult] = createSignal<SyncResult | null>(null);
 const [syncing, setSyncing] = createSignal(false);
 const [importing, setImporting] = createSignal(false);
 const [batch, setBatch] = createSignal<BatchState>(EMPTY_BATCH);
+const [queuePending, setQueuePending] = createSignal(0);
+const [queueExcluded, setQueueExcluded] = createSignal(0);
 const selectedCount = () => selected().length;
 let loadSequence = 0;
 let searchTimer: number | undefined;
+let autoResumeHandled = false;
 
 async function load(): Promise<void> {
   const sequence = ++loadSequence;
@@ -41,10 +44,37 @@ async function load(): Promise<void> {
     setAnalyzed(page.analyzed);
     setFavorites(page.favorites);
     setSelected((ids) => ids.filter((id) => page.games.some((game) => game.id === id)));
+    void refreshQueue();
   } catch (error) {
     ui.notify(toErrorMessage(error), "error");
   } finally {
     if (sequence === loadSequence) setLoading(false);
+  }
+}
+
+/// Очередь — производная состояния: партии без анализа текущей конфигурации,
+/// у которых меньше трёх неудачных попыток. Считает бэкенд.
+async function refreshQueue(): Promise<void> {
+  try {
+    const plan = await api.listPendingAnalysis(filter());
+    setQueuePending(plan.ids.length);
+    setQueueExcluded(plan.excluded);
+  } catch {
+    // Счётчик не критичен для загрузки библиотеки; ошибка придёт при запуске.
+  }
+}
+
+async function startAutoResume(): Promise<void> {
+  if (autoResumeHandled) return;
+  autoResumeHandled = true;
+  if (!settingsStore.settings().autoResumeAnalysis) return;
+  try {
+    const plan = await api.listPendingAnalysis({});
+    if (plan.ids.length === 0) return;
+    ui.notify(`Продолжаю разбор: ${plan.ids.length} партий`, "info");
+    await batchController.analyzeIds(plan.ids, "Продолжение разбора", plan.positions);
+  } catch (error) {
+    ui.notify(toErrorMessage(error), "error");
   }
 }
 function updateFilter(patch: Partial<GameFilter>): void {
@@ -173,7 +203,7 @@ async function importText(text: string): Promise<void> {
 
 function maybeAutoAnalyze(imported: number): void {
   if (imported <= 0 || !settingsStore.settings().autoAnalyze) return;
-  void batchController.analyzePending(false);
+  void batchController.analyzePending(false, true);
 }
 
 function notifyImport(result: ImportSummary): void {
@@ -264,7 +294,8 @@ export const libraryStore = {
   total,
   analyzed,
   favorites,
-  pendingAnalysis: () => Math.max(0, total() - analyzed()),
+  pendingAnalysis: queuePending,
+  queueExcluded,
   loading,
   filter,
   selected,
@@ -303,5 +334,7 @@ export const libraryStore = {
   analyzeOne: (id: number) => batchController.analyzeOne(id),
   analyzeIds: (ids: number[], label?: string) =>
     batchController.analyzeIds(ids, label ?? "Пакетный анализ"),
+  refreshQueue,
+  startAutoResume,
   cancelBatch: () => batchController.cancel(),
 };

@@ -157,6 +157,26 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         )?;
         conn.pragma_update(None, "user_version", 4)?;
     }
+    if version < 5 {
+        add_column_if_missing(
+            conn,
+            "games",
+            "analysis_attempts",
+            "INTEGER NOT NULL DEFAULT 0",
+        )?;
+        add_column_if_missing(conn, "games", "last_analysis_error", "TEXT")?;
+        // Новые установки получают автоанализ включённым (значение по
+        // умолчанию в AppSettings). У существующей базы, где пользователь
+        // ещё не выбирал, сохраняем прежнее поведение — выключено.
+        conn.execute(
+            "INSERT INTO app_settings (key, value)
+             SELECT 'auto_analyze', 'false'
+             WHERE NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'auto_analyze')
+               AND EXISTS (SELECT 1 FROM games)",
+            [],
+        )?;
+        conn.pragma_update(None, "user_version", 5)?;
+    }
     Ok(())
 }
 

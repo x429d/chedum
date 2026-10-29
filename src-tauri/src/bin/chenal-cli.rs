@@ -1,11 +1,14 @@
 //! Служебная консоль для операций над локальной базой Chenal.
 //! Не входит в бандл приложения; используется для аудита и пакетного разбора.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::sync::Arc;
+use std::time::Instant;
 
 use chenal_lib::db::connection::Db;
 use chenal_lib::domain::error::AppResult;
+use chenal_lib::engine::pool::{hash_mb_for, workers_from_setting, EnginePool};
 use chenal_lib::service::openings;
 
 fn default_db() -> PathBuf {
@@ -49,11 +52,172 @@ fn run() -> AppResult<()> {
             audit(&db)
         }
         "hub" => hub(&db),
+        "analyze" => block_on(analyze(&db, &args)),
         other => {
-            eprintln!("Неизвестная команда «{other}»: audit | openings | backfill | hub");
+            eprintln!(
+                "Неизвестная команда «{other}»: audit | openings | backfill | hub | analyze"
+            );
             Ok(())
         }
     }
+}
+
+fn block_on<F>(future: F) -> AppResult<()>
+where
+    F: std::future::Future<Output = AppResult<()>>,
+{
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .map_err(|err| chenal_lib::domain::error::AppError::Internal(err.to_string()))?;
+    runtime.block_on(future)
+}
+
+fn arg_value(args: &[String], name: &str) -> Option<String> {
+    args.iter()
+        .position(|value| value == name)
+        .and_then(|index| args.get(index + 1))
+        .cloned()
+}
+
+fn engine_path() -> PathBuf {
+    if let Ok(path) = std::env::var("CHENAL_STOCKFISH") {
+        return PathBuf::from(path);
+    }
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("binaries/stockfish-aarch64-apple-darwin")
+}
+
+async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
+    let depth = arg_value(args, "--depth")
+        .and_then(|value| value.parse::<u32>().ok())
+        .unwrap_or(14);
+    let multipv = arg_value(args, "--multipv")
+        .and_then(|value| value.parse::<u32>().ok())
+        .unwrap_or(3);
+    let limit = arg_value(args, "--limit")
+        .and_then(|value| value.parse::<usize>().ok())
+        .unwrap_or(20);
+    let setting = arg_value(args, "--workers")
+        .and_then(|value| value.parse::<u32>().ok())
+        .unwrap_or(0);
+    let workers = workers_from_setting(setting);
+    let explicit_ids: Option<Vec<i64>> = arg_value(args, "--ids").map(|value| {
+        value
+            .split(',')
+            .filter_map(|item| item.trim().parse::<i64>().ok())
+            .collect()
+    });
+    let fresh = args.iter().any(|value| value == "--fresh");
+    if fresh {
+        if let Some(ids) = &explicit_ids {
+            for id in ids {
+                db.with(|conn| {
+                    conn.execute("DELETE FROM game_analyses WHERE game_id = ?1", [id])?;
+                    Ok(())
+                })?;
+            }
+        }
+    }
+    let ids: Vec<i64> = match explicit_ids {
+        Some(ids) => ids,
+        None => db.with(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT g.id FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
+                 WHERE a.id IS NULL ORDER BY g.played_at DESC LIMIT ?1",
+            )?;
+            let rows = stmt.query_map([limit as i64], |row| row.get::<_, i64>(0))?;
+            let mut out = Vec::new();
+            for row in rows {
+                out.push(row?);
+            }
+            Ok(out)
+        })?,
+    };
+    if ids.is_empty() {
+        println!("Нет партий для анализа");
+        return Ok(());
+    }
+    let path = engine_path();
+    if !path.is_file() {
+        eprintln!("Stockfish не найден: {}", path.display());
+        return Ok(());
+    }
+    println!(
+        "analyze: {} партий, depth {depth}, MultiPV {multipv}, workers {workers}, hash {} MB",
+        ids.len(),
+        hash_mb_for(workers)
+    );
+    let pool = EnginePool::spawn(&path, workers, hash_mb_for(workers)).await?;
+    let started = Instant::now();
+    let next = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let mut tasks = Vec::new();
+    for _ in 0..workers {
+        let pool = Arc::clone(&pool);
+        let next = Arc::clone(&next);
+        let ids = ids.clone();
+        let db = db.clone();
+        tasks.push(tokio::spawn(async move {
+            let mut results = Vec::new();
+            loop {
+                let index = next.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                if index >= ids.len() {
+                    break;
+                }
+                let id = ids[index];
+                let lease = pool.acquire().await;
+                let game_started = Instant::now();
+                let outcome = chenal_lib::service::analysis::analyze_game(
+                    &db,
+                    lease.manager(),
+                    id,
+                    depth,
+                    multipv,
+                    None,
+                )
+                .await;
+                let elapsed = game_started.elapsed().as_secs_f64();
+                results.push((id, elapsed, outcome.map(|detail| detail.analysis)));
+            }
+            results
+        }));
+    }
+    let mut games = 0usize;
+    let mut failures = 0usize;
+    for task in tasks {
+        match task.await {
+            Ok(results) => {
+                for (id, elapsed, outcome) in results {
+                    games += 1;
+                    match outcome {
+                        Ok(Some(analysis)) => println!(
+                            "  #{id}: {:.1}s white_acc={:?} black_acc={:?} white_acpl={:?} black_acpl={:?}",
+                            elapsed,
+                            analysis.white_accuracy,
+                            analysis.black_accuracy,
+                            analysis.white_acpl,
+                            analysis.black_acpl
+                        ),
+                        Ok(None) => println!("  #{id}: {:.1}s (без анализа)", elapsed),
+                        Err(err) => {
+                            failures += 1;
+                            println!("  #{id}: {:.1}s ошибка: {err}", elapsed);
+                        }
+                    }
+                }
+            }
+            Err(err) => {
+                failures += 1;
+                eprintln!("worker join error: {err}");
+            }
+        }
+    }
+    pool.shutdown().await;
+    println!(
+        "done: {games} обработано, {failures} ошибок, {:.1}s всего",
+        started.elapsed().as_secs_f64()
+    );
+    Ok(())
 }
 
 fn audit(db: &Db) -> AppResult<()> {

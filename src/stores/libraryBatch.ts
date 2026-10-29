@@ -81,6 +81,7 @@ export function createBatchController(deps: BatchControllerDeps) {
     ids: number[],
     label: string,
     positionsTotal = 0,
+    lowPriority = false,
   ): Promise<void> {
     if (ids.length === 0 || running || deps.batch().running) return;
     if (gameStore.analyzing()) {
@@ -93,14 +94,28 @@ export function createBatchController(deps: BatchControllerDeps) {
     let failed = 0;
     let firstError: string | null = null;
     let fatal = false;
-    let positionsBefore = 0;
-    let seenPositions = 0;
-    let gamePly = 0;
+    let completedPositions = 0;
+    const activePly: number[] = [];
+    const activeTotal: number[] = [];
+    let nextIndex = 0;
+    const positionsDone = () =>
+      completedPositions + activePly.reduce((sum, value) => sum + value, 0);
+    const percent = () => {
+      if (positionsTotal > 0) {
+        return Math.min(99.5, (positionsDone() / positionsTotal) * 100);
+      }
+      return Math.min(99.5, ((done + failed) / ids.length) * 100);
+    };
     try {
       // Сначала гасим live-анализ: иначе его stop_engine прилетит уже
-      // в первую партию пакета и отменит её.
+      // в первые партии пакета и отменит их.
       await analysisStore.stop();
       const settings = settingsStore.settings();
+      const maximum = settingsStore.info()?.maxAnalysisWorkers ?? 1;
+      const requested = settings.analysisThreads === 0 ? maximum : settings.analysisThreads;
+      const full = Math.max(1, Math.min(ids.length, requested, maximum));
+      // Автоанализ после импорта не занимает весь пул.
+      const workers = lowPriority ? Math.max(1, Math.floor(full / 2)) : full;
       startedAt = Date.now();
       deps.setBatch({
         running: true,
@@ -109,7 +124,7 @@ export function createBatchController(deps: BatchControllerDeps) {
         percent: 0,
         label,
         ply: 0,
-        plyTotal: 0,
+        plyTotal: positionsTotal,
         done: 0,
         failed: 0,
         elapsedSec: 0,
@@ -119,71 +134,80 @@ export function createBatchController(deps: BatchControllerDeps) {
       timer = window.setInterval(() => {
         deps.setBatch((current) =>
           current.running
-            ? withTiming(current, positionsBefore + gamePly, positionsTotal)
+            ? withTiming(current, positionsDone(), positionsTotal)
             : current,
         );
       }, 1000);
-      for (let index = 0; index < ids.length; index += 1) {
-        if (cancelled) break;
-        seenPositions = 0;
-        gamePly = 0;
-        deps.setBatch((current) =>
-          withTiming(
-            {
-              ...current,
-              current: index,
-              done,
-              failed,
-              ply: 0,
-              plyTotal: 0,
-              label: `${label}: ${index + 1} из ${ids.length}`,
-            },
-            positionsBefore,
-            positionsTotal,
-          ),
-        );
-        try {
-          await api.analyzeGame(
-            ids[index],
-            settings.analysisDepth,
-            settings.multipv,
-            (progress) => {
-              seenPositions = Math.max(seenPositions, progress.total);
-              gamePly = progress.ply;
-              deps.setBatch((current) =>
-                withTiming(
-                  {
-                    ...current,
-                    percent: ((index + progress.percent / 100) / ids.length) * 100,
-                    label: progress.message,
-                    ply: progress.ply,
-                    plyTotal: progress.total,
-                  },
-                  positionsBefore + progress.ply,
-                  positionsTotal,
-                ),
-              );
-            },
+      const runWorker = async (slot: number): Promise<void> => {
+        activePly[slot] = 0;
+        activeTotal[slot] = 0;
+        while (!cancelled) {
+          const index = nextIndex;
+          nextIndex += 1;
+          if (index >= ids.length) break;
+          deps.setBatch((current) =>
+            withTiming(
+              {
+                ...current,
+                current: done + failed,
+                done,
+                failed,
+                label: `${label}: ${done + failed + 1} из ${ids.length} (${workers} потоков)`,
+              },
+              positionsDone(),
+              positionsTotal,
+            ),
           );
-          done += 1;
-          positionsBefore += Math.max(seenPositions, gamePly, 1);
-        } catch (error) {
-          if (cancelled) break;
-          failed += 1;
-          positionsBefore += gamePly;
-          if (firstError === null) firstError = toErrorMessage(error);
-          const code = toErrorCode(error);
-          if (code !== null && FATAL_CODES.has(code)) {
-            fatal = true;
-            break;
+          try {
+            await api.analyzeGame(
+              ids[index],
+              settings.analysisDepth,
+              settings.multipv,
+              (progress) => {
+                activePly[slot] = progress.ply;
+                activeTotal[slot] = Math.max(activeTotal[slot] ?? 0, progress.total);
+                deps.setBatch((current) =>
+                  withTiming(
+                    {
+                      ...current,
+                      percent: percent(),
+                      label: progress.message,
+                      ply: positionsDone(),
+                      plyTotal: positionsTotal || progress.total,
+                    },
+                    positionsDone(),
+                    positionsTotal,
+                  ),
+                );
+              },
+            );
+            done += 1;
+            completedPositions += Math.max(activeTotal[slot] ?? 0, activePly[slot] ?? 0, 1);
+          } catch (error) {
+            if (cancelled) break;
+            failed += 1;
+            completedPositions += activePly[slot] ?? 0;
+            if (firstError === null) firstError = toErrorMessage(error);
+            const code = toErrorCode(error);
+            if (code !== null && FATAL_CODES.has(code)) {
+              fatal = true;
+              cancelled = true;
+              break;
+            }
+          } finally {
+            activePly[slot] = 0;
+            activeTotal[slot] = 0;
           }
         }
-      }
+      };
+      await Promise.all(
+        Array.from({ length: workers }, (_, slot) => runWorker(slot)),
+      );
     } finally {
       // Очередь обязана разблокироваться при любом сбое.
       stopTimer();
       running = false;
-      const stopped = cancelled;
+      const stopped = cancelled && !fatal;
       const elapsedSec =
         startedAt > 0 ? Math.max(0, Math.round((Date.now() - startedAt) / 1000)) : 0;
       startedAt = 0;
@@ -220,14 +244,14 @@ export function createBatchController(deps: BatchControllerDeps) {
   }
 
   /** Все партии без анализа по текущему фильтру, а не только видимая страница. */
-  async function analyzePending(notifyEmpty = true): Promise<void> {
+  async function analyzePending(notifyEmpty = true, lowPriority = false): Promise<void> {
     try {
       const plan = await api.listPendingAnalysis(deps.filter());
       if (plan.ids.length === 0) {
         if (notifyEmpty) ui.notify("Нет партий, ожидающих анализа", "info");
         return;
       }
-      await analyzeIds(plan.ids, "Разбор новых", plan.positions);
+      await analyzeIds(plan.ids, "Разбор новых", plan.positions, lowPriority);
     } catch (error) {
       ui.notify(toErrorMessage(error), "error");
     }

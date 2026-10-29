@@ -10,11 +10,11 @@ use rusqlite::{params, params_from_iter, Connection, OptionalExtension, Row};
 const GAME_COLUMNS: &str = "g.id, g.external_id, g.source, g.pgn, g.initial_fen, g.white_username, \
     g.black_username, g.white_elo, g.black_elo, g.user_color, g.result, g.termination, \
     g.time_control, g.time_class, g.eco, g.opening_name, g.opening_ply, g.opening_source, \
-    g.played_at, g.total_plies, g.notes, g.is_favorite";
+    g.played_at, g.total_plies, g.notes, g.is_favorite, g.analysis_attempts, g.last_analysis_error";
 
 const LIST_COLUMNS: &str = "g.id, g.white_username, g.black_username, g.white_elo, g.black_elo, \
     g.user_color, g.result, g.time_control, g.time_class, g.eco, g.opening_name, g.played_at, \
-    g.total_plies, g.notes, g.is_favorite";
+    g.total_plies, g.notes, g.is_favorite, g.analysis_attempts, g.last_analysis_error";
 
 pub fn insert_game(conn: &Connection, draft: &GameDraft) -> AppResult<Option<i64>> {
     let changed = conn.execute(
@@ -243,22 +243,32 @@ pub fn list_games(db: &Db, filter: &GameFilter) -> AppResult<PagedGames> {
 }
 
 /// План пакетного анализа: все партии выборки без анализа и число позиций.
-pub fn pending_analysis(db: &Db, filter: &GameFilter) -> AppResult<PendingAnalysis> {
+pub fn pending_analysis(
+    db: &Db,
+    filter: &GameFilter,
+    config_key: &str,
+) -> AppResult<PendingAnalysis> {
     db.with(|conn| {
         let mut filter = filter.clone();
         filter.analyzed_only = false;
         let (where_sql, values) = filter_clause(&filter);
+        let base = format!(
+            "FROM games g LEFT JOIN game_analyses a
+                 ON a.game_id = g.id AND a.config_key = ?1 {where_sql}"
+        );
         let condition = if where_sql.is_empty() {
             "WHERE a.id IS NULL".to_string()
         } else {
             format!("{where_sql} AND a.id IS NULL")
         };
         let sql = format!(
-            "SELECT g.id, g.total_plies FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id \
-             {condition} ORDER BY g.played_at DESC"
+            "SELECT g.id, g.total_plies {base} {condition} AND g.analysis_attempts < 3
+             ORDER BY g.played_at DESC"
         );
+        let mut params_vec = vec![Value::Text(config_key.to_string())];
+        params_vec.extend(values.iter().cloned());
         let mut stmt = conn.prepare(&sql)?;
-        let rows = stmt.query_map(params_from_iter(values.iter()), |row| {
+        let rows = stmt.query_map(params_from_iter(params_vec.iter()), |row| {
             Ok((row.get::<_, i64>(0)?, row.get::<_, i32>(1)?))
         })?;
         let mut ids = Vec::new();
@@ -268,7 +278,43 @@ pub fn pending_analysis(db: &Db, filter: &GameFilter) -> AppResult<PendingAnalys
             ids.push(id);
             positions += u64::from(plies.max(0) as u32) + 1;
         }
-        Ok(PendingAnalysis { ids, positions })
+        let excluded_sql = format!(
+            "SELECT COUNT(*) {base} {condition} AND g.analysis_attempts >= 3"
+        );
+        let excluded: i64 =
+            conn.query_row(&excluded_sql, params_from_iter(params_vec.iter()), |row| {
+                row.get(0)
+            })?;
+        Ok(PendingAnalysis {
+            ids,
+            positions,
+            excluded: excluded as u32,
+        })
+    })
+}
+
+/// Фиксирует неудачную попытку анализа; после третьей партия выходит из очереди.
+pub fn record_analysis_failure(db: &Db, id: i64, message: &str) -> AppResult<()> {
+    db.with(|conn| {
+        conn.execute(
+            "UPDATE games SET analysis_attempts = analysis_attempts + 1,
+                last_analysis_error = ?2 WHERE id = ?1",
+            params![id, message],
+        )?;
+        Ok(())
+    })
+}
+
+/// Успешный анализ снимает прошлые ошибки и возвращает партию в очередь
+/// при следующей смене конфигурации.
+pub fn reset_analysis_attempts(db: &Db, id: i64) -> AppResult<()> {
+    db.with(|conn| {
+        conn.execute(
+            "UPDATE games SET analysis_attempts = 0, last_analysis_error = NULL
+             WHERE id = ?1",
+            params![id],
+        )?;
+        Ok(())
     })
 }
 
@@ -299,6 +345,8 @@ fn map_game(row: &Row<'_>) -> rusqlite::Result<Game> {
         total_plies: row.get("total_plies")?,
         notes: row.get("notes")?,
         is_favorite: row.get::<_, i64>("is_favorite")? != 0,
+        analysis_attempts: row.get::<_, i64>("analysis_attempts")? as u32,
+        last_analysis_error: row.get("last_analysis_error")?,
     })
 }
 
@@ -341,6 +389,8 @@ fn map_game_list_item(row: &Row<'_>) -> rusqlite::Result<GameListItem> {
         engine_name: row.get("engine_name")?,
         analysis_depth: row.get("depth")?,
         accuracy_method: row.get("accuracy_method_version")?,
+        analysis_attempts: row.get::<_, i64>("analysis_attempts")? as u32,
+        last_analysis_error: row.get("last_analysis_error")?,
     })
 }
 

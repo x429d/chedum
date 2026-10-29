@@ -140,6 +140,10 @@ pub struct AppSettings {
     pub piece_set: String,
     pub show_arrows: bool,
     pub auto_analyze: bool,
+    /// 0 — авто (производительные ядра − 1), иначе 1…N процессов.
+    pub analysis_threads: u32,
+    /// Продолжать недоделанную очередь при запуске приложения.
+    pub auto_resume_analysis: bool,
 }
 
 impl Default for AppSettings {
@@ -151,7 +155,9 @@ impl Default for AppSettings {
             board_theme: "walnut".to_string(),
             piece_set: "cburnett".to_string(),
             show_arrows: true,
-            auto_analyze: false,
+            auto_analyze: true,
+            analysis_threads: 0,
+            auto_resume_analysis: false,
         }
     }
 }
@@ -170,4 +176,5 @@ pub struct AppInfo {
     pub name: String,
     pub version: String,
     pub eco_openings: usize,
+    pub max_analysis_workers: u32,
 }

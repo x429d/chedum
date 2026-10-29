@@ -110,6 +110,41 @@ export function SettingsView() {
                 </div>
               </div>
               <div class="form-row">
+                <span class="form-label">Потоки анализа</span>
+                <div class="segmented">
+                  <button
+                    type="button"
+                    classList={{ active: settingsStore.settings().analysisThreads === 0 }}
+                    onClick={() => void settingsStore.update({ analysisThreads: 0 })}
+                  >
+                    Авто
+                  </button>
+                  <For
+                    each={Array.from(
+                      { length: settingsStore.info()?.maxAnalysisWorkers ?? 1 },
+                      (_, index) => index + 1,
+                    )}
+                  >
+                    {(value) => (
+                      <button
+                        type="button"
+                        classList={{
+                          active: settingsStore.settings().analysisThreads === value,
+                        }}
+                        onClick={() => void settingsStore.update({ analysisThreads: value })}
+                      >
+                        {value}
+                      </button>
+                    )}
+                  </For>
+                </div>
+                <div class="form-hint">
+                  Сколько партий разбирать одновременно. Авто = производительные ядра − 1
+                  (сейчас доступно {(settingsStore.info()?.maxAnalysisWorkers ?? 1)}). Каждый
+                  процесс Stockfish получает Threads=1 и общий лимит памяти.
+                </div>
+              </div>
+              <div class="form-row">
                 <span class="form-label">MultiPV</span>
                 <div class="segmented">
                   <For each={[1, 2, 3]}>
@@ -128,6 +163,26 @@ export function SettingsView() {
                   Две линии нужны для поиска критических позиций и Brilliant/Great. Три — для
                   более богатого дерева вариантов.
                 </div>
+              </div>
+              <div class="toggle-row">
+                <div>
+                  <div style={{ "font-size": "12px", "font-weight": "600" }}>
+                    Продолжать разбор при запуске
+                  </div>
+                  <div class="form-hint">
+                    Если очередь не закончена, начать её автоматически после старта.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="switch"
+                  classList={{ on: settingsStore.settings().autoResumeAnalysis }}
+                  onClick={() =>
+                    void settingsStore.update({
+                      autoResumeAnalysis: !settingsStore.settings().autoResumeAnalysis,
+                    })
+                  }
+                />
               </div>
               <div class="toggle-row">
                 <div>

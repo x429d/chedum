@@ -15,12 +15,15 @@ export interface AppSettings {
   pieceSet: PieceSet;
   showArrows: boolean;
   autoAnalyze: boolean;
+  analysisThreads: number;
+  autoResumeAnalysis: boolean;
 }
 
 export interface AppInfo {
   name: string;
   version: string;
   ecoOpenings: number;
+  maxAnalysisWorkers: number;
 }
 
 export interface OpeningEntry {

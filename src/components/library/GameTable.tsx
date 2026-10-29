@@ -42,7 +42,18 @@ function Row(props: { game: GameListItem }) {
       </td>
       <td style={{ "white-space": "nowrap" }}>
         <div class="game-title">{formatDate(props.game.playedAt)}</div>
-        <div class="game-meta">{timeClassLabel(props.game.timeClass)}</div>
+        <div class="game-meta">
+          {timeClassLabel(props.game.timeClass)}
+          <Show when={props.game.analysisAttempts >= 3}>
+            <span
+              style={{ color: "var(--danger)", "margin-left": "5px" }}
+              title={`Анализ падал ${props.game.analysisAttempts} раз: ${props.game.lastAnalysisError ?? "причина неизвестна"}`}
+              aria-label="Анализ партии не удался три раза"
+            >
+              ⚠
+            </span>
+          </Show>
+        </div>
       </td>
       <td>
         <div class="game-title">

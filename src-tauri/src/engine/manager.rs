@@ -37,7 +37,12 @@ pub struct EngineManager {
 
 impl EngineManager {
     pub async fn spawn(path: &Path) -> AppResult<Self> {
-        let process = EngineProcess::spawn(path).await?;
+        EngineManager::spawn_with(path, 2, 128).await
+    }
+
+    /// Один процесс пула: обычно `threads = 1` и умеренный `Hash`.
+    pub async fn spawn_with(path: &Path, threads: usize, hash_mb: u32) -> AppResult<Self> {
+        let process = EngineProcess::spawn_with(path, threads, hash_mb).await?;
         let name = process.name().to_string();
         let version = version_from_name(&name);
         Ok(EngineManager {
@@ -256,6 +261,54 @@ mod tests {
         assert!(matches!(second, Err(AppError::Busy(_))));
         drop(job);
         assert!(manager.begin_job().await.is_ok());
+        manager.shutdown().await;
+    }
+
+    #[tokio::test]
+    async fn stop_cancels_a_running_search() {
+        let Some(path) = bundled_engine() else {
+            return;
+        };
+        let manager = std::sync::Arc::new(EngineManager::spawn(&path).await.unwrap());
+        let _job = manager.begin_job().await.unwrap();
+        let stopper = tokio::spawn({
+            let manager = std::sync::Arc::clone(&manager);
+            async move {
+                tokio::time::sleep(Duration::from_millis(200)).await;
+                manager.request_stop();
+            }
+        });
+        let result = timeout(
+            Duration::from_secs(8),
+            manager.analyze(START, 30, 1, |_| {}),
+        )
+        .await
+        .expect("search stopped");
+        assert!(matches!(result, Err(AppError::Engine(_))));
+        stopper.await.unwrap();
+        manager.shutdown().await;
+    }
+
+    #[tokio::test]
+    async fn recovers_after_engine_process_is_killed() {
+        let Some(path) = bundled_engine() else {
+            return;
+        };
+        let manager = EngineManager::spawn(&path).await.unwrap();
+        let job = manager.begin_job().await.unwrap();
+        // Имитация падения воркера: процесса больше нет, задача ещё жива.
+        manager.shutdown().await;
+        drop(job);
+        let _job = manager.begin_job().await.unwrap();
+        let update = timeout(
+            Duration::from_secs(20),
+            manager.analyze(START, 8, 1, |_| {}),
+        )
+        .await
+        .expect("engine restarted")
+        .unwrap();
+        assert!(update.finished);
+        assert!(!update.lines.is_empty());
         manager.shutdown().await;
     }
 

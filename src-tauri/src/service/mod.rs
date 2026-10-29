@@ -5,3 +5,4 @@ pub mod evaluation;
 pub mod hashing;
 pub mod import;
 pub mod openings;
+pub mod queue;
