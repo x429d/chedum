@@ -1,6 +1,9 @@
 pub mod analysis;
+pub mod enums;
 pub mod error;
 pub mod game;
+pub mod move_category;
+pub mod phase;
 pub mod position;
 pub mod stats;
 pub mod sync;
