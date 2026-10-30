@@ -3,6 +3,7 @@ import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-j
 import type { MoveEvaluation, Phase } from "../../types/models";
 import { CATEGORY_META, PHASE_LABELS } from "../../types/models";
 import { formatClock, formatEval, formatNumber } from "../../utils/format";
+import { layoutPhaseLabels } from "./chartLabels";
 
 const H = 214;
 const ML = 38;
@@ -105,15 +106,7 @@ export function EvalChart(props: {
       seen.add(phase);
       starts.push({ phase, ply });
     }
-    return starts.map((start) => {
-      const px = x(start.ply);
-      const nearRight = px > ML + plotW() * 0.86;
-      return {
-        phase: start.phase,
-        x: nearRight ? px - 5 : px + 5,
-        anchor: nearRight ? ("end" as const) : ("start" as const),
-      };
-    });
+    return layoutPhaseLabels(starts, { left: ML, right: width() - MR }, x);
   });
   const markers = createMemo(() =>
     props.moves
