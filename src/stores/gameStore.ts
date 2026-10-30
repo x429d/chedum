@@ -27,6 +27,12 @@ interface PreviewState {
   index: number;
 }
 
+/** Позиция доски для undo/redo: вариант и номер хода в партии. */
+interface BoardSnapshot {
+  variation: VariationState | null;
+  ply: number;
+}
+
 const [detail, setDetail] = createSignal<GameDetail | null>(null);
 const [loading, setLoading] = createSignal(false);
 const [ply, setPly] = createSignal(0);
@@ -39,6 +45,8 @@ const [progress, setProgress] = createSignal<AnalysisProgress | null>(null);
 let previewTimer: number | undefined;
 let previewEndTimer: number | undefined;
 let analysisCancelled = false;
+/** Состояния, снятые через undo: redo возвращает их по одному. */
+const undoHistory: BoardSnapshot[] = [];
 
 const moves = () => detail()?.moves ?? [];
 const analysis = () => detail()?.analysis ?? null;
@@ -100,6 +108,7 @@ async function load(id: number): Promise<void> {
     setDetail(data);
     setPly(0);
     setVariation(null);
+    undoHistory.length = 0;
     stopPreview();
     setCategoryFilter(null);
     setOrientation(data.game.userColor === "black" ? "black" : "white");
@@ -112,6 +121,7 @@ async function load(id: number): Promise<void> {
 }
 
 function goTo(index: number): void {
+  undoHistory.length = 0;
   stopPreview();
   setVariation(null);
   setPly(Math.max(0, Math.min(index, moves().length)));
@@ -180,6 +190,7 @@ function enterVariation(from: string, to: string): boolean {
   const baseFen = currentFen();
   const played = playMove(baseFen, from, to);
   if (!played) return false;
+  undoHistory.length = 0;
   const existing = variation();
   const fens = existing ? [...existing.fens, played.fenAfter] : [baseFen, played.fenAfter];
   const sans = existing ? [...existing.sans, played.san] : [played.san];
@@ -189,7 +200,47 @@ function enterVariation(from: string, to: string): boolean {
 }
 
 function clearVariation(): void {
+  undoHistory.length = 0;
   setVariation(null);
+}
+
+function snapshot(): BoardSnapshot {
+  return { variation: variation(), ply: ply() };
+}
+
+function applySnapshot(state: BoardSnapshot): void {
+  stopPreview();
+  setVariation(state.variation);
+  setPly(state.ply);
+}
+
+/** Позиция на шаг назад: последний ход варианта либо предыдущий ход партии. */
+function previousSnapshot(): BoardSnapshot | null {
+  const line = variation();
+  if (line && line.sans.length > 0) {
+    const rest = {
+      ...line,
+      fens: line.fens.slice(0, -1),
+      sans: line.sans.slice(0, -1),
+      ucis: line.ucis.slice(0, -1),
+    };
+    return { variation: rest.sans.length > 0 ? rest : null, ply: ply() };
+  }
+  if (ply() > 0) return { variation: null, ply: ply() - 1 };
+  return null;
+}
+
+function undo(): void {
+  const next = previousSnapshot();
+  if (!next) return;
+  undoHistory.push(snapshot());
+  applySnapshot(next);
+}
+
+function redo(): void {
+  const next = undoHistory.pop();
+  if (!next) return;
+  applySnapshot(next);
 }
 
 async function saveComment(index: number, comment: string): Promise<void> {
@@ -239,6 +290,8 @@ async function runAnalysis(): Promise<void> {
     if (detail()?.game.id !== gameId) return;
     setDetail(result);
     setPly(0);
+    setVariation(null);
+    undoHistory.length = 0;
     ui.notify("Анализ завершён", "success");
     await settingsStore.refreshEngine();
   } catch (error) {
@@ -285,6 +338,8 @@ export const gameStore = {
   first,
   last,
   flip,
+  undo,
+  redo,
   toggleCategory,
   setCategoryFilter,
   stopPreview,

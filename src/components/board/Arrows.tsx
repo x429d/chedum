@@ -2,6 +2,7 @@ import { For } from "solid-js";
 
 import type { ArrowSpec, Color } from "../../types/models";
 import { squareCoords } from "../../utils/chess";
+import { arrowGeometry } from "./arrowGeometry";
 
 /** Outline that separates arrows from the board and from each other. */
 const ARROW_BORDER = "#0c110b";
@@ -24,50 +25,33 @@ export function Arrows(props: { arrows: ArrowSpec[]; orientation: Color }) {
           const from = center(arrow.from, props.orientation);
           const to = center(arrow.to, props.orientation);
           if (!from || !to) return null;
-          const dx = to.x - from.x;
-          const dy = to.y - from.y;
-          const length = Math.hypot(dx, dy);
-          if (length < 0.05) return null;
-          const ux = dx / length;
-          const uy = dy / length;
-          const startX = from.x + ux * 0.24;
-          const startY = from.y + uy * 0.24;
-          const tipX = to.x - ux * 0.06;
-          const tipY = to.y - uy * 0.06;
-          const baseX = to.x - ux * 0.34;
-          const baseY = to.y - uy * 0.34;
-          const px = -uy;
-          const py = ux;
+          const geometry = arrowGeometry(from, to);
+          if (!geometry) return null;
           const opacity = arrow.opacity ?? 1;
           const width = arrow.width ?? 0.12;
-          const head = 0.18;
           const border = width + BORDER_WIDTH;
-          const headPoints = `${tipX},${tipY} ${baseX + px * head},${baseY + py * head} ${baseX - px * head},${baseY - py * head}`;
+          const dash = arrow.dashed ? "0.16 0.12" : undefined;
           return (
             <g opacity={opacity}>
-              <g stroke={ARROW_BORDER} fill={ARROW_BORDER} stroke-linejoin="round">
-                <line
-                  x1={startX}
-                  y1={startY}
-                  x2={baseX}
-                  y2={baseY}
-                  stroke-width={border}
-                  stroke-linecap="round"
-                  stroke-dasharray={arrow.dashed ? "0.16 0.12" : undefined}
-                />
-                <polygon points={headPoints} stroke-width={BORDER_WIDTH} />
+              <g fill="none" stroke={ARROW_BORDER} stroke-linejoin="round" stroke-linecap="round">
+                <path d={geometry.shaft} stroke-width={border} stroke-dasharray={dash} />
               </g>
-              <line
-                x1={startX}
-                y1={startY}
-                x2={baseX}
-                y2={baseY}
+              <polygon
+                points={geometry.head}
+                fill={ARROW_BORDER}
+                stroke={ARROW_BORDER}
+                stroke-width={BORDER_WIDTH}
+                stroke-linejoin="round"
+              />
+              <path
+                d={geometry.shaft}
+                fill="none"
                 stroke={arrow.color}
                 stroke-width={width}
                 stroke-linecap="round"
-                stroke-dasharray={arrow.dashed ? "0.16 0.12" : undefined}
+                stroke-dasharray={dash}
               />
-              <polygon points={headPoints} fill={arrow.color} />
+              <polygon points={geometry.head} fill={arrow.color} />
             </g>
           );
         }}

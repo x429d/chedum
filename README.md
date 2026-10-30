@@ -13,8 +13,9 @@ inspired dark interface.
   pagination (25/50/100), batch analysis queue and batch deletion.
 - **Analysis Studio**: custom SVG board with three themes and six switchable open-source piece sets,
   drag-and-drop and click-to-move, eval bar with live Stockfish score, multi-arrow layer,
-  right-drag user arrows (Shift/Alt/Ctrl change colour), move-category badges, variation
-  exploration, fullscreen, live Stockfish panel, and ←/→ keyboard navigation.
+  right-drag user arrows (Shift/Alt/Ctrl change colour, knight moves bend «Г»), move-category badges,
+  variation exploration, fullscreen, live Stockfish panel, and ←/→ navigation plus Cmd/Ctrl+Z undo and
+  Cmd/Ctrl+Shift+Z redo.
 - **Deep analytics**: Win% area chart + synchronized move-time histogram, Lichess-style accuracy
   (win-probability loss with volatility windows and harmonic mean), ACPL,
   performance Elo, 11 move categories, phase accuracy, time-management flags.

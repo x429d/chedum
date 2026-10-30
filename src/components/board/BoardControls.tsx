@@ -22,7 +22,7 @@ export interface BoardControlsProps {
 
 export function BoardControls(props: BoardControlsProps) {
   return (
-    <div class="board-toolbar" title="Листайте партию стрелками ← →">
+    <div class="board-toolbar" title="Листайте партию стрелками ← →. Отменить ход — Cmd/Ctrl+Z, вернуть — Cmd/Ctrl+Shift+Z">
       <button type="button" class="btn btn-ghost btn-sm icon-btn" title="Начало" onClick={props.onFirst}>
         <Icon name="chevrons-left" />
       </button>

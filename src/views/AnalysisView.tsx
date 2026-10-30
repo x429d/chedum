@@ -53,7 +53,7 @@ export function AnalysisView() {
 
   onMount(() => {
     const handler = (event: KeyboardEvent): void => {
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.defaultPrevented) return;
       const target = event.target;
       if (target instanceof HTMLElement) {
         const tag = target.tagName;
@@ -66,6 +66,21 @@ export function AnalysisView() {
           return;
         }
       }
+      // Cmd/Ctrl+Z — отменить ход, Cmd/Ctrl+Shift+Z и Ctrl+Y — вернуть.
+      if (event.metaKey || event.ctrlKey) {
+        if (event.altKey) return;
+        const key = event.key.toLowerCase();
+        if (key === "z") {
+          event.preventDefault();
+          if (event.shiftKey) gameStore.redo();
+          else gameStore.undo();
+        } else if (key === "y") {
+          event.preventDefault();
+          gameStore.redo();
+        }
+        return;
+      }
+      if (event.altKey) return;
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         gameStore.previous();
