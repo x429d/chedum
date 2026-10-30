@@ -12,6 +12,13 @@ const EH = 138;
 const HIST_TOP = 166;
 const HIST_H = 38;
 
+/** Цвета фаз: три разных тона, чтобы подложка читалась на тёмном фоне. */
+const PHASE_COLORS: Record<Phase, string> = {
+  opening: "#2f9e8b",
+  middlegame: "#d9a441",
+  endgame: "#6d8fe0",
+};
+
 export function EvalChart(props: {
   moves: MoveEvaluation[];
   totalPlies: number;
@@ -55,12 +62,58 @@ export function EvalChart(props: {
       .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
       .join(" "),
   );
-  const areaPath = createMemo(() => {
+  /** Фаза хода на этом ply: подложка графика режется по фазам. */
+  const phaseOf = (ply: number): Phase =>
+    props.moves[ply <= 0 ? 0 : ply - 1]?.phase ?? "opening";
+  const phaseRuns = createMemo(() => {
+    const list = points();
     const bottom = MT + EH;
-    const first = points()[0];
-    const last = points()[points().length - 1];
-    if (!first || !last) return "";
-    return `${linePath()} L ${last.x.toFixed(2)} ${bottom} L ${first.x.toFixed(2)} ${bottom} Z`;
+    const runs: { phase: Phase; area: string }[] = [];
+    const first = list[0];
+    if (!first) return runs;
+    let phase = phaseOf(first.ply);
+    let start = first;
+    let path = `M ${first.x.toFixed(2)} ${first.y.toFixed(2)}`;
+    const flush = (endX: number) => {
+      runs.push({
+        phase,
+        area: `${path} L ${endX.toFixed(2)} ${bottom} L ${start.x.toFixed(2)} ${bottom} Z`,
+      });
+    };
+    for (let index = 1; index < list.length; index += 1) {
+      const point = list[index];
+      if (!point) continue;
+      path += ` L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+      const next = phaseOf(point.ply);
+      if (next === phase) continue;
+      // Смена фазы ровно по её вертикальной линии: подложки стыкуются без зазора.
+      flush(point.x);
+      phase = next;
+      start = point;
+      path = `M ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+    }
+    const last = list[list.length - 1];
+    flush(last ? last.x : start.x);
+    return runs;
+  });
+  const phaseLabels = createMemo(() => {
+    const starts: { phase: Phase; ply: number }[] = [];
+    const seen = new Set<Phase>();
+    for (let ply = 1; ply <= total(); ply += 1) {
+      const phase = phaseOf(ply);
+      if (seen.has(phase)) continue;
+      seen.add(phase);
+      starts.push({ phase, ply });
+    }
+    return starts.map((start) => {
+      const px = x(start.ply);
+      const nearRight = px > ML + plotW() * 0.86;
+      return {
+        phase: start.phase,
+        x: nearRight ? px - 5 : px + 5,
+        anchor: nearRight ? ("end" as const) : ("start" as const),
+      };
+    });
   });
   const markers = createMemo(() =>
     props.moves
@@ -137,10 +190,14 @@ export function EvalChart(props: {
         onClick={(event) => props.onSelect(plyFromEvent(event))}
       >
         <defs>
-          <linearGradient id="eval-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#c6a15b" stop-opacity="0.24" />
-            <stop offset="100%" stop-color="#c6a15b" stop-opacity="0.01" />
-          </linearGradient>
+          <For each={["opening", "middlegame", "endgame"] as Phase[]}>
+            {(phase) => (
+              <linearGradient id={`eval-fill-${phase}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color={PHASE_COLORS[phase]} stop-opacity="0.34" />
+                <stop offset="100%" stop-color={PHASE_COLORS[phase]} stop-opacity="0.05" />
+              </linearGradient>
+            )}
+          </For>
         </defs>
 
         <For each={[0, 25, 50, 75, 100]}>
@@ -156,28 +213,36 @@ export function EvalChart(props: {
 
         <For each={phaseMarks()}>
           {(mark) => (
-            <>
-              <line
-                x1={mark.x}
-                x2={mark.x}
-                y1={MT}
-                y2={H - 4}
-                stroke="#3a4432"
-                stroke-width="0.8"
-                stroke-dasharray="3 4"
-              />
-              <text x={mark.x + 5} y={MT + 10} fill="#a4a794" font-size="9">
-                {PHASE_LABELS[mark.phase]}
-              </text>
-            </>
+            <line
+              x1={mark.x}
+              x2={mark.x}
+              y1={MT}
+              y2={H - 4}
+              stroke="#3a4432"
+              stroke-width="0.8"
+              stroke-dasharray="3 4"
+            />
           )}
         </For>
-        <text x={ML + 5} y={MT + 10} fill="#a4a794" font-size="9">
-          {PHASE_LABELS.opening}
-        </text>
 
-        <path d={areaPath()} fill="url(#eval-fill)" />
+        <For each={phaseRuns()}>
+          {(run) => <path d={run.area} fill={`url(#eval-fill-${run.phase})`} />}
+        </For>
         <path d={linePath()} fill="none" stroke="#e0bf7d" stroke-width="1.8" stroke-linejoin="round" />
+        <For each={phaseLabels()}>
+          {(label) => (
+            <text
+              x={label.x}
+              y={MT - 3}
+              text-anchor={label.anchor}
+              fill={PHASE_COLORS[label.phase]}
+              font-size="9"
+              opacity="0.9"
+            >
+              {PHASE_LABELS[label.phase]}
+            </text>
+          )}
+        </For>
         <line x1={ML} x2={width() - MR} y1={y(50)} y2={y(50)} stroke="#4a5344" stroke-width="0.7" stroke-dasharray="4 4" />
 
         <For each={markers()}>
@@ -185,10 +250,11 @@ export function EvalChart(props: {
             <circle
               cx={x(marker.ply)}
               cy={y(marker.move.winProbWhite)}
-              r="3.6"
+              r="2.3"
               fill={CATEGORY_META[marker.move.classification].color}
               stroke="#0c110b"
-              stroke-width="1.2"
+              stroke-width="0.8"
+              opacity="0.9"
             />
           )}
         </For>
@@ -211,7 +277,7 @@ export function EvalChart(props: {
           {(move, index) => {
             const height = () =>
               move.timeSpentSec === null ? 0 : Math.max(1, (move.timeSpentSec / histMax()) * HIST_H);
-            const barWidth = plotW() / total() * 0.64;
+            const barWidth = plotW() / total() * 0.34;
             const color = () =>
               move.timeFlag === "time_trouble" || move.timeFlag === "impulsive_error"
                 ? "#e05c4f"
@@ -228,7 +294,7 @@ export function EvalChart(props: {
                 height={height()}
                 rx={barWidth / 2}
                 fill={color()}
-                opacity="0.9"
+                opacity="0.82"
               />
             );
           }}
