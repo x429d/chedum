@@ -10,7 +10,9 @@ export interface LibraryActionsDeps {
   total: () => number;
   selected: () => number[];
   selectedGameId: () => number | null;
+  filter: () => GameFilter;
   setGames: Setter<GameListItem[]>;
+  setFavorites: Setter<number>;
   setSelected: Setter<number[]>;
   setSelectedGameId: (id: number | null) => void;
   setFilter: Setter<GameFilter>;
@@ -36,13 +38,18 @@ export function createLibraryActions(deps: LibraryActionsDeps) {
   }
 
   async function toggleFavorite(game: GameListItem): Promise<void> {
+    const favorite = !game.isFavorite;
     try {
-      await api.toggleFavorite(game.id, !game.isFavorite);
+      await api.toggleFavorite(game.id, favorite);
+      // Счётчик избранного приходит с бэкендом только при полной загрузке страницы,
+      // поэтому обновляем его локально вместе со строкой таблицы.
       deps.setGames((items) =>
-        items.map((item) =>
-          item.id === game.id ? { ...item, isFavorite: !item.isFavorite } : item,
-        ),
+        items.map((item) => (item.id === game.id ? { ...item, isFavorite: favorite } : item)),
       );
+      deps.setFavorites((count) => Math.max(0, count + (favorite ? 1 : -1)));
+      // В режиме «только избранное» снятая звезда убирает партию из выборки:
+      // перезагружаем страницу, чтобы не оставлять лишнюю строку и не сбить total.
+      if (deps.filter().favoritesOnly) await deps.load();
     } catch (error) {
       ui.notify(toErrorMessage(error), "error");
     }
