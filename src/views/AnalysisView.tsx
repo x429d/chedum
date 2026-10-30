@@ -2,7 +2,6 @@ import { createEffect, createSignal, on, onCleanup, onMount, Show } from "solid-
 
 import { AnalysisBoard } from "../components/analytics/AnalysisBoard";
 import { AnalysisHeader } from "../components/analytics/AnalysisHeader";
-import { EvalChart } from "../components/analytics/EvalChart";
 import { KeyMomentsTab } from "../components/analytics/KeyMomentsTab";
 import { MovesTab } from "../components/analytics/MovesTab";
 import { ReportTab } from "../components/analytics/ReportTab";
@@ -70,11 +69,14 @@ export function AnalysisView() {
       if (event.metaKey || event.ctrlKey) {
         if (event.altKey) return;
         const key = event.key.toLowerCase();
-        if (key === "z") {
+        // На нелатинской раскладке key может быть другим, поэтому смотрим и code.
+        const undoKey = key === "z" || event.code === "KeyZ";
+        const redoKey = key === "y" || event.code === "KeyY";
+        if (undoKey) {
           event.preventDefault();
           if (event.shiftKey) gameStore.redo();
           else gameStore.undo();
-        } else if (key === "y") {
+        } else if (redoKey) {
           event.preventDefault();
           gameStore.redo();
         }
@@ -275,37 +277,6 @@ export function AnalysisView() {
                 </div>
               </div>
             </div>
-
-            <Show when={gameStore.moves().length > 0 && analysis()}>
-              <div class="card chart-card">
-                <div class="chart-header">
-                  <div>
-                    <div class="card-title">Двойная аналитика</div>
-                    <div class="card-subtitle">Win% и время на ход. Клик переводит доску.</div>
-                  </div>
-                  <div class="chart-legend">
-                    <span>
-                      <span class="legend-dot" style={{ background: "#e0bf7d" }} />
-                      Win% белых
-                    </span>
-                    <span>
-                      <span class="legend-dot" style={{ background: "#e05c4f" }} />
-                      цейтнот / поспешность
-                    </span>
-                    <span>
-                      <span class="legend-dot" style={{ background: "#4a5344" }} />
-                      время
-                    </span>
-                  </div>
-                </div>
-                <EvalChart
-                  moves={gameStore.moves()}
-                  totalPlies={gameStore.moves().length}
-                  currentPly={gameStore.ply()}
-                  onSelect={(ply) => gameStore.goTo(ply)}
-                />
-              </div>
-            </Show>
           </div>
         )}
       </Show>

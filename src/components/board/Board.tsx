@@ -35,6 +35,9 @@ export interface BoardProps {
   checkSquare?: string | null;
   interactive?: boolean;
   embedded?: boolean;
+  /** Свои стрелки, если их состояние живёт снаружи (в сторе). */
+  userArrows?: ArrowSpec[];
+  onUserArrowsChange?: (arrows: ArrowSpec[]) => void;
   onMove?: (from: string, to: string) => void;
 }
 
@@ -46,11 +49,17 @@ export function Board(props: BoardProps) {
     orientation: () => props.orientation,
     position,
   });
+  /** Свои стрелки в сторе (analysis) или локально в доске (тренажёр). */
+  const arrowsControlled = props.onUserArrowsChange !== undefined;
   const pointer = createBoardPointer({
     board: () => boardRef,
     position,
     orientation: () => props.orientation,
     interactive: () => Boolean(props.interactive),
+    arrows: arrowsControlled ? () => props.userArrows ?? [] : undefined,
+    onArrowsChange: arrowsControlled
+      ? (next) => props.onUserArrowsChange?.(next)
+      : undefined,
     onMove: (from, to, animate) => {
       if (!animate) motion.suppressNext();
       props.onMove?.(from, to);
@@ -182,11 +191,6 @@ export function Board(props: BoardProps) {
         event.preventDefault();
         event.stopPropagation();
       }}
-      title={
-        props.interactive
-          ? "Правая кнопка мыши — нарисовать стрелку. Shift — зелёная, Alt — синяя, Ctrl/Cmd — красная, без модификатора — жёлтая. Правый клик без перетаскивания — очистить."
-          : undefined
-      }
     >
       <svg
         ref={boardRef}

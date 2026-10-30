@@ -20,6 +20,9 @@ export interface BoardPointerOptions {
   orientation: () => Color;
   interactive: () => boolean;
   onMove: (from: string, to: string, animate: boolean) => void;
+  /** Свои стрелки снаружи: если заданы, состояние живёт в сторе (нужно для undo). */
+  arrows?: () => ArrowSpec[];
+  onArrowsChange?: (next: ArrowSpec[]) => void;
 }
 
 /** Правая кнопка рисует жёлтую стрелку; цвета как на Chess.com. */
@@ -56,8 +59,15 @@ export function createBoardPointer(options: BoardPointerOptions) {
   const [selected, setSelected] = createSignal<string | null>(null);
   const [drag, setDrag] = createSignal<DragState | null>(null);
   const [hover, setHover] = createSignal<string | null>(null);
-  const [userArrows, setUserArrows] = createSignal<ArrowSpec[]>([]);
+  const [localArrows, setLocalArrows] = createSignal<ArrowSpec[]>([]);
   const [drawingArrow, setDrawingArrow] = createSignal<ArrowSpec | null>(null);
+  /** Контролируемый режим: стрелки хранит вызывающая сторона (стор) — так работает undo. */
+  const controlled = options.onArrowsChange !== undefined;
+  const userArrows = (): ArrowSpec[] => options.arrows?.() ?? localArrows();
+  const setUserArrows = (next: ArrowSpec[]): void => {
+    if (options.onArrowsChange) options.onArrowsChange(next);
+    else setLocalArrows(next);
+  };
   let unblockMenu: (() => void) | null = null;
 
   const stopBlockingMenu = (): void => {
@@ -186,21 +196,19 @@ export function createBoardPointer(options: BoardPointerOptions) {
   };
 
   const finishArrow = (arrow: ArrowSpec, target: string | null): void => {
+    const items = userArrows();
     if (!target || target === arrow.from) {
       // Правый клик без перетаскивания очищает все стрелки.
-      setUserArrows([]);
+      if (items.length > 0) setUserArrows([]);
       return;
     }
-    setUserArrows((items) => {
-      const existing = items.find(
-        (item) => item.from === arrow.from && item.to === target,
-      );
-      if (existing?.color === arrow.color) {
-        return items.filter((item) => item !== existing);
-      }
-      const without = items.filter((item) => !(item.from === arrow.from && item.to === target));
-      return [...without, { ...arrow, to: target }];
-    });
+    const existing = items.find((item) => item.from === arrow.from && item.to === target);
+    if (existing?.color === arrow.color) {
+      setUserArrows(items.filter((item) => item !== existing));
+      return;
+    }
+    const without = items.filter((item) => !(item.from === arrow.from && item.to === target));
+    setUserArrows([...without, { ...arrow, to: target }]);
   };
 
   const handleUp = (event: PointerEvent): void => {
@@ -229,7 +237,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     setSelected(null);
     setDrag(null);
     setDrawingArrow(null);
-    setUserArrows([]);
+    if (!controlled) setLocalArrows([]);
     stopBlockingMenu();
   };
 

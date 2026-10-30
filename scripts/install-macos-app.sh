@@ -18,4 +18,8 @@ for directory in /Applications "$HOME/Applications"; do
 done
 
 ditto "$SOURCE" "$DESTINATION"
+
+# Spotlight не должен показывать сборочную копию: в поиске остаётся только /Applications.
+touch "$ROOT/src-tauri/target/.metadata_never_index"
+
 echo "Установлено: $DESTINATION"

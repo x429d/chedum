@@ -1981,8 +1981,13 @@ tr:hover .row-actions,
 }
 
 .chart-card {
-  margin-top: 18px;
+  margin-top: 0;
   overflow: hidden;
+}
+
+/* В полноэкранном режиме доска и панель занимают экран — графику там не место. */
+.analysis-layout.is-fullscreen .chart-card {
+  display: none;
 }
 
 .chart-header {

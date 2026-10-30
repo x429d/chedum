@@ -27,10 +27,11 @@ interface PreviewState {
   index: number;
 }
 
-/** Позиция доски для undo/redo: вариант и номер хода в партии. */
+/** Позиция доски для undo/redo: вариант, номер хода в партии и свои стрелки. */
 interface BoardSnapshot {
   variation: VariationState | null;
   ply: number;
+  arrows: ArrowSpec[];
 }
 
 const [detail, setDetail] = createSignal<GameDetail | null>(null);
@@ -40,13 +41,17 @@ const [orientation, setOrientation] = createSignal<Color>("white");
 const [categoryFilter, setCategoryFilter] = createSignal<MoveCategory | null>(null);
 const [variation, setVariation] = createSignal<VariationState | null>(null);
 const [preview, setPreview] = createSignal<PreviewState | null>(null);
+const [userArrows, setUserArrows] = createSignal<ArrowSpec[]>([]);
 const [analyzing, setAnalyzing] = createSignal(false);
 const [progress, setProgress] = createSignal<AnalysisProgress | null>(null);
 let previewTimer: number | undefined;
 let previewEndTimer: number | undefined;
 let analysisCancelled = false;
-/** Состояния, снятые через undo: redo возвращает их по одному. */
+/** История действий: каждое изменение доски кладёт сюда снимок «как было». */
 const undoHistory: BoardSnapshot[] = [];
+/** Снимки, снятые через undo, — их возвращает redo. */
+const redoHistory: BoardSnapshot[] = [];
+const HISTORY_LIMIT = 200;
 
 const moves = () => detail()?.moves ?? [];
 const analysis = () => detail()?.analysis ?? null;
@@ -108,7 +113,9 @@ async function load(id: number): Promise<void> {
     setDetail(data);
     setPly(0);
     setVariation(null);
+    setUserArrows([]);
     undoHistory.length = 0;
+    redoHistory.length = 0;
     stopPreview();
     setCategoryFilter(null);
     setOrientation(data.game.userColor === "black" ? "black" : "white");
@@ -121,10 +128,13 @@ async function load(id: number): Promise<void> {
 }
 
 function goTo(index: number): void {
-  undoHistory.length = 0;
+  const target = Math.max(0, Math.min(index, moves().length));
+  if (target === ply() && !variation()) return;
+  record();
   stopPreview();
   setVariation(null);
-  setPly(Math.max(0, Math.min(index, moves().length)));
+  setPly(target);
+  setUserArrows([]);
 }
 
 function next(): void {
@@ -190,56 +200,73 @@ function enterVariation(from: string, to: string): boolean {
   const baseFen = currentFen();
   const played = playMove(baseFen, from, to);
   if (!played) return false;
-  undoHistory.length = 0;
+  record();
   const existing = variation();
   const fens = existing ? [...existing.fens, played.fenAfter] : [baseFen, played.fenAfter];
   const sans = existing ? [...existing.sans, played.san] : [played.san];
   const ucis = existing ? [...existing.ucis, played.uci] : [played.uci];
   setVariation({ fens, sans, ucis, basePly: ply() });
+  setUserArrows([]);
   return true;
 }
 
 function clearVariation(): void {
-  undoHistory.length = 0;
+  if (!variation()) return;
+  record();
   setVariation(null);
+  setUserArrows([]);
+}
+
+/** Свои стрелки на доске — обычное действие, которое тоже отменяется. */
+function updateUserArrows(next: ArrowSpec[]): void {
+  const current = userArrows();
+  if (
+    current.length === next.length &&
+    current.every((arrow, index) => {
+      const other = next[index];
+      return (
+        other !== undefined &&
+        arrow.from === other.from &&
+        arrow.to === other.to &&
+        arrow.color === other.color
+      );
+    })
+  ) {
+    return;
+  }
+  record();
+  setUserArrows(next);
 }
 
 function snapshot(): BoardSnapshot {
-  return { variation: variation(), ply: ply() };
+  return { variation: variation(), ply: ply(), arrows: userArrows() };
+}
+
+/** Запомнить текущее состояние перед действием; новая ветка сбрасывает redo. */
+function record(): void {
+  undoHistory.push(snapshot());
+  if (undoHistory.length > HISTORY_LIMIT) undoHistory.shift();
+  redoHistory.length = 0;
 }
 
 function applySnapshot(state: BoardSnapshot): void {
   stopPreview();
   setVariation(state.variation);
   setPly(state.ply);
-}
-
-/** Позиция на шаг назад: последний ход варианта либо предыдущий ход партии. */
-function previousSnapshot(): BoardSnapshot | null {
-  const line = variation();
-  if (line && line.sans.length > 0) {
-    const rest = {
-      ...line,
-      fens: line.fens.slice(0, -1),
-      sans: line.sans.slice(0, -1),
-      ucis: line.ucis.slice(0, -1),
-    };
-    return { variation: rest.sans.length > 0 ? rest : null, ply: ply() };
-  }
-  if (ply() > 0) return { variation: null, ply: ply() - 1 };
-  return null;
+  setUserArrows(state.arrows);
 }
 
 function undo(): void {
-  const next = previousSnapshot();
-  if (!next) return;
-  undoHistory.push(snapshot());
-  applySnapshot(next);
+  const previous = undoHistory.pop();
+  if (!previous) return;
+  redoHistory.push(snapshot());
+  applySnapshot(previous);
 }
 
 function redo(): void {
-  const next = undoHistory.pop();
+  const next = redoHistory.pop();
   if (!next) return;
+  undoHistory.push(snapshot());
   applySnapshot(next);
 }
 
@@ -291,7 +318,9 @@ async function runAnalysis(): Promise<void> {
     setDetail(result);
     setPly(0);
     setVariation(null);
+    setUserArrows([]);
     undoHistory.length = 0;
+    redoHistory.length = 0;
     ui.notify("Анализ завершён", "success");
     await settingsStore.refreshEngine();
   } catch (error) {
@@ -316,6 +345,7 @@ export const gameStore = {
   categoryFilter,
   variation,
   preview,
+  userArrows,
   analyzing,
   progress,
   moves,
@@ -347,6 +377,7 @@ export const gameStore = {
   playBestLine,
   enterVariation,
   clearVariation,
+  updateUserArrows,
   saveComment,
   saveNotes,
   runAnalysis,

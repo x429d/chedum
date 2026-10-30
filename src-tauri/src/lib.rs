@@ -11,6 +11,7 @@ pub mod db;
 pub mod domain;
 pub mod eco;
 pub mod engine;
+pub mod menu;
 pub mod pgn;
 pub mod service;
 pub mod state;
@@ -25,6 +26,8 @@ pub fn run() {
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
+            // Меню без Undo/Redo: иначе Cmd+Z и Cmd+Shift+Z забирает macOS.
+            app.handle().set_menu(menu::build(app.handle())?)?;
             let data_dir = app.path().app_data_dir().map_err(|err| {
                 std::io::Error::other(format!("Не удалось определить каталог данных: {err}"))
             })?;

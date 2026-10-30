@@ -10,6 +10,7 @@ import { formatEval } from "../../utils/format";
 import { Board } from "../board/Board";
 import { BoardControls } from "../board/BoardControls";
 import { EvalBar } from "../board/EvalBar";
+import { EvalChart } from "./EvalChart";
 import { LivePanel } from "./LivePanel";
 
 const THEMES: BoardTheme[] = ["midnight", "walnut", "slate"];
@@ -80,6 +81,8 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
           badge={gameStore.badge()}
           checkSquare={gameStore.checkSquareName()}
           interactive={!gameStore.preview()}
+          userArrows={gameStore.preview() ? [] : gameStore.userArrows()}
+          onUserArrowsChange={gameStore.updateUserArrows}
           onMove={(from, to) => {
             gameStore.enterVariation(from, to);
           }}
@@ -142,6 +145,37 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
         depth={settingsStore.settings().analysisDepth}
         multipv={settingsStore.settings().multipv}
       />
+
+      <Show when={gameStore.moves().length > 0 && gameStore.analysis()}>
+        <div class="card chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="card-title">Двойная аналитика</div>
+              <div class="card-subtitle">Win% и время на ход. Клик переводит доску.</div>
+            </div>
+            <div class="chart-legend">
+              <span>
+                <span class="legend-dot" style={{ background: "#e0bf7d" }} />
+                Win% белых
+              </span>
+              <span>
+                <span class="legend-dot" style={{ background: "#e05c4f" }} />
+                цейтнот / поспешность
+              </span>
+              <span>
+                <span class="legend-dot" style={{ background: "#4a5344" }} />
+                время
+              </span>
+            </div>
+          </div>
+          <EvalChart
+            moves={gameStore.moves()}
+            totalPlies={gameStore.moves().length}
+            currentPly={gameStore.ply()}
+            onSelect={(ply) => gameStore.goTo(ply)}
+          />
+        </div>
+      </Show>
     </div>
   );
 }
