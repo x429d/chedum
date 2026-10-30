@@ -67,7 +67,7 @@ impl EngineState {
             }
         };
         if let Ok(mut name) = self.name.lock() {
-            *name = pool.first_name();
+            *name = Some(pool.name().to_string());
         }
         *guard = Some((workers, Arc::clone(&pool)));
         Ok(pool)

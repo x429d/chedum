@@ -113,9 +113,13 @@ export function createBatchController(deps: BatchControllerDeps) {
       const settings = settingsStore.settings();
       const maximum = settingsStore.info()?.maxAnalysisWorkers ?? 1;
       const requested = settings.analysisThreads === 0 ? maximum : settings.analysisThreads;
+      const poolSize = Math.max(1, Math.min(requested, maximum));
       const full = Math.max(1, Math.min(ids.length, requested, maximum));
       // Автоанализ после импорта не занимает весь пул.
       const workers = lowPriority ? Math.max(1, Math.floor(full / 2)) : full;
+      // Движков вдвое больше, чем партий: свободные процессы выгоднее отдать
+      // позициям одной партии, чем оставить их простаивать.
+      const parallel = !lowPriority && ids.length * 2 <= poolSize;
       startedAt = Date.now();
       deps.setBatch({
         running: true,
@@ -163,6 +167,7 @@ export function createBatchController(deps: BatchControllerDeps) {
               ids[index],
               settings.analysisDepth,
               settings.multipv,
+              parallel,
               (progress) => {
                 activePly[slot] = progress.ply;
                 activeTotal[slot] = Math.max(activeTotal[slot] ?? 0, progress.total);

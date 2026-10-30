@@ -24,6 +24,13 @@ use super::*;
         assert!(update.finished);
         assert!(!update.lines.is_empty());
         assert!(update.best_move.is_some());
+        assert!(update.best_san.is_some());
+        // Итоговое обновление обязано содержать SAN для всех линий: анализ
+        // сохраняет best_san и PV из него, а не из промежуточных обновлений.
+        assert!(update
+            .lines
+            .iter()
+            .all(|line| !line.san_moves.is_empty() && line.san_moves.len() == line.uci_moves.len()));
         assert!(updates > 0);
         assert!(update.depth >= 8);
         manager.shutdown().await;

@@ -3,7 +3,7 @@ import { For } from "solid-js";
 import { Icon } from "../ui/Icon";
 import { settingsStore } from "../../stores/settingsStore";
 
-const DEPTHS = [8, 10, 12, 14, 16, 18, 20, 22];
+const DEPTHS = [8, 10, 12, 14, 16, 18, 20, 22, 24];
 
 export function AnalysisCard() {
   return (
@@ -69,9 +69,12 @@ export function AnalysisCard() {
                   </For>
                 </div>
                 <div class="form-hint">
-                  Сколько партий разбирать одновременно. Авто = производительные ядра − 1
-                  (сейчас доступно {(settingsStore.info()?.maxAnalysisWorkers ?? 1)}). Каждый
-                  процесс Stockfish получает Threads=1 и общий лимит памяти.
+                  Сколько процессов Stockfish работает одновременно. Авто = все
+                  производительные ядра и часть энергоэффективных (сейчас доступно{" "}
+                  {settingsStore.info()?.maxAnalysisWorkers ?? 1}). Каждый процесс получает
+                  Threads=1: один поток на процесс быстрее, чем несколько потоков внутри
+                  одного. Если партий меньше, чем процессов, позиции одной партии считаются
+                  параллельно — она разбирается в разы быстрее.
                 </div>
               </div>
               <div class="form-row">

@@ -16,11 +16,26 @@ pub async fn analyze_game(
     game_id: i64,
     depth: Option<u32>,
     multipv: Option<u32>,
+    parallel: Option<bool>,
     on_progress: Channel<AnalysisProgress>,
 ) -> AppResult<GameDetail> {
     let settings = settings_repo::get_settings(&state.db)?;
     let depth = depth.unwrap_or(settings.analysis_depth).clamp(6, 24);
     let multipv = multipv.unwrap_or(settings.multipv).clamp(1, 3);
+    // Свободных процессов больше, чем партий в работе: позиции одной партии
+    // выгоднее разложить по всему пулу, чем считать одним процессом.
+    if parallel.unwrap_or(false) {
+        let pool = state.engine.pool_for(settings.analysis_threads).await?;
+        return analysis::analyze_game_parallel(
+            &state.db,
+            &pool,
+            game_id,
+            depth,
+            multipv,
+            Some(&on_progress),
+        )
+        .await;
+    }
     let lease = state.engine.acquire(settings.analysis_threads).await?;
     analysis::analyze_game(
         &state.db,

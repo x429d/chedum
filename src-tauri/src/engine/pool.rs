@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use tokio::sync::{Mutex, Notify};
@@ -14,6 +15,10 @@ pub struct EnginePool {
     notify: Notify,
     path: PathBuf,
     size: usize,
+    /// Общая отмена: выставляется `request_stop` и проверяется задачами,
+    /// которые ещё не начали свой блок. Без неё блоки, начатые после
+    /// остановки, сбрасывали бы флаг движка и продолжали работу.
+    stop: AtomicBool,
 }
 
 pub struct PooledEngine {
@@ -46,6 +51,7 @@ impl EnginePool {
             notify: Notify::new(),
             path: path.to_path_buf(),
             size,
+            stop: AtomicBool::new(false),
         }))
     }
 
@@ -74,9 +80,19 @@ impl EnginePool {
     }
 
     pub fn request_stop(&self) {
+        self.stop.store(true, Ordering::SeqCst);
         for manager in &self.managers {
             manager.request_stop();
         }
+    }
+
+    /// Новая задача анализа: старая отмена больше не действует.
+    pub fn clear_stop(&self) {
+        self.stop.store(false, Ordering::SeqCst);
+    }
+
+    pub fn is_stopped(&self) -> bool {
+        self.stop.load(Ordering::SeqCst)
     }
 
     pub async fn shutdown(&self) {
@@ -85,8 +101,16 @@ impl EnginePool {
         }
     }
 
-    pub fn first_name(&self) -> Option<String> {
-        self.managers.first().map(|manager| manager.name().to_string())
+    pub fn name(&self) -> &str {
+        self.managers
+            .first()
+            .map_or("Stockfish", |manager| manager.name())
+    }
+
+    pub fn version(&self) -> &str {
+        self.managers
+            .first()
+            .map_or("unknown", |manager| manager.version())
     }
 }
 
@@ -107,24 +131,34 @@ impl Drop for PooledEngine {
     }
 }
 
-/// Число производительных ядер минус одно; на Apple Silicon — `perflevel0`.
-/// Минимум 1, чтобы приложение работало и на одном ядре.
+/// Число процессов анализа. Один поток Stockfish на процесс выгоднее, чем
+/// несколько потоков внутри процесса: на depth 14 второй поток даёт вдвое
+/// больше узлов, но общее время растёт, поэтому параллелизм берётся числом
+/// процессов. Замер throughput на 4P+6E (M5): 3 процесса — 1.8x, 6 — 2.7x,
+/// 8 — 2.8x, 10 — 2.5x; отсюда «все производительные плюс две трети
+/// энергоэффективных ядер».
 pub fn default_workers() -> usize {
-    let perf = std::process::Command::new("sysctl")
-        .args(["-n", "hw.perflevel0.logicalcpu"])
+    let performance = sysctl_usize("hw.perflevel0.logicalcpu");
+    let efficiency = sysctl_usize("hw.perflevel1.logicalcpu").unwrap_or(0);
+    let workers = match performance {
+        Some(performance) => performance + (efficiency * 2) / 3,
+        None => std::thread::available_parallelism()
+            .map(|value| value.get())
+            .unwrap_or(1),
+    };
+    workers.clamp(1, 64)
+}
+
+fn sysctl_usize(key: &str) -> Option<usize> {
+    std::process::Command::new("sysctl")
+        .args(["-n", key])
         .output()
         .ok()
         .and_then(|output| String::from_utf8(output.stdout).ok())
         .and_then(|value| value.trim().parse::<usize>().ok())
-        .filter(|value| *value > 0);
-    perf.or_else(|| {
-        std::thread::available_parallelism()
-            .map(|value| value.get())
-            .ok()
-    })
-    .map(|value| value.saturating_sub(1).max(1))
-    .unwrap_or(1)
+        .filter(|value| *value > 0)
 }
+
 
 /// Размер хеша на процесс: не больше 128 МБ и не меньше 16 МБ.
 pub fn hash_mb_for(workers: usize) -> u32 {

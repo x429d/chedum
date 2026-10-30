@@ -133,12 +133,14 @@ export const api = {
     gameId: number,
     depth: number,
     multipv: number,
+    parallel: boolean,
     onProgress: (progress: AnalysisProgress) => void,
   ): Promise<GameDetail> {
     return invoke<GameDetail>("analyze_game", {
       gameId,
       depth,
       multipv,
+      parallel,
       onProgress: channel(onProgress),
     });
   },

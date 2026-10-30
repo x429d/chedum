@@ -310,6 +310,9 @@ async function runAnalysis(): Promise<void> {
       gameId,
       settings.analysisDepth,
       settings.multipv,
+      // Экран одной партии: остальные движки пула свободны, считаем позиции
+      // параллельно.
+      true,
       (update) => {
         if (detail()?.game.id === gameId) setProgress(update);
       },

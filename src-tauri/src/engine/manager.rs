@@ -190,15 +190,15 @@ impl EngineManager {
                         mate: info.mate,
                         win_prob: score.win_prob(),
                         uci_moves: info.pv.clone(),
-                        san_moves: line_to_san(fen, &info.pv),
+                        san_moves: Vec::new(),
                     },
                 );
                 update.depth = info.depth.unwrap_or(update.depth);
                 update.seldepth = info.seldepth.or(update.seldepth);
                 update.nodes = info.nodes.or(update.nodes);
                 update.nps = info.nps.or(update.nps);
-                update.lines = lines.values().cloned().collect();
                 if last_emit.elapsed() >= THROTTLE {
+                    fill_lines(&mut update, &lines, fen);
                     on_update(&update);
                     last_emit = Instant::now();
                 }
@@ -212,6 +212,7 @@ impl EngineManager {
                     .as_deref()
                     .and_then(|best| move_to_san(fen, best));
                 update.finished = true;
+                fill_lines(&mut update, &lines, fen);
                 on_update(&update);
                 return Ok(update);
             }
@@ -224,6 +225,21 @@ impl EngineManager {
     }
 }
 
+/// Переносит найденные линии в `update`, переводя UCI-варианты в SAN.
+/// SAN считается только в момент отправки: пакетному анализу обновления
+/// не нужны вовсе, а при построении на каждой строке `info` пришлось бы
+/// заново разбирать FEN и пересчитывать весь вариант — десятки раз на позицию.
+fn fill_lines(update: &mut EngineUpdate, lines: &BTreeMap<u32, EngineLine>, fen: &str) {
+    update.lines = lines
+        .values()
+        .map(|line| {
+            let mut line = line.clone();
+            line.san_moves = line_to_san(fen, &line.uci_moves);
+            line
+        })
+        .collect();
+}
+
 fn version_from_name(name: &str) -> String {
     name.rsplit_once(' ')
         .map(|(_, version)| version.trim().to_string())
@@ -233,6 +249,16 @@ fn version_from_name(name: &str) -> String {
 
 fn is_cancel_error(err: &AppError) -> bool {
     matches!(err, AppError::Engine(message) if message.as_str() == CANCELLED)
+}
+
+/// Отмена пользователем — не сбой партии: попытки разбора не растут.
+pub fn is_cancelled_error(err: &AppError) -> bool {
+    is_cancel_error(err)
+}
+
+/// Ошибка отмены в том же виде, что отдаёт движок.
+pub fn cancelled_error() -> AppError {
+    AppError::Engine(CANCELLED.to_string())
 }
 
 #[cfg(test)]

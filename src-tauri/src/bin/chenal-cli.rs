@@ -113,6 +113,7 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
             .collect()
     });
     let fresh = args.iter().any(|value| value == "--fresh");
+    let parallel = args.iter().any(|value| value == "--parallel");
     if fresh {
         if let Some(ids) = &explicit_ids {
             for id in ids {
@@ -172,15 +173,29 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
                 let id = ids[index];
                 let lease = pool.acquire().await;
                 let game_started = Instant::now();
-                let outcome = chenal_lib::service::analysis::analyze_game(
-                    &db,
-                    lease.manager(),
-                    id,
-                    depth,
-                    multipv,
-                    None,
-                )
-                .await;
+                let outcome = if parallel {
+                    // Позиции одной партии раскладываются по всему пулу:
+                    // осмысленно при небольшом числе партий.
+                    chenal_lib::service::analysis::analyze_game_parallel(
+                        &db,
+                        &pool,
+                        id,
+                        depth,
+                        multipv,
+                        None,
+                    )
+                    .await
+                } else {
+                    chenal_lib::service::analysis::analyze_game(
+                        &db,
+                        lease.manager(),
+                        id,
+                        depth,
+                        multipv,
+                        None,
+                    )
+                    .await
+                };
                 let elapsed = game_started.elapsed().as_secs_f64();
                 results.push((id, elapsed, outcome.map(|detail| detail.analysis)));
             }

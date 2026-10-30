@@ -140,7 +140,7 @@ pub struct AppSettings {
     pub piece_set: String,
     pub show_arrows: bool,
     pub auto_analyze: bool,
-    /// 0 — авто (производительные ядра − 1), иначе 1…N процессов.
+    /// 0 — авто (производительные ядра плюс часть энергоэффективных), иначе 1…N процессов.
     pub analysis_threads: u32,
     /// Продолжать недоделанную очередь при запуске приложения.
     pub auto_resume_analysis: bool,
