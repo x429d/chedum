@@ -36,6 +36,18 @@ function arrowColor(event: PointerEvent): string {
   return ARROW_COLOR;
 }
 
+const suppressContextMenu = (event: Event): void => event.preventDefault();
+
+/**
+ * WKWebView на macOS показывает по правому клику своё меню («Reload page»),
+ * даже если стрелка уже рисуется. Пока кнопка зажата, гасим меню на уровне
+ * всего окна: отпустить её можно и за пределами доски.
+ */
+function blockNativeMenu(): () => void {
+  window.addEventListener("contextmenu", suppressContextMenu, true);
+  return () => window.removeEventListener("contextmenu", suppressContextMenu, true);
+}
+
 /**
  * Pointer state machine for the board: whole-cell selection, click-to-move,
  * drag-to-move and right-button arrow drawing.
@@ -46,6 +58,12 @@ export function createBoardPointer(options: BoardPointerOptions) {
   const [hover, setHover] = createSignal<string | null>(null);
   const [userArrows, setUserArrows] = createSignal<ArrowSpec[]>([]);
   const [drawingArrow, setDrawingArrow] = createSignal<ArrowSpec | null>(null);
+  let unblockMenu: (() => void) | null = null;
+
+  const stopBlockingMenu = (): void => {
+    unblockMenu?.();
+    unblockMenu = null;
+  };
 
   const pointOf = (event: PointerEvent): { x: number; y: number } | null => {
     const rect = options.board()?.getBoundingClientRect();
@@ -108,7 +126,10 @@ export function createBoardPointer(options: BoardPointerOptions) {
     if (!square) return;
     // Right button: start an arrow. The preview is updated in handleMove.
     if (event.button === 2) {
+      event.preventDefault();
       if (drag()) return;
+      unblockMenu?.();
+      unblockMenu = blockNativeMenu();
       setDrawingArrow({
         from: square,
         to: square,
@@ -188,6 +209,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
       // Если кнопку отпустили за доской, оставляем последнюю подсвеченную клетку.
       finishArrow(arrow, squareOf(event) ?? arrow.to);
       setDrawingArrow(null);
+      stopBlockingMenu();
       release(event);
       return;
     }
@@ -208,6 +230,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     setDrag(null);
     setDrawingArrow(null);
     setUserArrows([]);
+    stopBlockingMenu();
   };
 
   return {
@@ -224,6 +247,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     handleCancel: () => {
       setDrag(null);
       setDrawingArrow(null);
+      stopBlockingMenu();
     },
     clearHover: () => setHover(null),
     reset,

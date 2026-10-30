@@ -177,6 +177,11 @@ export function Board(props: BoardProps) {
       class={`board-wrap theme-${props.theme}`}
       classList={{ "board-embed": props.embedded }}
       style={props.embedded ? { width: "100%", "max-width": "none" } : undefined}
+      onContextMenu={(event) => {
+        // У WebView на macOS правый клик открывает своё меню («Reload page»).
+        event.preventDefault();
+        event.stopPropagation();
+      }}
       title={
         props.interactive
           ? "Правая кнопка мыши — нарисовать стрелку. Shift — зелёная, Alt — синяя, Ctrl/Cmd — красная, без модификатора — жёлтая. Правый клик без перетаскивания — очистить."
@@ -193,7 +198,6 @@ export function Board(props: BoardProps) {
         onPointerUp={pointer.handleUp}
         onPointerCancel={pointer.handleCancel}
         onPointerLeave={pointer.clearHover}
-        onContextMenu={(event) => event.preventDefault()}
       >
         <rect x="-0.25" y="-0.25" width="8.5" height="8.5" fill="var(--board-frame, #10150e)" />
         <rect x="0" y="0" width="8" height="8" class="board-sq-dark" />
