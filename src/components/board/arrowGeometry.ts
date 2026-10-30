@@ -10,13 +10,17 @@ export interface ArrowGeometry {
   head: string;
 }
 
-/** Стрелка начинается и заканчивается ровно в центре клетки. */
-const START_GAP = 0;
-const TIP_GAP = 0;
-/** Длина наконечника. */
-const HEAD_BASE = 0.34;
-/** Полуширина наконечника. */
-const HEAD_WIDTH = 0.18;
+/**
+ * Отступы подобраны так, чтобы хвост выходил из-под фигуры, а острие мягко
+ * останавливалось перед центром цели. На коротких ходах отступы ужимаются
+ * пропорционально: иначе стрелка на одну клетку превращается в огрызок.
+ */
+const TAIL_GAP = 0.3;
+const TIP_GAP = 0.15;
+/** Максимальная длина наконечника. */
+const HEAD_LENGTH = 0.32;
+/** Полуширина наконечника относительно его длины. */
+const HEAD_RATIO = 0.55;
 /** Радиус скругления излома стрелки коня. */
 const BEND_RADIUS = 0.34;
 
@@ -42,11 +46,14 @@ function isKnight(from: ArrowPoint, to: ArrowPoint): boolean {
  * клетки по длинной оси, затем одна по короткой — как на шахматной доске.
  */
 export function arrowGeometry(from: ArrowPoint, to: ArrowPoint): ArrowGeometry | null {
-  if (Math.hypot(to.x - from.x, to.y - from.y) < 0.05) return null;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length < 0.05) return null;
 
   const knight = isKnight(from, to);
   const corner = knight
-    ? Math.abs(to.x - from.x) > Math.abs(to.y - from.y)
+    ? Math.abs(dx) > Math.abs(dy)
       ? { x: to.x, y: from.y }
       : { x: from.x, y: to.y }
     : null;
@@ -55,15 +62,21 @@ export function arrowGeometry(from: ArrowPoint, to: ArrowPoint): ArrowGeometry |
   const first = unit(origin.x - from.x, origin.y - from.y);
   const last = unit(to.x - (corner?.x ?? from.x), to.y - (corner?.y ?? from.y));
 
-  const start = { x: from.x + first.x * START_GAP, y: from.y + first.y * START_GAP };
-  const tip = { x: to.x - last.x * TIP_GAP, y: to.y - last.y * TIP_GAP };
-  const base = { x: to.x - last.x * HEAD_BASE, y: to.y - last.y * HEAD_BASE };
+  const tail = Math.min(TAIL_GAP, length * 0.22);
+  // Наконечник не должен съесть всё древко, поэтому его длина ограничена остатком.
+  const headLength = Math.min(HEAD_LENGTH, Math.max(0.18, (length - tail) * 0.5));
+  const tip = Math.min(TIP_GAP, length * 0.1);
+  const headWidth = headLength * HEAD_RATIO;
+
+  const start = { x: from.x + first.x * tail, y: from.y + first.y * tail };
+  const tipPoint = { x: to.x - last.x * tip, y: to.y - last.y * tip };
+  const base = { x: to.x - last.x * (tip + headLength), y: to.y - last.y * (tip + headLength) };
   const sideX = -last.y;
   const sideY = last.x;
   const head = [
-    `${round(tip.x)},${round(tip.y)}`,
-    `${round(base.x + sideX * HEAD_WIDTH)},${round(base.y + sideY * HEAD_WIDTH)}`,
-    `${round(base.x - sideX * HEAD_WIDTH)},${round(base.y - sideY * HEAD_WIDTH)}`,
+    `${round(tipPoint.x)},${round(tipPoint.y)}`,
+    `${round(base.x + sideX * headWidth)},${round(base.y + sideY * headWidth)}`,
+    `${round(base.x - sideX * headWidth)},${round(base.y - sideY * headWidth)}`,
   ].join(" ");
 
   if (!corner) {
