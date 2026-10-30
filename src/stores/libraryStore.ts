@@ -61,8 +61,10 @@ async function refreshQueue(): Promise<void> {
     const plan = await api.listPendingAnalysis(filter());
     setQueuePending(plan.ids.length);
     setQueueExcluded(plan.excluded);
-  } catch {
-    // Счётчик не критичен для загрузки библиотеки; ошибка придёт при запуске.
+  } catch (error) {
+    // Счётчик не критичен для загрузки библиотеки, но молча терять ошибку нельзя:
+    // иначе очередь выглядит пустой, хотя партии без анализа есть.
+    ui.notify(`Очередь анализа: ${toErrorMessage(error)}`, "error");
   }
 }
 

@@ -17,6 +17,33 @@ const KEY_MOMENTS_VERSION: &str = "errors-gap3-v2";
 const FEN_ACCURACY_KEY: &str = "fen_accuracy_version";
 const FEN_ACCURACY_VERSION: &str = "player-color-v1";
 
+/// Чинит записи, оставшиеся от старых сборок: если строку записал бинарник,
+/// не знавший о колонках версии и ключа конфигурации, `engine_version` и
+/// `config_key` остаются пустыми. Миграция такие строки уже не догоняет —
+/// она выполняется один раз, поэтому чиним при каждом запуске.
+pub fn backfill_config_keys(db: &Db) -> AppResult<usize> {
+    db.with(|conn| {
+        let updated = conn.execute(
+            "UPDATE game_analyses SET
+                engine_version = COALESCE(NULLIF(engine_version, ''), ?1),
+                config_key = engine_name
+                    || '|' || COALESCE(NULLIF(engine_version, ''), ?1)
+                    || '|' || depth
+                    || '|' || multipv
+                    || '|' || COALESCE(NULLIF(classifier_version, ''), ?2)
+                    || '|' || COALESCE(NULLIF(accuracy_method_version, ''), ?3)
+             WHERE config_key IS NULL OR config_key = ''
+                OR engine_version IS NULL OR engine_version = ''",
+            params![
+                crate::domain::analysis::DEFAULT_ENGINE_VERSION,
+                crate::domain::analysis::CLASSIFIER_VERSION,
+                crate::domain::analysis::ACCURACY_METHOD_VERSION
+            ],
+        )?;
+        Ok(updated)
+    })
+}
+
 /// Пересчитывает ключевые моменты по сохранённым оценкам. Движок не нужен:
 /// после смены алгоритма отбора достаточно пересмотреть ходы.
 pub fn backfill_key_moments(db: &Db) -> AppResult<usize> {

@@ -15,8 +15,11 @@ pub fn pending_analysis(
         let mut filter = filter.clone();
         filter.analyzed_only = false;
         let (where_sql, values) = filter_clause(&filter);
+        // Записи старых сборок без config_key считаем разобранными: иначе они
+        // навсегда остаются «в очереди» и заново гоняются через движок.
         let base = "FROM games g LEFT JOIN game_analyses a
-                 ON a.game_id = g.id AND a.config_key = ?1";
+                 ON a.game_id = g.id
+                AND (a.config_key = ?1 OR a.config_key IS NULL OR a.config_key = '')";
         let condition = if where_sql.is_empty() {
             "WHERE a.id IS NULL".to_string()
         } else {

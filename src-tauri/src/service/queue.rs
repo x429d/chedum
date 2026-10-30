@@ -1,24 +1,36 @@
 use rusqlite::OptionalExtension;
 
 use crate::db::connection::Db;
-use crate::domain::analysis::{ACCURACY_METHOD_VERSION, CLASSIFIER_VERSION};
+use crate::domain::analysis::{
+    ACCURACY_METHOD_VERSION, CLASSIFIER_VERSION, DEFAULT_ENGINE_VERSION,
+};
 use crate::domain::error::AppResult;
 use crate::domain::stats::AppSettings;
 
 /// Ключ конфигурации, которую выдаст следующий анализ: движок берётся из
 /// последнего сохранённого анализа (до первого — Stockfish 19), глубина и
 /// MultiPV — из текущих настроек.
+///
+/// Записи старых сборок могут иметь NULL в `engine_version`: такие строки
+/// пропускаем, иначе чтение колонки как String роняет весь запрос очереди.
 pub fn target_config_key(db: &Db, settings: &AppSettings) -> AppResult<String> {
     let (engine, version) = db.with(|conn| {
         let row: Option<(String, String)> = conn
             .query_row(
                 "SELECT engine_name, engine_version FROM game_analyses
+                 WHERE engine_name IS NOT NULL AND engine_name <> ''
+                   AND engine_version IS NOT NULL AND engine_version <> ''
                  ORDER BY analyzed_at DESC, id DESC LIMIT 1",
                 [],
                 |row| Ok((row.get(0)?, row.get(1)?)),
             )
             .optional()?;
-        Ok(row.unwrap_or_else(|| ("Stockfish 19".to_string(), "19".to_string())))
+        Ok(row.unwrap_or_else(|| {
+            (
+                format!("Stockfish {DEFAULT_ENGINE_VERSION}"),
+                DEFAULT_ENGINE_VERSION.to_string(),
+            )
+        }))
     })?;
     Ok(format!(
         "{}|{}|{}|{}|{}|{}",

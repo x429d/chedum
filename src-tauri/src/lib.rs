@@ -52,6 +52,13 @@ pub fn run() {
                 Ok(_) => {}
                 Err(err) => eprintln!("Chenal: не удалось пересчитать точность: {err}"),
             }
+            match analyses_repo::backfill_config_keys(&db) {
+                Ok(count) if count > 0 => {
+                    eprintln!("Chenal: ключи конфигурации восстановлены у записей — {count}");
+                }
+                Ok(_) => {}
+                Err(err) => eprintln!("Chenal: не удалось восстановить ключи конфигурации: {err}"),
+            }
             match analyses_repo::backfill_fen_accuracy(&db) {
                 Ok(count) if count > 0 => {
                     eprintln!("Chenal: точность FEN-партий пересчитана — {count}");

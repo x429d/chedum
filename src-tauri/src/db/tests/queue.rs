@@ -1,11 +1,12 @@
 use super::support::{analysis, draft, move_eval};
+use crate::db::analyses_repo::{analysis_config_key, backfill_config_keys, insert_analysis_draft};
 use crate::db::connection::Db;
-use crate::db::analyses_repo::insert_analysis_draft;
 use crate::db::games_repo::{
     get_game, insert_game, pending_analysis, record_analysis_failure, reset_analysis_attempts,
 };
 use crate::domain::analysis::{MoveCategory, Phase, TimeFlag};
 use crate::domain::game::{GameFilter, TimeClass, UserColor};
+use crate::domain::stats::AppSettings;
 
 #[test]
 fn pending_queue_is_derived_from_the_target_configuration() {
@@ -124,6 +125,99 @@ fn pending_queue_puts_new_games_first() {
     let key = "Stockfish 19|19|14|2|classifier-v1|lichess-v1";
     let queue = pending_analysis(&db, &GameFilter::default(), key).unwrap();
     assert_eq!(queue.ids, vec![ids[1], ids[2], ids[0]]);
+}
+
+#[test]
+fn legacy_analyses_without_config_key_do_not_break_the_queue() {
+    let db = Db::in_memory().unwrap();
+    let game = draft(
+        "legacy",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        10,
+    );
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    let legacy = analysis(
+        id,
+        90.0,
+        80.0,
+        vec![move_eval(
+            id,
+            1,
+            Phase::Opening,
+            MoveCategory::Best,
+            TimeFlag::Normal,
+        )],
+    );
+    insert_analysis_draft(&db, &legacy).unwrap();
+    // Так выглядит запись, сделанная сборкой, которая не знала о config_key.
+    db.with(|conn| {
+        conn.execute(
+            "UPDATE game_analyses SET config_key = '', engine_version = NULL WHERE game_id = ?1",
+            [id],
+        )?;
+        Ok(())
+    })
+    .unwrap();
+
+    let key = crate::service::queue::target_config_key(&db, &AppSettings::default()).unwrap();
+    assert_eq!(key, "Stockfish 19|19|14|2|classifier-v1|lichess-v1");
+    let queue = pending_analysis(&db, &GameFilter::default(), &key).unwrap();
+    assert!(queue.ids.is_empty(), "старая запись не должна проситься заново");
+}
+
+#[test]
+fn backfill_restores_config_key_of_legacy_analyses() {
+    let db = Db::in_memory().unwrap();
+    let game = draft(
+        "legacy",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        10,
+    );
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    let legacy = analysis(
+        id,
+        90.0,
+        80.0,
+        vec![move_eval(
+            id,
+            1,
+            Phase::Opening,
+            MoveCategory::Best,
+            TimeFlag::Normal,
+        )],
+    );
+    let expected = analysis_config_key(&legacy.analysis);
+    insert_analysis_draft(&db, &legacy).unwrap();
+    db.with(|conn| {
+        conn.execute(
+            "UPDATE game_analyses SET config_key = '', engine_version = '' WHERE game_id = ?1",
+            [id],
+        )?;
+        Ok(())
+    })
+    .unwrap();
+
+    assert_eq!(backfill_config_keys(&db).unwrap(), 1);
+    let restored: (String, String) = db
+        .with(|conn| {
+            Ok(conn.query_row(
+                "SELECT config_key, engine_version FROM game_analyses WHERE game_id = ?1",
+                [id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )?)
+        })
+        .unwrap();
+    assert_eq!(restored.1, "19");
+    assert_eq!(restored.0, expected);
+    assert_eq!(backfill_config_keys(&db).unwrap(), 0, "повторный запуск ничего не меняет");
 }
 
 #[test]
