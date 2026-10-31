@@ -170,6 +170,9 @@ export type TranslationSchema = {
     timeTroubleOrImpulsive: string;
     moveTimeLegend: string;
     startPosition: string;
+    scopeUser: string;
+    scopeOpponent: string;
+    scopeAll: string;
   };
   board: {
     first: string;

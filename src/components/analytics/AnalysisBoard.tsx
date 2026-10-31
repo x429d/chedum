@@ -11,12 +11,18 @@ import { formatEval } from "../../utils/format";
 import { Board } from "../board/Board";
 import { BoardControls } from "../board/BoardControls";
 import { EvalBar } from "../board/EvalBar";
-import { EvalChart } from "./EvalChart";
+import { type ChartScope, EvalChart } from "./EvalChart";
 import { LivePanel } from "./LivePanel";
 
 const THEMES: BoardTheme[] = ["midnight", "walnut", "slate"];
 
-export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => void }) {
+export function AnalysisBoard(props: {
+  fullscreen: boolean;
+  onFullscreen: () => void;
+  ref?: (el: HTMLDivElement) => void;
+}) {
+  const [chartScope, setChartScope] = createSignal<ChartScope>("user");
+
   /** Оценка live-движка в перспективе белых; UCI отдаёт cp/mate от ходящего. */
   const liveEval = createMemo(() => {
     if (!analysisStore.liveEnabled()) return null;
@@ -65,7 +71,11 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
   };
 
   return (
-    <div class="board-column" classList={{ "is-live": analysisStore.liveEnabled() }}>
+    <div
+      ref={props.ref}
+      class="board-column"
+      classList={{ "is-live": analysisStore.liveEnabled() }}
+    >
       <div class="board-stage">
         <EvalBar
           winProbWhite={liveEval()?.winProbWhite ?? gameStore.winProbWhite()}
@@ -150,8 +160,19 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
       <Show when={gameStore.moves().length > 0 && gameStore.analysis()}>
         <div class="card chart-card">
           <div class="chart-header">
-            <div>
+            <div class="chart-header-left">
               <div class="card-title">{t("studio.dualChart")}</div>
+              <select
+                class="select chart-scope-select"
+                value={chartScope()}
+                onChange={(event) =>
+                  setChartScope(event.currentTarget.value as ChartScope)
+                }
+              >
+                <option value="user">{t("studio.scopeUser")}</option>
+                <option value="opponent">{t("studio.scopeOpponent")}</option>
+                <option value="all">{t("studio.scopeAll")}</option>
+              </select>
             </div>
             <div class="chart-legend">
               <span>
@@ -172,6 +193,8 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
             moves={gameStore.moves()}
             totalPlies={gameStore.moves().length}
             currentPly={gameStore.ply()}
+            userColor={gameStore.detail()?.game.userColor}
+            scope={chartScope()}
             onSelect={(ply) => gameStore.goTo(ply)}
           />
         </div>

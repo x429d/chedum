@@ -172,6 +172,9 @@ export const en: TranslationSchema = {
     timeTroubleOrImpulsive: "time trouble / rush",
     moveTimeLegend: "time",
     startPosition: "Start position",
+    scopeUser: "My moves only",
+    scopeOpponent: "Opponent moves",
+    scopeAll: "All moves (both)",
   },
   board: {
     first: "Start",

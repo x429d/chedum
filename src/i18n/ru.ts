@@ -172,6 +172,9 @@ export const ru: TranslationSchema = {
     timeTroubleOrImpulsive: "цейтнот / поспешность",
     moveTimeLegend: "время",
     startPosition: "Стартовая позиция",
+    scopeUser: "Только свои ходы",
+    scopeOpponent: "Ходы соперника",
+    scopeAll: "Все ходы (вместе)",
   },
   board: {
     first: "Начало",

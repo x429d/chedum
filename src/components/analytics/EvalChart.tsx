@@ -1,10 +1,12 @@
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
 import { t, tCategory, tPhase } from "../../i18n";
-import type { MoveEvaluation, Phase } from "../../types/models";
+import type { MoveEvaluation, Phase, UserColor } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { formatClock, formatEval, formatNumber } from "../../utils/format";
 import { layoutPhaseLabels } from "./chartLabels";
+
+export type ChartScope = "user" | "opponent" | "all";
 
 const H = 214;
 const ML = 38;
@@ -25,11 +27,23 @@ export function EvalChart(props: {
   moves: MoveEvaluation[];
   totalPlies: number;
   currentPly: number;
+  userColor?: UserColor;
+  scope?: ChartScope;
   onSelect: (ply: number) => void;
 }) {
   const [hover, setHover] = createSignal<{ ply: number; left: number } | null>(null);
   const [width, setWidth] = createSignal(1000);
   let wrapRef: HTMLDivElement | undefined;
+
+  const scope = () => props.scope ?? "user";
+  const isPlyInScope = (ply: number): boolean => {
+    const s = scope();
+    if (s === "all") return true;
+    const isWhiteMove = ply % 2 === 1;
+    const userCol = props.userColor === "black" ? "black" : "white";
+    const isUserMove = userCol === "white" ? isWhiteMove : !isWhiteMove;
+    return s === "user" ? isUserMove : !isUserMove;
+  };
 
   onMount(() => {
     if (!wrapRef) return;
@@ -67,9 +81,10 @@ export function EvalChart(props: {
   /** Фаза хода на этом ply: подложка графика режется по фазам. */
   const phaseOf = (ply: number): Phase =>
     props.moves[ply <= 0 ? 0 : ply - 1]?.phase ?? "opening";
+
   const phaseRuns = createMemo(() => {
     const list = points();
-    const bottom = MT + EH;
+    const bottom = HIST_TOP + HIST_H;
     const runs: { phase: Phase; area: string }[] = [];
     const first = list[0];
     if (!first) return runs;
@@ -113,9 +128,10 @@ export function EvalChart(props: {
     props.moves
       .map((move, index) => ({ move, ply: index + 1 }))
       .filter(
-        ({ move }) =>
-          ["brilliant", "great", "miss", "mistake", "blunder"].includes(move.classification) ||
-          move.isCritical,
+        ({ move, ply }) =>
+          isPlyInScope(ply) &&
+          (["brilliant", "great", "miss", "mistake", "blunder"].includes(move.classification) ||
+            move.isCritical),
       ),
   );
   const phaseMarks = createMemo(() => {
@@ -129,8 +145,11 @@ export function EvalChart(props: {
     });
     return marks.filter((mark) => mark.phase !== "opening");
   });
+  const scopedMoves = createMemo(() =>
+    props.moves.filter((move) => isPlyInScope(move.ply)),
+  );
   const histMax = createMemo(() => {
-    const values = props.moves
+    const values = scopedMoves()
       .map((move) => move.timeSpentSec)
       .filter((value): value is number => value !== null && Number.isFinite(value));
     return Math.max(1, ...values);
@@ -187,7 +206,7 @@ export function EvalChart(props: {
           <For each={["opening", "middlegame", "endgame"] as Phase[]}>
             {(phase) => (
               <linearGradient id={`eval-fill-${phase}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color={PHASE_COLORS[phase]} stop-opacity="0.34" />
+                <stop offset="0%" stop-color={PHASE_COLORS[phase]} stop-opacity="0.36" />
                 <stop offset="100%" stop-color={PHASE_COLORS[phase]} stop-opacity="0.05" />
               </linearGradient>
             )}
@@ -269,9 +288,20 @@ export function EvalChart(props: {
         <line x1={ML} x2={width() - MR} y1={HIST_TOP + HIST_H} y2={HIST_TOP + HIST_H} stroke="#293123" stroke-width="0.7" />
         <For each={props.moves}>
           {(move, index) => {
-            const height = () =>
-              move.timeSpentSec === null ? 0 : Math.max(1, (move.timeSpentSec / histMax()) * HIST_H);
-            const barWidth = plotW() / total() * 0.34;
+            const height = () => {
+              if (
+                !isPlyInScope(index() + 1) ||
+                move.timeSpentSec === null ||
+                move.timeSpentSec === undefined ||
+                move.timeSpentSec <= 0
+              ) {
+                return 0;
+              }
+              return Math.max(1.5, (move.timeSpentSec / histMax()) * HIST_H);
+            };
+            const step = plotW() / total();
+            const barWidth = Math.max(1, Math.min(5, step * 0.45));
+            const rx = Math.min(barWidth / 2, 1.5);
             const color = () =>
               move.timeFlag === "time_trouble" || move.timeFlag === "impulsive_error"
                 ? "#e05c4f"
@@ -281,15 +311,17 @@ export function EvalChart(props: {
                     ? "#e0bf7d"
                     : "#4a5344";
             return (
-              <rect
-                x={x(index() + 1) - barWidth / 2}
-                y={HIST_TOP + HIST_H - height()}
-                width={barWidth}
-                height={height()}
-                rx={barWidth / 2}
-                fill={color()}
-                opacity="0.82"
-              />
+              <Show when={height() > 0}>
+                <rect
+                  x={x(index() + 1) - barWidth / 2}
+                  y={HIST_TOP + HIST_H - height()}
+                  width={barWidth}
+                  height={height()}
+                  rx={rx}
+                  fill={color()}
+                  opacity="0.85"
+                />
+              </Show>
             );
           }}
         </For>
