@@ -1,34 +1,33 @@
 import { For } from "solid-js";
 
+import { currentLanguage, t } from "../../i18n";
 import type { TimeStats } from "../../types/models";
 import { formatNumber } from "../../utils/format";
 
 export function TimeStatsCard(props: { time: TimeStats }) {
+  const secUnit = () => (currentLanguage() === "ru" ? "с" : "s");
   const tiles = () => [
-    { label: "Цейтнот", value: String(props.time.timeTroubleMoves), hint: "ходов" },
-    { label: "Поспешные", value: String(props.time.impulsiveErrors), hint: "зевков" },
-    { label: "Зависания", value: String(props.time.overthinkMoves), hint: "ходов" },
+    { label: t("hub.timeTroubleTile"), value: String(props.time.timeTroubleMoves) },
+    { label: t("hub.impulsiveTile"), value: String(props.time.impulsiveErrors) },
+    { label: t("hub.overthinkTile"), value: String(props.time.overthinkMoves) },
     {
-      label: "Среднее время",
+      label: t("hub.avgTimeTile"),
       value:
-        props.time.avgTimeSpent === null ? "—" : `${formatNumber(props.time.avgTimeSpent, 1)} с`,
-      hint: "на ход",
+        props.time.avgTimeSpent === null ? "—" : `${formatNumber(props.time.avgTimeSpent, 1)} ${secUnit()}`,
     },
     {
-      label: "Точность в цейтноте",
+      label: t("hub.pressureAccuracyTile"),
       value:
         props.time.pressureAccuracy === null
           ? "—"
           : `${formatNumber(props.time.pressureAccuracy, 1)}%`,
-      hint: "под давлением",
     },
   ];
   return (
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Тайм-менеджмент</div>
-          <div class="card-subtitle">Психология ошибок и часы</div>
+          <div class="card-title">{t("hub.timeManagement")}</div>
         </div>
       </div>
       <div class="card-pad">
@@ -38,7 +37,6 @@ export function TimeStatsCard(props: { time: TimeStats }) {
               <div class="time-tile">
                 <div class="metric-label">{tile.label}</div>
                 <div class="metric-value">{tile.value}</div>
-                <div class="stat-hint">{tile.hint}</div>
               </div>
             )}
           </For>

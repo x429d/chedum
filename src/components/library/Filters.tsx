@@ -1,15 +1,11 @@
 import { For, Show } from "solid-js";
 
+import { t, tTimeClass } from "../../i18n";
 import { libraryStore } from "../../stores/libraryStore";
 import type { TimeClass } from "../../types/models";
 import { Icon } from "../ui/Icon";
 
-const TIME_CLASSES: { value: TimeClass; label: string }[] = [
-  { value: "bullet", label: "Пуля" },
-  { value: "blitz", label: "Блиц" },
-  { value: "rapid", label: "Рапид" },
-  { value: "classical", label: "Классика" },
-];
+const TIME_CLASSES: TimeClass[] = ["bullet", "blitz", "rapid", "classical"];
 
 function dateValue(timestamp: number | null | undefined): string {
   if (!timestamp) return "";
@@ -33,7 +29,7 @@ export function Filters() {
       <input
         class="input filter-search"
         type="search"
-        placeholder="Поиск: ник, дебют, ECO…"
+        placeholder={t("library.searchPlaceholder")}
         value={filter().search ?? ""}
         onInput={(event) => libraryStore.setSearch(event.currentTarget.value)}
       />
@@ -44,21 +40,21 @@ export function Filters() {
           classList={{ active: (filter().color ?? null) === null }}
           onClick={() => libraryStore.updateFilter({ color: null })}
         >
-          Все
+          {t("library.all")}
         </button>
         <button
           type="button"
           classList={{ active: filter().color === "white" }}
           onClick={() => libraryStore.updateFilter({ color: "white" })}
         >
-          Белые
+          {t("library.white")}
         </button>
         <button
           type="button"
           classList={{ active: filter().color === "black" }}
           onClick={() => libraryStore.updateFilter({ color: "black" })}
         >
-          Чёрные
+          {t("library.black")}
         </button>
       </div>
 
@@ -70,10 +66,10 @@ export function Filters() {
           libraryStore.updateFilter({ result: event.currentTarget.value || null })
         }
       >
-        <option value="">Результат</option>
-        <option value="win">Победы</option>
-        <option value="loss">Поражения</option>
-        <option value="draw">Ничьи</option>
+        <option value="">{t("library.result")}</option>
+        <option value="win">{t("library.wins")}</option>
+        <option value="loss">{t("library.losses")}</option>
+        <option value="draw">{t("library.draws")}</option>
       </select>
 
       <select
@@ -86,9 +82,9 @@ export function Filters() {
           })
         }
       >
-        <option value="">Контроль</option>
+        <option value="">{t("library.timeClass")}</option>
         <For each={TIME_CLASSES}>
-          {(item) => <option value={item.value}>{item.label}</option>}
+          {(val) => <option value={val}>{tTimeClass(val)}</option>}
         </For>
       </select>
 
@@ -109,8 +105,8 @@ export function Filters() {
           class="input"
           style={{ width: "142px" }}
           type="date"
-          title="С даты"
-          aria-label="Партии с даты"
+          title={t("library.fromDate")}
+          aria-label={t("library.fromDate")}
           value={dateValue(filter().dateFrom)}
           onChange={(event) => setDate("dateFrom", event.currentTarget.value)}
         />
@@ -118,8 +114,8 @@ export function Filters() {
           <button
             type="button"
             class="date-clear"
-            title="Очистить дату начала"
-            aria-label="Очистить дату начала"
+            title={t("library.clearStartDate")}
+            aria-label={t("library.clearStartDate")}
             onClick={() => libraryStore.updateFilter({ dateFrom: null })}
           >
             ×
@@ -131,8 +127,8 @@ export function Filters() {
           class="input"
           style={{ width: "142px" }}
           type="date"
-          title="По дату"
-          aria-label="Партии по дату"
+          title={t("library.toDate")}
+          aria-label={t("library.toDate")}
           value={dateValue(filter().dateTo)}
           onChange={(event) => setDate("dateTo", event.currentTarget.value)}
         />
@@ -140,8 +136,8 @@ export function Filters() {
           <button
             type="button"
             class="date-clear"
-            title="Очистить дату окончания"
-            aria-label="Очистить дату окончания"
+            title={t("library.clearEndDate")}
+            aria-label={t("library.clearEndDate")}
             onClick={() => libraryStore.updateFilter({ dateTo: null })}
           >
             ×
@@ -157,7 +153,7 @@ export function Filters() {
             libraryStore.updateFilter({ analyzedOnly: event.currentTarget.checked })
           }
         />
-        С анализом
+        {t("library.withAnalysis")}
       </label>
       <label class="chip" style={{ cursor: "pointer" }}>
         <input
@@ -167,7 +163,7 @@ export function Filters() {
             libraryStore.updateFilter({ favoritesOnly: event.currentTarget.checked })
           }
         />
-        Избранные
+        {t("library.favorites")}
       </label>
       <label class="chip" style={{ cursor: "pointer" }}>
         <input
@@ -175,12 +171,12 @@ export function Filters() {
           checked={filter().hasNotes ?? false}
           onChange={(event) => libraryStore.updateFilter({ hasNotes: event.currentTarget.checked })}
         />
-        С заметками
+        {t("library.withNotes")}
       </label>
 
       <button type="button" class="btn btn-ghost btn-sm" onClick={() => libraryStore.resetFilter()}>
         <Icon name="refresh" size={13} />
-        Сбросить
+        {t("library.resetFilter")}
       </button>
     </div>
   );

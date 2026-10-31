@@ -1,9 +1,10 @@
+import { t } from "../../i18n";
 import type { Color } from "../../types/models";
 
 export function EvalBar(props: { winProbWhite: number; label: string; orientation: Color }) {
   const percent = () => Math.max(2, Math.min(98, props.winProbWhite));
   return (
-    <div class="eval-bar" title={`Вероятность победы белых: ${props.winProbWhite.toFixed(1)}%`}>
+    <div class="eval-bar" title={`${t("studio.winProbWhite")}: ${props.winProbWhite.toFixed(1)}%`}>
       <div class="eval-bar-track">
         <div
           class="eval-bar-white"

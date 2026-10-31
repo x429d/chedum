@@ -1,5 +1,6 @@
 import { createSignal } from "solid-js";
 
+import { t } from "../i18n";
 import { api } from "../services/api";
 import type {
   AnalysisProgress,
@@ -324,7 +325,7 @@ async function runAnalysis(): Promise<void> {
     setUserArrows([]);
     undoHistory.length = 0;
     redoHistory.length = 0;
-    ui.notify("Анализ завершён", "success");
+    ui.notify(t("library.analysisFinished"), "success");
     await settingsStore.refreshEngine();
   } catch (error) {
     if (!analysisCancelled) ui.notify(toErrorMessage(error), "error");

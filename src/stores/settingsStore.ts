@@ -6,6 +6,7 @@ import type {
   AppSettings,
   BoardTheme,
   EngineStatus,
+  Language,
   PieceSet,
 } from "../types/models";
 import { toErrorMessage } from "../utils/format";
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   autoAnalyze: true,
   analysisThreads: 0,
   autoResumeAnalysis: false,
+  language: "en",
 };
 
 const [settings, setSettings] = createSignal<AppSettings>(DEFAULT_SETTINGS);
@@ -75,6 +77,10 @@ async function setPieceSet(pieceSet: PieceSet): Promise<boolean> {
   return update({ pieceSet });
 }
 
+async function setLanguage(language: Language): Promise<boolean> {
+  return update({ language });
+}
+
 export const settingsStore = {
   settings,
   engine,
@@ -85,5 +91,6 @@ export const settingsStore = {
   update,
   setBoardTheme,
   setPieceSet,
+  setLanguage,
   refreshEngine,
 };

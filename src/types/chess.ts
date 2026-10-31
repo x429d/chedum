@@ -1,6 +1,7 @@
 export type Color = "white" | "black";
 export type UserColor = Color | "none";
 export type BoardTheme = "midnight" | "walnut" | "slate";
+export type Language = "ru" | "en";
 export type PieceSet =
   | "cburnett"
   | "merida"
@@ -45,23 +46,23 @@ export interface CategoryMeta {
 }
 
 export const CATEGORY_META: Record<MoveCategory, CategoryMeta> = {
-  brilliant: { label: "Бриллиантовый", color: "#14B8A6" },
-  great: { label: "Отличный", color: "#3B82F6" },
-  best: { label: "Лучший", color: "#22C55E" },
-  excellent: { label: "Прекрасный", color: "#4ADE80" },
-  good: { label: "Хороший", color: "#86EFAC" },
-  book: { label: "Теория", color: "#D97706" },
-  inaccuracy: { label: "Неточность", color: "#FACC15" },
-  mistake: { label: "Ошибка", color: "#F97316" },
-  miss: { label: "Упущенный шанс", color: "#EC4899" },
-  blunder: { label: "Зевок", color: "#EF4444" },
-  forced: { label: "Единственный", color: "#6B7280" },
+  brilliant: { label: "Brilliant", color: "#14B8A6" },
+  great: { label: "Great", color: "#3B82F6" },
+  best: { label: "Best", color: "#22C55E" },
+  excellent: { label: "Excellent", color: "#4ADE80" },
+  good: { label: "Good", color: "#86EFAC" },
+  book: { label: "Book", color: "#D97706" },
+  inaccuracy: { label: "Inaccuracy", color: "#FACC15" },
+  mistake: { label: "Mistake", color: "#F97316" },
+  miss: { label: "Missed Win", color: "#EC4899" },
+  blunder: { label: "Blunder", color: "#EF4444" },
+  forced: { label: "Forced", color: "#6B7280" },
 };
 
 export const PHASE_LABELS: Record<Phase, string> = {
-  opening: "Дебют",
-  middlegame: "Миттельшпиль",
-  endgame: "Эндшпиль",
+  opening: "Opening",
+  middlegame: "Middlegame",
+  endgame: "Endgame",
 };
 
 export interface ArrowSpec {

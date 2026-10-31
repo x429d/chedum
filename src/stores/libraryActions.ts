@@ -1,5 +1,6 @@
 import type { Setter } from "solid-js";
 
+import { t } from "../i18n";
 import { api } from "../services/api";
 import type { GameFilter, GameListItem } from "../types/models";
 import { toErrorMessage } from "../utils/format";
@@ -26,12 +27,12 @@ export function createLibraryActions(deps: LibraryActionsDeps) {
   async function exportSelection(): Promise<void> {
     const ids = deps.selected();
     if (ids.length === 0 && deps.total() === 0) {
-      ui.notify("Нет партий для экспорта", "info");
+      ui.notify(t("library.noGamesToExport"), "info");
       return;
     }
     try {
       const path = await api.exportGames(ids);
-      if (path) ui.notify(`PGN сохранён: ${path}`, "success");
+      if (path) ui.notify(t("library.pgnSaved", { path }), "success");
     } catch (error) {
       ui.notify(toErrorMessage(error), "error");
     }
@@ -60,8 +61,8 @@ export function createLibraryActions(deps: LibraryActionsDeps) {
     if (unique.length === 0) return;
     const message =
       unique.length === 1
-        ? "Удалить партию вместе с анализом?"
-        : `Удалить ${unique.length} партий вместе с анализом?`;
+        ? t("library.confirmDeleteOne")
+        : t("library.confirmDeleteMany", { count: unique.length });
     let confirmed = false;
     try {
       confirmed = await api.confirmDelete(message);
@@ -73,7 +74,7 @@ export function createLibraryActions(deps: LibraryActionsDeps) {
     try {
       const deleted = await api.deleteGames(unique);
       if (deleted === 0) {
-        ui.notify("Партии уже удалены", "info");
+        ui.notify(t("library.gamesAlreadyDeleted"), "info");
         await deps.load();
         return;
       }
@@ -85,7 +86,7 @@ export function createLibraryActions(deps: LibraryActionsDeps) {
         ui.setView("library");
       }
       ui.notify(
-        unique.length === 1 ? "Партия удалена" : `Удалено партий: ${deleted}`,
+        unique.length === 1 ? t("library.gameDeleted") : t("library.gamesDeletedCount", { count: deleted }),
         "success",
       );
       if (deps.games().length === 0 && deps.pageIndex() > 0) {

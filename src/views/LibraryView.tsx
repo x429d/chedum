@@ -1,28 +1,28 @@
 import { createMemo, onCleanup, onMount, Show } from "solid-js";
 
-import { libraryStore } from "../stores/libraryStore";
-import { ui } from "../stores/uiStore";
-import { formatNumber, pluralRu } from "../utils/format";
-import { Icon } from "../components/ui/Icon";
 import { AnalysisQueue } from "../components/library/AnalysisQueue";
 import { Filters } from "../components/library/Filters";
 import { GameTable } from "../components/library/GameTable";
 import { ImportExport } from "../components/library/ImportExport";
 import { SyncPanel } from "../components/library/SyncPanel";
+import { Icon } from "../components/ui/Icon";
+import { pluralGames, t } from "../i18n";
+import { libraryStore } from "../stores/libraryStore";
+import { ui } from "../stores/uiStore";
+import { formatNumber } from "../utils/format";
 
-type SideSection = "sync" | "queue" | "deep";
+type SideSection = "sync" | "queue";
 
 export function LibraryView() {
   onMount(() => void libraryStore.load());
   onCleanup(() => libraryStore.cancelPendingSearch());
   let sideSync: HTMLDivElement | undefined;
   let sideQueue: HTMLDivElement | undefined;
-  let sideDeep: HTMLDivElement | undefined;
   const expandSidebar = (section?: SideSection): void => {
     ui.setLibrarySidebarCollapsed(false);
     if (!section) return;
     requestAnimationFrame(() => {
-      const target = section === "sync" ? sideSync : section === "queue" ? sideQueue : sideDeep;
+      const target = section === "sync" ? sideSync : sideQueue;
       target?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
   };
@@ -38,11 +38,9 @@ export function LibraryView() {
     <div class="view-scroll">
       <header class="view-header">
         <div>
-          <h1 class="view-title">Библиотека партий</h1>
+          <h1 class="view-title">{t("library.title")}</h1>
           <div class="view-subtitle">
-            {libraryStore.total()}{" "}
-            {pluralRu(libraryStore.total(), "партия", "партии", "партий")}, из них{" "}
-            {libraryStore.analyzed()} с анализом
+            {pluralGames(libraryStore.total())}, {libraryStore.analyzed()} {t("library.analyzed").toLowerCase()}
           </div>
         </div>
         <div class="header-actions">
@@ -52,26 +50,22 @@ export function LibraryView() {
 
       <div class="stats-strip">
         <div class="stat-card">
-          <div class="stat-label">Всего партий</div>
+          <div class="stat-label">{t("library.totalGames")}</div>
           <div class="stat-value">{libraryStore.total()}</div>
-          <div class="stat-hint">в локальной базе</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">С анализом</div>
+          <div class="stat-label">{t("library.analyzed")}</div>
           <div class="stat-value">{libraryStore.analyzed()}</div>
-          <div class="stat-hint">по всей выборке</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Средняя точность</div>
+          <div class="stat-label">{t("library.avgAccuracy")}</div>
           <div class="stat-value">
             {averageAccuracy() === null ? "—" : `${formatNumber(averageAccuracy(), 1)}%`}
           </div>
-          <div class="stat-hint">по видимой выборке</div>
         </div>
         <div class="stat-card">
-          <div class="stat-label">Избранные</div>
+          <div class="stat-label">{t("library.favorites")}</div>
           <div class="stat-value">{libraryStore.favorites()}</div>
-          <div class="stat-hint">по всей выборке</div>
         </div>
       </div>
 
@@ -89,8 +83,8 @@ export function LibraryView() {
             <button
               type="button"
               class="rail-btn"
-              title="Развернуть панели"
-              aria-label="Развернуть панели"
+              title={t("library.expandPanels")}
+              aria-label={t("library.expandPanels")}
               onClick={() => expandSidebar()}
             >
               <Icon name="chevrons-left" size={16} />
@@ -99,8 +93,8 @@ export function LibraryView() {
             <button
               type="button"
               class="rail-btn"
-              title="Chess.com"
-              aria-label="Chess.com"
+              title={t("library.syncTitle")}
+              aria-label={t("library.syncTitle")}
               onClick={() => expandSidebar("sync")}
             >
               <Icon name="sync" size={16} />
@@ -111,8 +105,8 @@ export function LibraryView() {
             <button
               type="button"
               class="rail-btn"
-              title="Очередь анализа"
-              aria-label="Очередь анализа"
+              title={t("library.queueTitle")}
+              aria-label={t("library.queueTitle")}
               onClick={() => expandSidebar("queue")}
             >
               <Icon name="cpu" size={16} />
@@ -120,25 +114,16 @@ export function LibraryView() {
                 <span class="rail-badge" />
               </Show>
             </button>
-            <button
-              type="button"
-              class="rail-btn"
-              title="Глубокий разбор"
-              aria-label="Глубокий разбор"
-              onClick={() => expandSidebar("deep")}
-            >
-              <Icon name="target" size={16} />
-            </button>
           </div>
 
           <div class="side-body">
             <div class="side-head">
-              <span>Панели</span>
+              <span>{t("library.panels")}</span>
               <button
                 type="button"
                 class="rail-btn rail-btn-sm"
-                title="Свернуть панели"
-                aria-label="Свернуть панели"
+                title={t("library.collapsePanels")}
+                aria-label={t("library.collapsePanels")}
                 aria-expanded="true"
                 onClick={() => ui.setLibrarySidebarCollapsed(true)}
               >
@@ -150,22 +135,6 @@ export function LibraryView() {
             </div>
             <div class="side-section" ref={(el) => (sideQueue = el)}>
               <AnalysisQueue />
-            </div>
-            <div class="side-section" ref={(el) => (sideDeep = el)}>
-              <div class="card card-pad">
-                <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
-                  <div class="empty-icon" style={{ width: "32px", height: "32px", "margin": "0" }}>
-                    <Icon name="target" size={15} />
-                  </div>
-                  <div>
-                    <div class="card-title">Глубокий разбор</div>
-                    <div class="card-subtitle">Открывается вместе с партией</div>
-                  </div>
-                </div>
-                <div class="form-hint" style={{ "margin-top": "9px" }}>
-                  Выберите партию в таблице — разбор откроется в студии.
-                </div>
-              </div>
             </div>
           </div>
         </div>

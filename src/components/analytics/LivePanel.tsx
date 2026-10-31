@@ -1,5 +1,6 @@
 import { createEffect, For, on, onCleanup, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import { analysisStore } from "../../stores/analysisStore";
 import { formatEval } from "../../utils/format";
 import { Icon } from "../ui/Icon";
@@ -29,7 +30,7 @@ export function LivePanel(props: { fen: string; depth: number; multipv: number }
         <div class="live-head">
           <div class="engine-row">
             <Icon name="activity" size={14} />
-            <span style={{ "font-size": "11px", "font-weight": "600" }}>Live-анализ</span>
+            <span style={{ "font-size": "11px", "font-weight": "600" }}>{t("studio.liveTitle")}</span>
             <span class="chip accent" style={{ height: "20px", "font-size": "9.5px" }}>
               depth {analysisStore.liveUpdate()?.depth ?? props.depth}
             </span>
@@ -42,7 +43,7 @@ export function LivePanel(props: { fen: string; depth: number; multipv: number }
           when={(analysisStore.liveUpdate()?.lines.length ?? 0) > 0}
           fallback={
             <div class="sync-log" style={{ "margin-top": "6px" }}>
-              Stockfish считает позицию…
+              {t("studio.liveThinking")}
             </div>
           }
         >

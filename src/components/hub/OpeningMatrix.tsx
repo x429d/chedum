@@ -1,5 +1,6 @@
 import { createMemo, createSignal, For, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import type { OpeningStat } from "../../types/models";
 import { formatEvalPawns, formatNumber } from "../../utils/format";
 
@@ -20,51 +21,47 @@ export function OpeningMatrix(props: { openings: OpeningStat[] }) {
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Матрица репертуара</div>
-          <div class="card-subtitle">Дебюты ECO, точность и оценка выхода</div>
+          <div class="card-title">{t("hub.openingMatrix")}</div>
         </div>
         <div class="segmented" style={{ "font-size": "10px" }}>
           <button
             type="button"
             classList={{ active: sort() === "games" }}
-            title="Сортировать по числу партий"
             onClick={() => setSort("games")}
           >
-            Партии
+            {t("hub.sortByGames")}
           </button>
           <button
             type="button"
             classList={{ active: sort() === "price" }}
-            title="Число партий × средняя потеря Win%"
             onClick={() => setSort("price")}
           >
-            По цене
+            {t("hub.sortByPrice")}
           </button>
         </div>
       </div>
       <div class="card-pad">
         <Show
           when={props.openings.length > 0}
-          fallback={<div class="empty-state" style={{ padding: "20px" }}>Нет данных по дебютам.</div>}
+          fallback={<div class="empty-state" style={{ padding: "20px" }}>{t("hub.noOpeningData")}</div>}
         >
           <div class="opening-row" style={{ "font-size": "10px", color: "var(--dim)" }}>
-            <span>ECO</span>
-            <span>Дебют</span>
-            <span title="Все партии этого дебюта">Партии</span>
-            <span title="Из них разобрано движком">Разобрано</span>
-            <span>Победы</span>
-            <span>Точность</span>
+            <span>{t("hub.eco")}</span>
+            <span>{t("hub.openingCol")}</span>
+            <span>{t("hub.gamesCol")}</span>
+            <span>{t("hub.analyzedCol")}</span>
+            <span>{t("hub.winsCol")}</span>
+            <span>{t("hub.accuracyCol")}</span>
           </div>
           <For each={ordered()}>
             {(opening) => (
               <div
                 class="opening-row"
                 classList={{ unreliable: !opening.reliable }}
-                title={`Цена: ${formatNumber(opening.price, 1)} Win% × партии`}
               >
                 <span class="eco-code">{opening.eco}</span>
                 <span class="opening-name-cell" title={opening.name}>
-                  {opening.name || "Без названия"}
+                  {opening.name || t("library.noOpening")}
                 </span>
                 <span class="mono">{opening.games}</span>
                 <span class="mono">{opening.analyzed}</span>
@@ -83,16 +80,8 @@ export function OpeningMatrix(props: { openings: OpeningStat[] }) {
                   <Show
                     when={opening.reliable}
                     fallback={
-                      <span
-                        class="dim"
-                        style={{ "font-size": "10px" }}
-                        title={
-                          opening.accuracy === null
-                            ? `Разобрано ${opening.analyzed} из ${opening.games} — данных нет`
-                            : `${formatNumber(opening.accuracy, 1)}% по ${opening.analyzed} партиям — мало данных`
-                        }
-                      >
-                        мало данных
+                      <span class="dim" style={{ "font-size": "10px" }}>
+                        {t("hub.notEnoughData")}
                       </span>
                     }
                   >

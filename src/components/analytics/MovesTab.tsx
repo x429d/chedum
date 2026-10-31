@@ -1,5 +1,6 @@
 import { createEffect, createSignal, For, on, Show } from "solid-js";
 
+import { t, tCategory } from "../../i18n";
 import { gameStore } from "../../stores/gameStore";
 import type { MoveCategory, MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
@@ -67,7 +68,7 @@ export function MovesTab() {
 
       <div>
         <div style={{ display: "flex", "align-items": "center", "justify-content": "space-between" }}>
-          <span class="card-title">Ходы</span>
+          <span class="card-title">{t("studio.moves")}</span>
           <Show when={gameStore.categoryFilter()}>
             {(category) => (
               <button
@@ -75,7 +76,7 @@ export function MovesTab() {
                 class="chip accent"
                 onClick={() => gameStore.setCategoryFilter(null)}
               >
-                {CATEGORY_META[category()].label} ✕
+                {tCategory(category())} ✕
               </button>
             )}
           </Show>
@@ -106,12 +107,12 @@ export function MovesTab() {
       <Show when={gameStore.currentMove()}>
         {(move) => (
           <div class="card" style={{ padding: "10px" }}>
-            <div class="form-label">Заметка к ходу {move().ply}</div>
+            <div class="form-label">{t("studio.noteForMove", { ply: move().ply })}</div>
             <textarea
               class="textarea"
               style={{ "min-height": "60px", "margin-top": "5px" }}
               value={draft()}
-              placeholder="Почему этот ход был выбран?"
+              placeholder={t("studio.noteMovePlaceholder")}
               onInput={(event) => setDraft(event.currentTarget.value)}
             />
             <button
@@ -120,19 +121,19 @@ export function MovesTab() {
               style={{ "margin-top": "7px" }}
               onClick={() => void gameStore.saveComment(move().ply, draft())}
             >
-              Сохранить заметку
+              {t("studio.saveNote")}
             </button>
           </div>
         )}
       </Show>
 
       <div class="card" style={{ padding: "10px" }}>
-        <div class="form-label">Заметка к партии</div>
+        <div class="form-label">{t("studio.gameNotes")}</div>
         <textarea
           class="textarea"
           style={{ "min-height": "56px", "margin-top": "5px" }}
           value={notes()}
-          placeholder="Выводы, идеи, что улучшить…"
+          placeholder={t("studio.gameNotesPlaceholder")}
           onInput={(event) => setNotes(event.currentTarget.value)}
         />
         <button
@@ -141,7 +142,7 @@ export function MovesTab() {
           style={{ "margin-top": "7px" }}
           onClick={() => void gameStore.saveNotes(notes())}
         >
-          Сохранить
+          {t("studio.saveGameNotes")}
         </button>
       </div>
     </div>

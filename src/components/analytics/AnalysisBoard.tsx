@@ -1,5 +1,6 @@
 import { createMemo, createSignal, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import { analysisStore } from "../../stores/analysisStore";
 import { gameStore } from "../../stores/gameStore";
 import { libraryStore } from "../../stores/libraryStore";
@@ -43,7 +44,7 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
         setLivePending(true);
         try {
           const confirmed = await libraryStore.stopBatchWithConfirm(
-            "Остановить текущий пакетный анализ и перейти в live-режим?",
+            t("studio.confirmStopBatch"),
           );
           if (!confirmed || gameStore.analyzing()) return;
           analysisStore.setLiveEnabled(true);
@@ -113,7 +114,7 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
       <Show when={gameStore.variation()}>
         {(line) => (
           <div class="card" style={{ padding: "8px 12px", "font-size": "11.5px" }}>
-            <span class="muted">Вариант: </span>
+            <span class="muted">{t("studio.variation")} </span>
             <span class="mono">{line().sans.join(" ")}</span>
             <button
               type="button"
@@ -121,21 +122,21 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
               style={{ "margin-left": "8px" }}
               onClick={() => gameStore.clearVariation()}
             >
-              Вернуться к партии
+              {t("studio.returnToGame")}
             </button>
           </div>
         )}
       </Show>
       <Show when={gameStore.preview()}>
         <div class="card" style={{ padding: "8px 12px", "font-size": "11.5px" }}>
-          <span style={{ color: "var(--accent-bright)" }}>Показ главной линии…</span>
+          <span style={{ color: "var(--accent-bright)" }}>{t("studio.showingMainLine")}</span>
           <button
             type="button"
             class="btn btn-ghost btn-sm"
             style={{ "margin-left": "8px" }}
             onClick={() => gameStore.stopPreview()}
           >
-            Остановить
+            {t("studio.stop")}
           </button>
         </div>
       </Show>
@@ -150,21 +151,20 @@ export function AnalysisBoard(props: { fullscreen: boolean; onFullscreen: () => 
         <div class="card chart-card">
           <div class="chart-header">
             <div>
-              <div class="card-title">Двойная аналитика</div>
-              <div class="card-subtitle">Win% и время на ход. Клик переводит доску.</div>
+              <div class="card-title">{t("studio.dualChart")}</div>
             </div>
             <div class="chart-legend">
               <span>
                 <span class="legend-dot" style={{ background: "#e0bf7d" }} />
-                Win% белых
+                {t("studio.winProbWhite")}
               </span>
               <span>
                 <span class="legend-dot" style={{ background: "#e05c4f" }} />
-                цейтнот / поспешность
+                {t("studio.timeTroubleOrImpulsive")}
               </span>
               <span>
                 <span class="legend-dot" style={{ background: "#4a5344" }} />
-                время
+                {t("studio.moveTimeLegend")}
               </span>
             </div>
           </div>

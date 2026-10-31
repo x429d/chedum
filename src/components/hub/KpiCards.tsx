@@ -1,40 +1,41 @@
 import { For } from "solid-js";
 
+import { pluralGames, t } from "../../i18n";
 import type { HubKpis } from "../../types/models";
-import { formatNumber, pluralRu } from "../../utils/format";
+import { formatNumber } from "../../utils/format";
 
 export function KpiCards(props: { kpis: HubKpis }) {
   const cards = () => [
     {
-      label: "Партий",
+      label: t("hub.games"),
       value: String(props.kpis.totalGames),
-      hint: `по всем ${props.kpis.totalGames}`,
+      hint: pluralGames(props.kpis.totalGames),
     },
     {
-      label: "Доля побед",
+      label: t("hub.winRate"),
       value: `${formatNumber(props.kpis.winRate, 1)}%`,
-      hint: `${props.kpis.wins} ${pluralRu(props.kpis.wins, "победа", "победы", "побед")}, ${props.kpis.draws} ${pluralRu(props.kpis.draws, "ничья", "ничьи", "ничьих")}, ${props.kpis.losses} ${pluralRu(props.kpis.losses, "поражение", "поражения", "поражений")} · по всем ${props.kpis.totalGames}`,
+      hint: `${props.kpis.wins}W · ${props.kpis.draws}D · ${props.kpis.losses}L`,
     },
     {
-      label: "Средняя точность",
+      label: t("hub.avgAccuracy"),
       value: props.kpis.avgAccuracy === null ? "—" : `${formatNumber(props.kpis.avgAccuracy, 1)}%`,
-      hint: `по ${props.kpis.analyzedGames} разобранным · метод Lichess`,
+      hint: pluralGames(props.kpis.analyzedGames),
     },
     {
-      label: "Средний ACPL",
+      label: t("hub.avgAcpl"),
       value: formatNumber(props.kpis.avgAcpl, 1),
-      hint: `по ${props.kpis.analyzedGames} разобранным`,
+      hint: pluralGames(props.kpis.analyzedGames),
     },
     {
-      label: "Performance Elo",
+      label: t("hub.perfElo"),
       value:
         props.kpis.avgPerfElo === null
           ? "—"
           : `${Math.round(props.kpis.avgPerfElo)} ± ${Math.round(props.kpis.avgPerfEloSpread ?? 0)}`,
       hint:
         props.kpis.avgPerfElo === null
-          ? "нужно ≥ 20 разобранных партий"
-          : `по ${props.kpis.analyzedGames} разобранным · оценка по точности, экспериментально`,
+          ? t("hub.perfEloNeedMore")
+          : pluralGames(props.kpis.analyzedGames),
     },
   ];
   return (

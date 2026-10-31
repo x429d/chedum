@@ -1,6 +1,7 @@
 import { For } from "solid-js";
 import type { Role } from "chessops/types";
 
+import { t } from "../../i18n";
 import { settingsStore } from "../../stores/settingsStore";
 import type { Color } from "../../types/chess";
 import { pieceImage, PIECE_SETS, pieceSetMeta } from "../../utils/pieceSets";
@@ -24,7 +25,7 @@ export function PieceSetPicker() {
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Набор фигур</div>
+          <div class="card-title">{t("settings.pieceSet")}</div>
         </div>
         <Icon name="board" size={16} />
       </div>

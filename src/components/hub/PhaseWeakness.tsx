@@ -1,7 +1,7 @@
 import { createMemo, For } from "solid-js";
 
+import { t, tPhase } from "../../i18n";
 import type { PhaseStat } from "../../types/models";
-import { PHASE_LABELS } from "../../types/models";
 import { formatNumber } from "../../utils/format";
 
 export function PhaseWeakness(props: { phases: PhaseStat[] }) {
@@ -17,8 +17,7 @@ export function PhaseWeakness(props: { phases: PhaseStat[] }) {
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Уязвимые фазы</div>
-          <div class="card-subtitle">Точность по стадиям партии</div>
+          <div class="card-title">{t("hub.vulnerablePhases")}</div>
         </div>
       </div>
       <div class="card-pad">
@@ -29,9 +28,9 @@ export function PhaseWeakness(props: { phases: PhaseStat[] }) {
                 style={{ width: "82px", "font-size": "11px" }}
                 classList={{ "muted": weakest() !== phase.phase }}
               >
-                {PHASE_LABELS[phase.phase]}
+                {tPhase(phase.phase)}
                 <span class="dim" style={{ display: "block", "font-size": "9px" }}>
-                  {phase.moves} ходов · {phase.games} партий
+                  {t("hub.movesCount", { moves: phase.moves, games: phase.games })}
                 </span>
               </span>
               <div class="phase-track" style={{ flex: "1" }}>

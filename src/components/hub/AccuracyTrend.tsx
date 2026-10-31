@@ -1,5 +1,6 @@
 import { createMemo, For, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import type { AccuracyPoint } from "../../types/models";
 import { formatDate } from "../../utils/format";
 
@@ -29,15 +30,13 @@ export function AccuracyTrend(props: { points: AccuracyPoint[] }) {
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">Тренд точности</div>
-          <div class="card-subtitle">От партии к партии</div>
+          <div class="card-title">{t("hub.accuracyTrend")}</div>
         </div>
-        <span class="chip">{props.points.length} точек</span>
       </div>
       <div class="card-pad">
         <Show
           when={props.points.length > 0}
-          fallback={<div class="empty-state" style={{ padding: "20px" }}>Пока нет проанализированных партий.</div>}
+          fallback={<div class="empty-state" style={{ padding: "20px" }}>{t("hub.noTrendData")}</div>}
         >
           <svg class="trend-svg" viewBox={`0 0 ${W} ${H}`}>
             <For each={[50, 75, 90]}>
@@ -91,15 +90,15 @@ export function AccuracyTrend(props: { points: AccuracyPoint[] }) {
           <div class="chart-legend" style={{ "margin-top": "4px" }}>
             <span>
               <span class="legend-dot" style={{ background: "#9ccf8f" }} />
-              победа
+              {t("outcomes.win")}
             </span>
             <span>
               <span class="legend-dot" style={{ background: "#d9c47f" }} />
-              ничья
+              {t("outcomes.draw")}
             </span>
             <span>
               <span class="legend-dot" style={{ background: "#e79a90" }} />
-              поражение
+              {t("outcomes.loss")}
             </span>
           </div>
         </Show>

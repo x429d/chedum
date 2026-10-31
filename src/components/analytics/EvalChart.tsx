@@ -1,7 +1,8 @@
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
+import { t, tCategory, tPhase } from "../../i18n";
 import type { MoveEvaluation, Phase } from "../../types/models";
-import { CATEGORY_META, PHASE_LABELS } from "../../types/models";
+import { CATEGORY_META } from "../../types/models";
 import { formatClock, formatEval, formatNumber } from "../../utils/format";
 import { layoutPhaseLabels } from "./chartLabels";
 
@@ -232,7 +233,7 @@ export function EvalChart(props: {
               font-size="9"
               opacity="0.9"
             >
-              {PHASE_LABELS[label.phase]}
+              {tPhase(label.phase)}
             </text>
           )}
         </For>
@@ -328,7 +329,7 @@ export function EvalChart(props: {
           >
             <Show
               when={state().move}
-              fallback={<span class="muted">Стартовая позиция</span>}
+              fallback={<span class="muted">{t("studio.startPosition")}</span>}
             >
               {(move) => (
                 <div style={{ display: "flex", "flex-direction": "column", gap: "2px" }}>
@@ -336,7 +337,7 @@ export function EvalChart(props: {
                     <span class="mono">{state().label}</span>
                     <span style={{ "font-weight": "700" }}>{move().playedSan}</span>
                     <span style={{ color: CATEGORY_META[move().classification].color }}>
-                      {CATEGORY_META[move().classification].label}
+                      {tCategory(move().classification)}
                     </span>
                   </div>
                   <div class="mono" style={{ color: "var(--muted)" }}>

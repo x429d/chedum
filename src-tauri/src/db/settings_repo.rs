@@ -32,10 +32,18 @@ pub fn set_setting(db: &Db, key: &str, value: &str) -> AppResult<()> {
         "auto_analyze",
         "analysis_threads",
         "auto_resume_analysis",
+        "language",
     ];
     if !allowed.contains(&key) {
         return Err(AppError::Validation(format!(
             "Неизвестный параметр «{key}»"
+        )));
+    }
+    if key == "language"
+        && (!value.chars().all(|c| c.is_ascii_lowercase()) || !(2..=5).contains(&value.len()))
+    {
+        return Err(AppError::Validation(format!(
+            "Некорректный код языка «{value}»"
         )));
     }
     if key == "analysis_depth" {
@@ -98,6 +106,7 @@ pub fn set_many(db: &Db, settings: &AppSettings) -> AppResult<()> {
                 "auto_resume_analysis",
                 settings.auto_resume_analysis.to_string(),
             ),
+            ("language", settings.language.clone()),
         ];
         for (key, value) in values {
             upsert_conn(tx, key, &value)?;
@@ -155,6 +164,11 @@ fn settings_from_map(map: &HashMap<String, String>) -> AppSettings {
     {
         settings.auto_resume_analysis = value;
     }
+    if let Some(value) = map.get("language") {
+        if value.chars().all(|c| c.is_ascii_lowercase()) && (2..=5).contains(&value.len()) {
+            settings.language = value.clone();
+        }
+    }
     settings
 }
 
@@ -191,5 +205,23 @@ mod tests {
         let mut map = HashMap::new();
         map.insert("piece_set".to_string(), "unknown".to_string());
         assert_eq!(settings_from_map(&map).piece_set, "cburnett");
+    }
+
+    #[test]
+    fn language_roundtrips_through_settings() {
+        let db = Db::in_memory().unwrap();
+        let settings = AppSettings {
+            language: "ru".to_string(),
+            ..AppSettings::default()
+        };
+        set_many(&db, &settings).unwrap();
+        assert_eq!(get_settings(&db).unwrap().language, "ru");
+    }
+
+    #[test]
+    fn invalid_language_is_rejected() {
+        let db = Db::in_memory().unwrap();
+        assert!(set_setting(&db, "language", "INVALID_123").is_err());
+        assert!(set_setting(&db, "language", "x").is_err());
     }
 }

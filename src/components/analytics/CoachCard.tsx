@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js";
 
+import { t, tCategory } from "../../i18n";
 import type { MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { formatClock, formatEval } from "../../utils/format";
@@ -13,8 +14,7 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
       fallback={
         <div class="coach-card">
           <div class="muted" style={{ "font-size": "11.5px", "line-height": "1.5" }}>
-            Выберите ход на доске или в списке — тренер объяснит решение, покажет линии Stockfish и
-            причину ошибки.
+            {t("studio.coachFallback")}
           </div>
         </div>
       }
@@ -25,7 +25,7 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
           <div class="coach-card">
             <div class="coach-head">
               <span class="badge" style={{ color: meta().color, "border-color": meta().color }}>
-                <CategoryGlyph category={move().classification} size={12} /> {meta().label}
+                <CategoryGlyph category={move().classification} size={12} /> {tCategory(move().classification)}
               </span>
               <span class="mono" style={{ "font-size": "11px" }}>
                 {move().ply}. {move().playedSan}
@@ -43,7 +43,7 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
               <div class="coach-text">{move().explanationText}</div>
             </Show>
             <Show when={!move().explanationText}>
-              <div class="coach-text muted">Лучший ход: {move().bestSan ?? "—"}.</div>
+              <div class="coach-text muted">{t("studio.bestMove", { san: move().bestSan ?? "—" })}</div>
             </Show>
             <div class="pv-list">
               <For each={move().pvLines.slice(0, 2)}>
@@ -66,10 +66,10 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
                 onClick={props.onPlayLine}
               >
                 <Icon name="play" size={12} />
-                Показать лучшую линию
+                {t("studio.showBestLine")}
               </button>
               <Show when={move().isCritical}>
-                <span class="chip accent">Критический момент</span>
+                <span class="chip accent">{t("studio.criticalMoment")}</span>
               </Show>
             </div>
           </div>

@@ -1,8 +1,9 @@
 import type { Setter } from "solid-js";
 
+import { pluralGames, t } from "../i18n";
 import { api } from "../services/api";
 import type { BatchState, GameFilter, GameListItem } from "../types/models";
-import { pluralRu, toErrorCode, toErrorMessage } from "../utils/format";
+import { toErrorCode, toErrorMessage } from "../utils/format";
 import { analysisStore } from "./analysisStore";
 import { gameStore } from "./gameStore";
 import { settingsStore } from "./settingsStore";
@@ -27,10 +28,10 @@ function summaryLabel(
   total: number,
   failed: number,
 ): string {
-  if (stopped) return "Очередь остановлена";
-  if (fatal) return "Очередь прервана: ошибка движка";
-  if (failed > 0) return `Готово: ${done} из ${total}, ошибок ${failed}`;
-  return "Анализ завершён";
+  if (stopped) return t("library.queueStopped");
+  if (fatal) return t("library.queueAbortedEngine");
+  if (failed > 0) return t("library.queueDoneCount", { done, total, failed });
+  return t("library.analysisFinished");
 }
 
 function positionsFor(game: GameListItem | undefined): number {
@@ -85,7 +86,7 @@ export function createBatchController(deps: BatchControllerDeps) {
   ): Promise<void> {
     if (ids.length === 0 || running || deps.batch().running) return;
     if (gameStore.analyzing()) {
-      ui.notify("Дождитесь завершения анализа партии", "info");
+      ui.notify(t("library.waitForGameAnalysis"), "info");
       return;
     }
     running = true;
@@ -156,7 +157,7 @@ export function createBatchController(deps: BatchControllerDeps) {
                 current: done + failed,
                 done,
                 failed,
-                label: `${label}: ${done + failed + 1} из ${ids.length} (${workers} потоков)`,
+                label: `${label}: ${done + failed + 1} / ${ids.length} (${t("library.threadsCount", { threads: workers })})`,
               },
               positionsDone(),
               positionsTotal,
@@ -230,17 +231,17 @@ export function createBatchController(deps: BatchControllerDeps) {
         etaSec: null,
       }));
       if (stopped) {
-        ui.notify(`Очередь остановлена: ${done} из ${ids.length}`, "info");
+        ui.notify(`${t("library.queueStopped")}: ${done} / ${ids.length}`, "info");
       } else if (fatal) {
-        ui.notify(firstError ?? "Очередь прервана: движок недоступен", "error");
+        ui.notify(firstError ?? t("library.queueAbortedEngine"), "error");
       } else if (failed > 0) {
         ui.notify(
-          `Обработано ${done} из ${ids.length}, ошибок ${failed}: ${firstError ?? "см. журнал"}`,
+          `${t("library.done")}: ${done} / ${ids.length}, ${t("library.errors").toLowerCase()}: ${failed}`,
           "error",
         );
       } else {
         ui.notify(
-          `Готово: ${ids.length} ${pluralRu(ids.length, "партия", "партии", "партий")}`,
+          `${t("library.done")}: ${pluralGames(ids.length)}`,
           "success",
         );
       }
@@ -254,10 +255,10 @@ export function createBatchController(deps: BatchControllerDeps) {
     try {
       const plan = await api.listPendingAnalysis(deps.filter());
       if (plan.ids.length === 0) {
-        if (notifyEmpty) ui.notify("Нет партий, ожидающих анализа", "info");
+        if (notifyEmpty) ui.notify(t("library.queueEmpty"), "info");
         return;
       }
-      await analyzeIds(plan.ids, "Разбор новых", plan.positions, lowPriority);
+      await analyzeIds(plan.ids, t("library.newAnalysisLabel"), plan.positions, lowPriority);
     } catch (error) {
       ui.notify(toErrorMessage(error), "error");
     }
@@ -270,7 +271,7 @@ export function createBatchController(deps: BatchControllerDeps) {
         .games()
         .filter((game) => selection.includes(game.id))
         .reduce((sum, game) => sum + positionsFor(game), 0);
-      void analyzeIds(selection, "Пакетный анализ", positions);
+      void analyzeIds(selection, t("library.batchAnalysisLabel"), positions);
       return;
     }
     void analyzePending();
@@ -278,18 +279,18 @@ export function createBatchController(deps: BatchControllerDeps) {
 
   function analyzeOne(id: number): void {
     const game = deps.games().find((item) => item.id === id);
-    void analyzeIds([id], "Анализ партии", positionsFor(game));
+    void analyzeIds([id], t("library.gameAnalysisLabel"), positionsFor(game));
   }
 
   async function cancel(): Promise<void> {
     cancelled = true;
     deps.setBatch((current) =>
-      current.running ? { ...current, label: "Останавливаю очередь…" } : current,
+      current.running ? { ...current, label: t("library.queueStopping") } : current,
     );
     try {
       await api.stopEngine();
     } catch {
-      // движок мог уже завершиться
+      // engine may have already finished
     }
   }
 

@@ -144,6 +144,7 @@ pub struct AppSettings {
     pub analysis_threads: u32,
     /// Продолжать недоделанную очередь при запуске приложения.
     pub auto_resume_analysis: bool,
+    pub language: String,
 }
 
 impl Default for AppSettings {
@@ -158,6 +159,7 @@ impl Default for AppSettings {
             auto_analyze: true,
             analysis_threads: 0,
             auto_resume_analysis: false,
+            language: "en".to_string(),
         }
     }
 }

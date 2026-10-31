@@ -1,5 +1,6 @@
 import { Show } from "solid-js";
 
+import { t } from "../../i18n";
 import type { Game, GameAnalysis } from "../../types/models";
 import { formatDate, timeClassLabel } from "../../utils/format";
 import { Icon } from "../ui/Icon";
@@ -13,7 +14,7 @@ export function AnalysisHeader(props: {
 }) {
   return (
     <header class="analysis-header">
-      <button type="button" class="back-btn" title="Назад в библиотеку" onClick={props.onBack}>
+      <button type="button" class="back-btn" title={t("studio.backToLibrary")} aria-label={t("studio.backToLibrary")} onClick={props.onBack}>
         <Icon name="chevron-left" size={16} />
       </button>
       <div style={{ "min-width": "0", flex: "1" }}>
@@ -32,7 +33,7 @@ export function AnalysisHeader(props: {
           <span class="result-pill">{props.game.result}</span>
           <Show when={props.game.userColor !== "none"}>
             <span class="chip accent">
-              вы — {props.game.userColor === "white" ? "белые" : "чёрные"}
+              {props.game.userColor === "white" ? t("studio.youWhite") : t("studio.youBlack")}
             </span>
           </Show>
         </div>
@@ -65,12 +66,13 @@ export function AnalysisHeader(props: {
           <Show when={props.analyzing} fallback={<Icon name="analyze" size={14} />}>
             <span class="spinner" style={{ width: "13px", height: "13px" }} />
           </Show>
-          {props.analysis ? "Переанализировать" : "Анализировать"}
+          {props.analysis ? t("studio.reanalyze") : t("studio.analyze")}
         </button>
         <button
           type="button"
           class="btn btn-ghost icon-btn"
-          title="Библиотека"
+          title={t("nav.library")}
+          aria-label={t("nav.library")}
           onClick={props.onBack}
         >
           <Icon name="library" size={15} />

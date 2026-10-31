@@ -1,5 +1,6 @@
 import { Show } from "solid-js";
 
+import { t } from "../../i18n";
 import { libraryStore } from "../../stores/libraryStore";
 import { settingsStore } from "../../stores/settingsStore";
 import { formatDuration } from "../../utils/format";
@@ -16,7 +17,7 @@ export function AnalysisQueue() {
     <div class="card queue-card">
       <div class="card-header">
         <div>
-          <div class="card-title">Очередь анализа</div>
+          <div class="card-title">{t("library.queueTitle")}</div>
           <div class="card-subtitle">
             depth {settingsStore.settings().analysisDepth}, MultiPV{" "}
             {settingsStore.settings().multipv}
@@ -33,7 +34,9 @@ export function AnalysisQueue() {
             onClick={() => libraryStore.analyzeSelected()}
           >
             <Icon name="analyze" size={12} />
-            {selected() > 0 ? `Анализ (${selected()})` : `Продолжить разбор (${pending()})`}
+            {selected() > 0
+              ? t("library.queueAnalyzeSelected", { count: selected() })
+              : t("library.queueResume", { count: pending() })}
           </button>
           <Show when={selected() > 0 && pending() > 0 && !batch().running}>
             <button
@@ -41,7 +44,7 @@ export function AnalysisQueue() {
               class="btn btn-sm"
               onClick={() => void libraryStore.analyzePending()}
             >
-              Все новые ({pending()})
+              {t("library.queueAllNew", { count: pending() })}
             </button>
           </Show>
           <Show when={batch().running}>
@@ -51,7 +54,7 @@ export function AnalysisQueue() {
               onClick={() => void libraryStore.cancelBatch()}
             >
               <Icon name="pause" size={12} />
-              Стоп
+              {t("library.queueStop")}
             </button>
           </Show>
         </div>
@@ -69,42 +72,40 @@ export function AnalysisQueue() {
             </div>
             <div class="queue-metrics">
               <div class="queue-metric">
-                <span>Прошло</span>
+                <span>{t("library.elapsed")}</span>
                 <strong>{formatDuration(batch().elapsedSec)}</strong>
               </div>
               <div class="queue-metric">
-                <span>Осталось</span>
+                <span>{t("library.remaining")}</span>
                 <strong>
                   {batch().etaSec === null ? "—" : `~${formatDuration(batch().etaSec)}`}
                 </strong>
               </div>
               <div class="queue-metric">
-                <span>Готово</span>
+                <span>{t("library.done")}</span>
                 <strong>{batch().done}</strong>
               </div>
               <div class="queue-metric" classList={{ "is-warn": batch().failed > 0 }}>
-                <span>Ошибок</span>
+                <span>{t("library.errors")}</span>
                 <strong>{batch().failed}</strong>
               </div>
             </div>
             <div class="queue-message">{batch().label}</div>
             <Show when={batch().plyTotal > 0}>
               <div class="queue-submessage">
-                позиций: {batch().ply} из {batch().plyTotal}
-                {perGame() === null ? "" : `, ~${formatDuration(perGame())} на партию`}
+                {batch().ply} / {batch().plyTotal}
+                {perGame() === null ? "" : `, ~${formatDuration(perGame())}`}
               </div>
             </Show>
           </div>
         </Show>
 
         <div class="form-hint">
-          {batch().running
-            ? "Партии идут параллельно; остановка завершает текущие и не берёт новые."
-            : pending() > 0
-              ? `Без анализа текущей конфигурации: ${pending()} по фильтру.`
-              : "Все партии текущей конфигурации разобраны."}
+          {pending() > 0
+            ? t("library.queuePending", { count: pending() })
+            : t("library.queueAllDone")}
           {libraryStore.queueExcluded() > 0
-            ? ` Исключено после 3 ошибок: ${libraryStore.queueExcluded()}.`
+            ? ` ${t("library.queueExcluded", { count: libraryStore.queueExcluded() })}`
             : ""}
         </div>
       </div>

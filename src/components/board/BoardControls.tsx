@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import type { BoardTheme } from "../../types/models";
 import { Icon } from "../ui/Icon";
 
@@ -22,14 +23,15 @@ export interface BoardControlsProps {
 
 export function BoardControls(props: BoardControlsProps) {
   return (
-    <div class="board-toolbar" title="Листайте партию стрелками ← →. Отменить ход — Cmd/Ctrl+Z, вернуть — Cmd/Ctrl+Shift+Z">
-      <button type="button" class="btn btn-ghost btn-sm icon-btn" title="Начало" onClick={props.onFirst}>
+    <div class="board-toolbar">
+      <button type="button" class="btn btn-ghost btn-sm icon-btn" title={t("board.first")} aria-label={t("board.first")} onClick={props.onFirst}>
         <Icon name="chevrons-left" />
       </button>
       <button
         type="button"
         class="btn btn-ghost btn-sm icon-btn"
-        title="Предыдущий ход"
+        title={t("board.previous")}
+        aria-label={t("board.previous")}
         onClick={props.onPrevious}
       >
         <Icon name="chevron-left" />
@@ -37,12 +39,13 @@ export function BoardControls(props: BoardControlsProps) {
       <button
         type="button"
         class="btn btn-ghost btn-sm icon-btn"
-        title="Следующий ход"
+        title={t("board.next")}
+        aria-label={t("board.next")}
         onClick={props.onNext}
       >
         <Icon name="chevron-right" />
       </button>
-      <button type="button" class="btn btn-ghost btn-sm icon-btn" title="Конец" onClick={props.onLast}>
+      <button type="button" class="btn btn-ghost btn-sm icon-btn" title={t("board.last")} aria-label={t("board.last")} onClick={props.onLast}>
         <Icon name="chevrons-right" />
       </button>
       <span class="toolbar-label mono">
@@ -52,7 +55,8 @@ export function BoardControls(props: BoardControlsProps) {
       <button
         type="button"
         class="btn btn-ghost btn-sm icon-btn"
-        title="Перевернуть доску"
+        title={t("board.flip")}
+        aria-label={t("board.flip")}
         onClick={props.onFlip}
       >
         <Icon name="flip" />
@@ -60,7 +64,8 @@ export function BoardControls(props: BoardControlsProps) {
       <button
         type="button"
         class="btn btn-ghost btn-sm"
-        title="Тема доски"
+        title={t("board.theme")}
+        aria-label={t("board.theme")}
         onClick={props.onTheme}
       >
         <Icon name="board" />
@@ -70,7 +75,8 @@ export function BoardControls(props: BoardControlsProps) {
         type="button"
         class="btn btn-ghost btn-sm icon-btn"
         classList={{ active: props.showArrows }}
-        title="Стрелки линий"
+        title={t("board.arrows")}
+        aria-label={t("board.arrows")}
         onClick={props.onArrows}
       >
         <Icon name="arrows" />
@@ -79,7 +85,8 @@ export function BoardControls(props: BoardControlsProps) {
         type="button"
         class="btn btn-ghost btn-sm"
         classList={{ active: props.liveEnabled }}
-        title="Live-анализ Stockfish"
+        title={t("board.live")}
+        aria-label={t("board.live")}
         disabled={props.liveDisabled}
         onClick={props.onLive}
       >
@@ -89,7 +96,8 @@ export function BoardControls(props: BoardControlsProps) {
       <button
         type="button"
         class="btn btn-ghost btn-sm icon-btn"
-        title={props.fullscreen ? "Выйти из полноэкранного режима" : "Полноэкранный режим"}
+        title={props.fullscreen ? t("board.exitFullscreen") : t("board.fullscreen")}
+        aria-label={props.fullscreen ? t("board.exitFullscreen") : t("board.fullscreen")}
         onClick={props.onFullscreen}
       >
         <Icon name={props.fullscreen ? "shrink" : "expand"} />

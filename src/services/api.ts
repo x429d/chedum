@@ -1,6 +1,7 @@
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { confirm as confirmDialog, open, save } from "@tauri-apps/plugin-dialog";
 
+import { t } from "../i18n";
 import type {
   AnalysisProgress,
   AppInfo,
@@ -48,8 +49,8 @@ export const api = {
     return confirmDialog(message, {
       title: "Chenal",
       kind: "warning",
-      okLabel: "Удалить",
-      cancelLabel: "Отмена",
+      okLabel: t("library.delete"),
+      cancelLabel: t("library.cancel"),
     });
   },
 
@@ -57,8 +58,8 @@ export const api = {
     return confirmDialog(message, {
       title: "Chenal",
       kind: "warning",
-      okLabel: "Остановить и продолжить",
-      cancelLabel: "Отмена",
+      okLabel: t("library.stopAndProceed"),
+      cancelLabel: t("library.cancel"),
     });
   },
 
@@ -80,7 +81,7 @@ export const api = {
 
   async importPgnFiles(): Promise<ImportSummary | null> {
     const selection = await open({
-      title: "Импорт PGN",
+      title: `${t("library.importPgn")} PGN`,
       multiple: true,
       filters: PGN_FILTER,
     });
@@ -92,7 +93,7 @@ export const api = {
 
   async exportGames(ids: number[]): Promise<string | null> {
     const path = await save({
-      title: "Экспорт PGN",
+      title: `${t("library.export")} PGN`,
       defaultPath: "chenal-export.pgn",
       filters: PGN_FILTER,
     });

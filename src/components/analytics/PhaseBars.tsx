@@ -1,7 +1,7 @@
 import { For } from "solid-js";
 
+import { tPhase } from "../../i18n";
 import type { GameAnalysis, Phase, UserColor } from "../../types/models";
-import { PHASE_LABELS } from "../../types/models";
 
 export function PhaseBars(props: { analysis: GameAnalysis; userColor: UserColor }) {
   const entries = (): { phase: Phase; value: number | null }[] => {
@@ -20,7 +20,7 @@ export function PhaseBars(props: { analysis: GameAnalysis; userColor: UserColor 
       <For each={entries()}>
         {(entry) => (
           <div class="phase-row">
-            <span class="muted">{PHASE_LABELS[entry.phase]}</span>
+            <span class="muted">{tPhase(entry.phase)}</span>
             <div class="phase-track">
               <div
                 class="phase-fill"

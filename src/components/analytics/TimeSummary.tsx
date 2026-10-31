@@ -1,5 +1,6 @@
 import { createMemo, For } from "solid-js";
 
+import { currentLanguage, t } from "../../i18n";
 import type { MoveEvaluation, UserColor } from "../../types/models";
 import { formatNumber } from "../../utils/format";
 
@@ -29,19 +30,18 @@ export function TimeSummary(props: { moves: MoveEvaluation[]; userColor: UserCol
         : null;
     return { trouble, impulsive, overthink, average, pressureAccuracy };
   });
+  const secUnit = () => (currentLanguage() === "ru" ? "с" : "s");
   const tiles = createMemo(() => [
-    { label: "Цейтнот", value: String(stats().trouble), hint: "ходов на флажке" },
-    { label: "Поспешные", value: String(stats().impulsive), hint: "ошибок за <2.5 с" },
-    { label: "Зависания", value: String(stats().overthink), hint: ">20% времени" },
+    { label: t("hub.timeTroubleTile"), value: String(stats().trouble) },
+    { label: t("hub.impulsiveTile"), value: String(stats().impulsive) },
+    { label: t("hub.overthinkTile"), value: String(stats().overthink) },
     {
-      label: "Среднее время",
-      value: stats().average === null ? "—" : `${formatNumber(stats().average, 1)} с`,
-      hint: "на ход",
+      label: t("hub.avgTimeTile"),
+      value: stats().average === null ? "—" : `${formatNumber(stats().average, 1)} ${secUnit()}`,
     },
     {
-      label: "Точность в цейтноте",
+      label: t("hub.pressureAccuracyTile"),
       value: stats().pressureAccuracy === null ? "—" : `${formatNumber(stats().pressureAccuracy, 1)}%`,
-      hint: "под давлением",
     },
   ]);
   return (
@@ -51,7 +51,6 @@ export function TimeSummary(props: { moves: MoveEvaluation[]; userColor: UserCol
           <div class="metric-tile">
             <div class="metric-label">{tile.label}</div>
             <div class="metric-value">{tile.value}</div>
-            <div class="stat-hint">{tile.hint}</div>
           </div>
         )}
       </For>

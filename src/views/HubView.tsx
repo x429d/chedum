@@ -6,6 +6,7 @@ import { OpeningMatrix } from "../components/hub/OpeningMatrix";
 import { PhaseWeakness } from "../components/hub/PhaseWeakness";
 import { TimeStatsCard } from "../components/hub/TimeStatsCard";
 import { Icon } from "../components/ui/Icon";
+import { pluralGames, t, tSide } from "../i18n";
 import { api } from "../services/api";
 import { libraryStore } from "../stores/libraryStore";
 import { settingsStore } from "../stores/settingsStore";
@@ -46,9 +47,10 @@ export function HubView() {
   const colorCards = (): { color: string; record: ColorRecord }[] => {
     const value = stats();
     if (!value) return [];
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
     return [
-      { color: "Белые", record: value.kpis.white },
-      { color: "Чёрные", record: value.kpis.black },
+      { color: cap(tSide("white")), record: value.kpis.white },
+      { color: cap(tSide("black")), record: value.kpis.black },
     ];
   };
 
@@ -56,15 +58,14 @@ export function HubView() {
     <div class="view-scroll">
       <header class="view-header">
         <div>
-          <h1 class="view-title">Аналитика игрока</h1>
-          <div class="view-subtitle">Результаты, дебюты, фазы и время на ход.</div>
+          <h1 class="view-title">{t("hub.title")}</h1>
         </div>
         <div class="header-actions">
           <button type="button" class="btn" onClick={() => void load()} disabled={loading()}>
             <Show when={loading()} fallback={<Icon name="refresh" size={14} />}>
               <span class="spinner" style={{ width: "13px", height: "13px" }} />
             </Show>
-            Обновить
+            {t("hub.refresh")}
           </button>
         </div>
       </header>
@@ -77,10 +78,10 @@ export function HubView() {
               <Icon name="hub" size={22} />
             </div>
             <div style={{ "font-weight": "600", color: "var(--text)" }}>
-              {loading() ? "Считаю статистику…" : "Нет данных"}
+              {loading() ? t("hub.calculating") : t("hub.noData")}
             </div>
             <div style={{ "font-size": "12px" }}>
-              Добавьте партии и запустите анализ — дашборд соберётся автоматически.
+              {t("hub.noDataHint")}
             </div>
           </div>
         }
@@ -94,11 +95,10 @@ export function HubView() {
                   <Icon name="library" size={22} />
                 </div>
                 <div style={{ "font-weight": "600", color: "var(--text)" }}>
-                  Пока нет партий с вашим цветом
+                  {t("hub.noUserGames")}
                 </div>
                 <div style={{ "font-size": "12px", "max-width": "380px" }}>
-                  Укажите свой ник в настройках — он используется для определения цвета в
-                  импортированных партиях.
+                  {t("hub.noUserGamesHint")}
                 </div>
                 <button
                   type="button"
@@ -106,7 +106,7 @@ export function HubView() {
                   onClick={() => ui.setView("settings")}
                 >
                   <Icon name="settings" size={13} />
-                  В настройки
+                  {t("hub.goToSettings")}
                 </button>
               </div>
             }
@@ -116,12 +116,15 @@ export function HubView() {
                 <div class="config-strip">
                   <div>
                     <strong>
-                      Конфигурация: {config().engineName} · depth {" "}
-                      {config().depth} · MultiPV {config().multipv}
+                      {t("hub.configLabel", {
+                        engine: config().engineName,
+                        depth: config().depth,
+                        multipv: config().multipv,
+                      })}
                     </strong>
                     <span class="dim">
                       {" "}
-                      — учтено {config().included} из {config().total}
+                      — {config().included} / {config().total}
                     </span>
                   </div>
                   <Show when={config().mismatchedGameIds.length > 0}>
@@ -129,20 +132,22 @@ export function HubView() {
                       type="button"
                       class="btn btn-sm"
                       disabled={reanalyzing() || libraryStore.batch().running}
-                      title={`Пересчитать ${config().mismatchedGameIds.length} партию на текущей глубине из настроек`}
                       onClick={() => {
                         const ids = config().mismatchedGameIds;
                         setReanalyzing(true);
                         void libraryStore
-                          .analyzeIds(ids, "Пересчёт конфигурации")
+                          .analyzeIds(ids, "Recalculate")
                           .then(() => load())
                           .finally(() => setReanalyzing(false));
                       }}
                     >
                       <Icon name="analyze" size={12} />
                       {reanalyzing()
-                        ? "Пересчитываю…"
-                        : `Пересчитать на depth ${settingsStore.settings().analysisDepth} (${config().mismatchedGameIds.length})`}
+                        ? t("hub.reanalyzing")
+                        : t("hub.reanalyzeAtDepth", {
+                            depth: settingsStore.settings().analysisDepth,
+                            count: config().mismatchedGameIds.length,
+                          })}
                     </button>
                   </Show>
                 </div>
@@ -164,8 +169,7 @@ export function HubView() {
             <div class="card">
               <div class="card-header">
                 <div>
-                  <div class="card-title">Результаты по цветам</div>
-                  <div class="card-subtitle">Победы, ничьи и точность</div>
+                  <div class="card-title">{t("hub.colorResults")}</div>
                 </div>
               </div>
               <div class="card-pad">
@@ -183,11 +187,11 @@ export function HubView() {
                     >
                       <span style={{ "font-weight": "600", "font-size": "12px" }}>{item.color}</span>
                       <div style={{ display: "flex", gap: "8px", "align-items": "center" }}>
-                        <span class="badge outcome-win">Победы {item.record.wins}</span>
-                        <span class="badge outcome-draw">Ничьи {item.record.draws}</span>
-                        <span class="badge outcome-loss">Поражения {item.record.losses}</span>
+                        <span class="badge outcome-win">{t("hub.winsCount", { n: item.record.wins })}</span>
+                        <span class="badge outcome-draw">{t("hub.drawsCount", { n: item.record.draws })}</span>
+                        <span class="badge outcome-loss">{t("hub.lossesCount", { n: item.record.losses })}</span>
                         <span class="dim" style={{ "font-size": "10.5px" }}>
-                          {item.record.games} партий
+                          {pluralGames(item.record.games)}
                         </span>
                       </div>
                       <span class="mono" style={{ "font-size": "12px" }}>

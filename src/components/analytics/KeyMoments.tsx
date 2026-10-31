@@ -1,5 +1,6 @@
 import { createMemo, For, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import type { MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { formatEval } from "../../utils/format";
@@ -10,11 +11,11 @@ export function KeyMoments(props: { moves: MoveEvaluation[]; onSelect: (ply: num
   return (
     <Show
       when={moments().length > 0}
-      fallback={<div class="empty-state" style={{ padding: "24px" }}>Ключевых моментов нет.</div>}
+      fallback={<div class="empty-state" style={{ padding: "24px" }}>{t("studio.noKeyMoments")}</div>}
     >
       <div>
         <div class="card-title" style={{ "margin-bottom": "8px" }}>
-          Ключевые моменты
+          {t("studio.keyMomentsTitle")}
         </div>
         <For each={moments()}>
           {(move) => {

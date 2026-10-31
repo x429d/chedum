@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import { libraryStore } from "../../stores/libraryStore";
 import { Icon } from "../ui/Icon";
 
@@ -16,11 +17,11 @@ export function Pagination() {
     <Show when={libraryStore.total() > 0}>
       <div class="pagination-bar">
         <span class="muted">
-          {start()}–{end()} из {libraryStore.total()}
+          {start()}–{end()} {t("library.of")} {libraryStore.total()}
         </span>
         <span class="spacer" />
         <label class="pagination-size">
-          На странице
+          {t("library.perPage")}
           <select
             class="select"
             value={String(libraryStore.pageSize())}
@@ -34,7 +35,8 @@ export function Pagination() {
         <button
           type="button"
           class="btn btn-ghost btn-sm icon-btn"
-          title="Первая страница"
+          title={t("library.firstPage")}
+          aria-label={t("library.firstPage")}
           disabled={page() === 0 || libraryStore.loading()}
           onClick={() => libraryStore.setPage(0)}
         >
@@ -43,7 +45,8 @@ export function Pagination() {
         <button
           type="button"
           class="btn btn-ghost btn-sm icon-btn"
-          title="Предыдущая страница"
+          title={t("library.prevPage")}
+          aria-label={t("library.prevPage")}
           disabled={page() === 0 || libraryStore.loading()}
           onClick={() => libraryStore.setPage(page() - 1)}
         >
@@ -55,7 +58,8 @@ export function Pagination() {
         <button
           type="button"
           class="btn btn-ghost btn-sm icon-btn"
-          title="Следующая страница"
+          title={t("library.nextPage")}
+          aria-label={t("library.nextPage")}
           disabled={page() >= pages() - 1 || libraryStore.loading()}
           onClick={() => libraryStore.setPage(page() + 1)}
         >
@@ -64,7 +68,8 @@ export function Pagination() {
         <button
           type="button"
           class="btn btn-ghost btn-sm icon-btn"
-          title="Последняя страница"
+          title={t("library.lastPage")}
+          aria-label={t("library.lastPage")}
           disabled={page() >= pages() - 1 || libraryStore.loading()}
           onClick={() => libraryStore.setPage(pages() - 1)}
         >

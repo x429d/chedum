@@ -1,10 +1,10 @@
+import { tPhase } from "../../i18n";
 import type { Phase } from "../../types/models";
-import { PHASE_LABELS } from "../../types/models";
 
 const LABEL_FONT_SIZE = 9;
 const LABEL_GAP = 6;
 const LABEL_INSET = 5;
-/** Средняя ширина кириллического символа в долях кегля (SF Pro / Inter). */
+/** Средняя ширина символа в долях кегля (SF Pro / Inter). */
 const AVG_GLYPH_RATIO = 0.58;
 
 export interface PhaseLabelStart {
@@ -19,18 +19,12 @@ export interface PlacedPhaseLabel {
   anchor: "start";
 }
 
-/// Ширина подписи оценивается по числу символов: до отрисовки SVG-текст
-/// не измерить, а завышенная оценка безопаснее заниженной — она лишь
-/// раздвигает подписи сильнее, чем нужно.
+/// Ширина подписи оценивается по числу символов.
 export function estimateLabelWidth(text: string): number {
   return text.length * LABEL_FONT_SIZE * AVG_GLYPH_RATIO;
 }
 
 /// Раскладка подписей фаз в одну строку над графиком.
-/// Подпись ставится справа от границы своей фазы, если там есть место,
-/// иначе — слева; если места нет ни там, ни там, подпись скрывается:
-/// «Миттельшпиль» поверх «Эндшпиля» читается хуже, чем отсутствие подписи.
-/// Гарантия: подписи не пересекаются между собой и не выходят за область графика.
 export function layoutPhaseLabels(
   starts: PhaseLabelStart[],
   plot: { left: number; right: number },
@@ -39,7 +33,7 @@ export function layoutPhaseLabels(
   const placed: PlacedPhaseLabel[] = [];
   let cursor = plot.left;
   for (const start of starts) {
-    const width = estimateLabelWidth(PHASE_LABELS[start.phase]);
+    const width = estimateLabelWidth(tPhase(start.phase));
     const boundary = xOf(start.ply);
     // Порядок важен: сперва место после границы, затем — перед ней.
     const candidates = [boundary + LABEL_INSET, boundary - LABEL_INSET - width];

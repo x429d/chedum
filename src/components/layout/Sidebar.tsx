@@ -1,22 +1,23 @@
 import { For, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import { libraryStore } from "../../stores/libraryStore";
 import { settingsStore } from "../../stores/settingsStore";
 import { ui, type View } from "../../stores/uiStore";
 import { Icon, type IconName } from "../ui/Icon";
 import { BrandMark } from "./BrandMark";
 
-interface NavItem {
+interface NavConfig {
   view: View;
-  label: string;
+  labelKey: "nav.library" | "nav.studio" | "nav.analytics" | "nav.settings";
   icon: IconName;
 }
 
-const NAV: NavItem[] = [
-  { view: "library", label: "Библиотека", icon: "library" },
-  { view: "analysis", label: "Студия", icon: "analysis" },
-  { view: "hub", label: "Аналитика", icon: "hub" },
-  { view: "settings", label: "Настройки", icon: "settings" },
+const NAV: NavConfig[] = [
+  { view: "library", labelKey: "nav.library", icon: "library" },
+  { view: "analysis", labelKey: "nav.studio", icon: "analysis" },
+  { view: "hub", labelKey: "nav.analytics", icon: "hub" },
+  { view: "settings", labelKey: "nav.settings", icon: "settings" },
 ];
 
 export function Sidebar() {
@@ -24,7 +25,7 @@ export function Sidebar() {
     if (view === "analysis") {
       const id = libraryStore.selectedGameId() ?? libraryStore.games()[0]?.id;
       if (!id) {
-        ui.notify("Сначала импортируйте или выберите партию", "info");
+        ui.notify(t("nav.selectGamePrompt"), "info");
         return;
       }
       libraryStore.openGame(id);
@@ -44,14 +45,13 @@ export function Sidebar() {
         </div>
         <div class="brand-text">
           <div class="brand-title">Chenal</div>
-          <div class="brand-subtitle">шахматная студия</div>
         </div>
         <Show when={!ui.navSidebarCollapsed()}>
           <button
             type="button"
             class="sidebar-toggle"
-            title="Свернуть меню"
-            aria-label="Свернуть меню"
+            title={t("nav.collapse")}
+            aria-label={t("nav.collapse")}
             aria-expanded="true"
             onClick={() => ui.setNavSidebarCollapsed(true)}
           >
@@ -64,8 +64,8 @@ export function Sidebar() {
         <button
           type="button"
           class="sidebar-toggle sidebar-expand"
-          title="Развернуть меню"
-          aria-label="Развернуть меню"
+          title={t("nav.expand")}
+          aria-label={t("nav.expand")}
           onClick={() => ui.setNavSidebarCollapsed(false)}
         >
           <Icon name="chevrons-right" size={15} />
@@ -74,34 +74,33 @@ export function Sidebar() {
 
       <nav class="nav">
         <For each={NAV}>
-          {(item) => (
-            <button
-              type="button"
-              class="nav-item"
-              classList={{ active: ui.view() === item.view }}
-              title={item.label}
-              aria-label={item.label}
-              aria-current={ui.view() === item.view ? "page" : undefined}
-              onClick={() => navigate(item.view)}
-            >
-              <Icon name={item.icon} />
-              <span class="nav-label">{item.label}</span>
-              <Show when={item.view === "library" && libraryStore.total() > 0}>
-                <span class="nav-badge">{libraryStore.total()}</span>
-              </Show>
-            </button>
-          )}
+          {(item) => {
+            const label = () => t(item.labelKey);
+            return (
+              <button
+                type="button"
+                class="nav-item"
+                classList={{ active: ui.view() === item.view }}
+                title={label()}
+                aria-label={label()}
+                aria-current={ui.view() === item.view ? "page" : undefined}
+                onClick={() => navigate(item.view)}
+              >
+                <Icon name={item.icon} />
+                <span class="nav-label">{label()}</span>
+                <Show when={item.view === "library" && libraryStore.total() > 0}>
+                  <span class="nav-badge">{libraryStore.total()}</span>
+                </Show>
+              </button>
+            );
+          }}
         </For>
       </nav>
 
       <div class="sidebar-footer">
         <div class="engine-row">
           <span class="engine-dot" classList={{ online: engineOnline() }} />
-          <span>{engineOnline() ? "Stockfish готов" : "Stockfish не найден"}</span>
-        </div>
-        <div class="mono" style={{ "font-size": "9.5px", color: "var(--dim)" }}>
-          {settingsStore.engine()?.name ?? "local engine"}, v
-          {settingsStore.info()?.version ?? "0.1.0"}
+          <span>{engineOnline() ? t("nav.engineReady") : t("nav.engineNotFound")}</span>
         </div>
       </div>
     </aside>

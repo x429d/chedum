@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { t } from "../i18n";
 import { api } from "../services/api";
 import type {
   BatchState,
@@ -64,7 +65,7 @@ async function refreshQueue(): Promise<void> {
   } catch (error) {
     // Счётчик не критичен для загрузки библиотеки, но молча терять ошибку нельзя:
     // иначе очередь выглядит пустой, хотя партии без анализа есть.
-    ui.notify(`Очередь анализа: ${toErrorMessage(error)}`, "error");
+    ui.notify(`${t("library.queueTitle")}: ${toErrorMessage(error)}`, "error");
   }
 }
 
@@ -75,8 +76,8 @@ async function startAutoResume(): Promise<void> {
   try {
     const plan = await api.listPendingAnalysis({});
     if (plan.ids.length === 0) return;
-    ui.notify(`Продолжаю разбор: ${plan.ids.length} партий`, "info");
-    await batchController.analyzeIds(plan.ids, "Продолжение разбора", plan.positions);
+    ui.notify(t("library.resumingAnalysis", { count: plan.ids.length }), "info");
+    await batchController.analyzeIds(plan.ids, t("library.resumingBatch"), plan.positions);
   } catch (error) {
     ui.notify(toErrorMessage(error), "error");
   }
@@ -173,7 +174,10 @@ async function syncChesscom(username: string, force: boolean): Promise<void> {
     const result = await api.syncChesscom(username, force, (progress) => setSyncProgress(progress));
     setSyncResult(result);
     ui.notify(
-      `Синхронизация: +${result.gamesImported} партий, пропущено ${result.gamesSkipped}`,
+      t("library.syncDone", {
+        imported: result.gamesImported,
+        skipped: result.gamesSkipped,
+      }),
       "success",
     );
     if (result.username) {
@@ -227,8 +231,8 @@ function maybeAutoAnalyze(imported: number): void {
 }
 
 function notifyImport(result: ImportSummary): void {
-  const details = result.errors.length > 0 ? `, ошибок: ${result.errors.length}` : "";
-  ui.notify(`Импортировано ${result.imported}, пропущено ${result.skipped}${details}`, "success");
+  const details = result.errors.length > 0 ? `, ${t("library.errors").toLowerCase()}: ${result.errors.length}` : "";
+  ui.notify(t("library.importDone", { imported: result.imported, skipped: result.skipped, details }), "success");
 }
 
 function deleteGame(id: number): void {
@@ -283,7 +287,7 @@ export const libraryStore = {
   analyzePending: () => batchController.analyzePending(),
   analyzeOne: (id: number) => batchController.analyzeOne(id),
   analyzeIds: (ids: number[], label?: string) =>
-    batchController.analyzeIds(ids, label ?? "Пакетный анализ"),
+    batchController.analyzeIds(ids, label ?? t("library.batchAnalysisLabel")),
   refreshQueue,
   startAutoResume,
   cancelBatch: () => batchController.cancel(),

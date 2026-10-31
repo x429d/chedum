@@ -1,34 +1,23 @@
+import {
+  formatDateLocale,
+  formatDurationLocale,
+  tOutcome,
+  tSide,
+  tTimeClass,
+} from "../i18n";
 import type { Color, TimeClass, UserColor } from "../types/models";
 
 export function formatDate(timestamp: number): string {
-  const date = new Date(timestamp * 1000);
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+  return formatDateLocale(timestamp);
 }
 
 export function formatDateTime(timestamp: number): string {
   const date = new Date(timestamp * 1000);
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return date.toLocaleString();
 }
 
 export function formatDuration(totalSeconds: number | null): string {
-  if (totalSeconds === null || !Number.isFinite(totalSeconds) || totalSeconds <= 0) return "0 с";
-  const seconds = Math.round(totalSeconds);
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const rest = seconds % 60;
-  if (hours > 0) return `${hours} ч ${String(minutes).padStart(2, "0")} мин`;
-  if (minutes > 0) return `${minutes} мин ${String(rest).padStart(2, "0")} с`;
-  return `${rest} с`;
+  return formatDurationLocale(totalSeconds);
 }
 
 export function formatClock(seconds: number | null): string {
@@ -75,16 +64,7 @@ export function userOutcome(result: string, color: UserColor): "win" | "loss" | 
 }
 
 export function outcomeLabel(result: string, color: UserColor): string {
-  switch (userOutcome(result, color)) {
-    case "win":
-      return "Победа";
-    case "loss":
-      return "Поражение";
-    case "draw":
-      return "Ничья";
-    default:
-      return result;
-  }
+  return tOutcome(result, color);
 }
 
 export function outcomeClass(result: string, color: UserColor): string {
@@ -101,24 +81,11 @@ export function outcomeClass(result: string, color: UserColor): string {
 }
 
 export function timeClassLabel(value: TimeClass | null): string {
-  switch (value) {
-    case "bullet":
-      return "Пуля";
-    case "blitz":
-      return "Блиц";
-    case "rapid":
-      return "Рапид";
-    case "classical":
-      return "Классика";
-    default:
-      return "—";
-  }
+  return tTimeClass(value);
 }
 
 export function sideLabel(color: Color | UserColor): string {
-  if (color === "white") return "белые";
-  if (color === "black") return "чёрные";
-  return "—";
+  return tSide(color);
 }
 
 export function pluralRu(count: number, one: string, few: string, many: string): string {
@@ -135,7 +102,7 @@ export function toErrorMessage(error: unknown): string {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message.length > 0) return message;
   }
-  return "Неизвестная ошибка";
+  return "Unknown error";
 }
 
 /** Машинный код ошибки из `AppError` (`{ code, message }`). */

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { api } from "../services/api";
 import { toErrorMessage } from "../utils/format";
 import { ui } from "./uiStore";
@@ -28,7 +29,7 @@ function waitForIdle(running: () => boolean, timeoutMs = 30_000): Promise<boolea
  */
 export async function stopBatchWithConfirm(
   running: () => boolean,
-  cancel: () => Promise<void>,
+  cancel: () => Promise<void> | void,
   message: string,
 ): Promise<boolean> {
   if (!running()) return true;
@@ -40,10 +41,10 @@ export async function stopBatchWithConfirm(
     return false;
   }
   if (!confirmed) return false;
-  ui.notify("Останавливаю пакетный анализ…", "info");
+  ui.notify(t("library.queueStopping"), "info");
   await cancel();
   if (!(await waitForIdle(running))) {
-    ui.notify("Не удалось остановить очередь анализа", "error");
+    ui.notify(t("library.queueStopError"), "error");
     return false;
   }
   return true;

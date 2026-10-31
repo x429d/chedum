@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import { libraryStore } from "../../stores/libraryStore";
 import type { GameListItem } from "../../types/models";
 import {
@@ -21,12 +22,8 @@ function accuracyColor(value: number | null): string | undefined {
 }
 
 function accuracyHint(game: GameListItem): string {
-  if (!game.hasAnalysis || !game.engineName) return "Партия не разобрана";
-  const method =
-    game.accuracyMethod === "lichess-v1"
-      ? "Lichess accuracy"
-      : (game.accuracyMethod ?? "метод неизвестен");
-  return `${game.engineName} · depth ${game.analysisDepth ?? "—"} · ${method}`;
+  if (!game.hasAnalysis || !game.engineName) return t("studio.notAnalyzedTitle");
+  return `${game.engineName} · depth ${game.analysisDepth ?? "—"}`;
 }
 
 function Row(props: { game: GameListItem }) {
@@ -47,8 +44,8 @@ function Row(props: { game: GameListItem }) {
           <Show when={props.game.analysisAttempts >= 3}>
             <span
               style={{ color: "var(--danger)", "margin-left": "5px" }}
-              title={`Анализ падал ${props.game.analysisAttempts} раз: ${props.game.lastAnalysisError ?? "причина неизвестна"}`}
-              aria-label="Анализ партии не удался три раза"
+              title={`Analysis failed ${props.game.analysisAttempts} times: ${props.game.lastAnalysisError ?? ""}`}
+              aria-label="Analysis failed 3 times"
             >
               ⚠
             </span>
@@ -76,7 +73,7 @@ function Row(props: { game: GameListItem }) {
       <td class="opening-cell">
         <span class="eco-code">{props.game.eco ?? "—"}</span>
         <span class="opening-name" title={props.game.openingName ?? ""}>
-          {props.game.openingName ?? "Без дебюта"}
+          {props.game.openingName ?? t("library.noOpening")}
         </span>
       </td>
       <td style={{ "text-align": "right" }} title={accuracyHint(props.game)}>
@@ -102,8 +99,8 @@ function Row(props: { game: GameListItem }) {
           <button
             type="button"
             class="btn btn-ghost btn-sm icon-btn row-delete"
-            title="Удалить"
-            aria-label="Удалить партию"
+            title={t("library.deleteGame")}
+            aria-label={t("library.deleteGame")}
             onClick={() => libraryStore.deleteGame(props.game.id)}
           >
             <Icon name="trash" size={14} />
@@ -111,8 +108,8 @@ function Row(props: { game: GameListItem }) {
           <button
             type="button"
             class="btn btn-ghost btn-sm icon-btn"
-            title={props.game.isFavorite ? "Убрать из избранного" : "В избранное"}
-            aria-label={props.game.isFavorite ? "Убрать из избранного" : "В избранное"}
+            title={props.game.isFavorite ? t("library.removeFromFavorites") : t("library.addToFavorites")}
+            aria-label={props.game.isFavorite ? t("library.removeFromFavorites") : t("library.addToFavorites")}
             onClick={() => void libraryStore.toggleFavorite(props.game)}
           >
             <Icon
@@ -124,8 +121,8 @@ function Row(props: { game: GameListItem }) {
           <button
             type="button"
             class="btn btn-ghost btn-sm icon-btn"
-            title="Анализировать"
-            aria-label="Анализировать партию"
+            title={t("library.analyzeGame")}
+            aria-label={t("library.analyzeGame")}
             onClick={() => libraryStore.analyzeOne(props.game.id)}
           >
             <Icon name="analyze" size={15} />
@@ -155,13 +152,13 @@ export function GameTable() {
             "font-size": "11.5px",
           }}
         >
-          <span>Выбрано: {libraryStore.selectedCount()}</span>
+          <span>{t("library.selectedCount", { count: libraryStore.selectedCount() })}</span>
           <button type="button" class="btn btn-sm" onClick={() => libraryStore.analyzeSelected()}>
             <Icon name="analyze" size={12} />
-            Анализировать выбранные
+            {t("library.analyzeSelected")}
           </button>
           <button type="button" class="btn btn-ghost btn-sm" onClick={() => libraryStore.clearSelection()}>
-            Снять выбор
+            {t("library.deselect")}
           </button>
           <button
             type="button"
@@ -170,7 +167,7 @@ export function GameTable() {
             onClick={() => libraryStore.deleteSelected()}
           >
             <Icon name="trash" size={12} />
-            Удалить выбранные
+            {t("library.deleteSelected")}
           </button>
         </div>
       </Show>
@@ -187,17 +184,12 @@ export function GameTable() {
                   }
                 />
               </th>
-              <th>Дата</th>
-              <th>Игроки</th>
-              <th>Результат</th>
-              <th>Дебют</th>
-              <th
-                style={{ "text-align": "right" }}
-                title="Метод Lichess: потеря вероятности победы за ход, окна волатильности + гармоническое среднее"
-              >
-                Точность
-              </th>
-              <th class="col-acpl" style={{ "text-align": "right" }}>ACPL</th>
+              <th>{t("library.date")}</th>
+              <th>{t("library.players")}</th>
+              <th>{t("library.result")}</th>
+              <th>{t("library.opening")}</th>
+              <th style={{ "text-align": "right" }}>{t("library.accuracy")}</th>
+              <th class="col-acpl" style={{ "text-align": "right" }}>{t("library.acpl")}</th>
               <th />
             </tr>
           </thead>
@@ -212,10 +204,10 @@ export function GameTable() {
                         <Icon name="library" size={22} />
                       </div>
                       <div style={{ "font-weight": "600", color: "var(--text)" }}>
-                        {libraryStore.loading() ? "Загружаю библиотеку…" : "Пока нет партий"}
+                        {t("library.emptyTitle")}
                       </div>
                       <div style={{ "font-size": "11.5px", "max-width": "360px" }}>
-                        Импортируйте PGN или синхронизируйте партии с Chess.com.
+                        {t("library.emptyHint")}
                       </div>
                       <div style={{ display: "flex", gap: "8px", "margin-top": "8px" }}>
                         <button
@@ -224,7 +216,7 @@ export function GameTable() {
                           onClick={() => void libraryStore.importFiles()}
                         >
                           <Icon name="import" size={13} />
-                          Импорт PGN
+                          {t("library.importPgn")}
                         </button>
                       </div>
                     </div>

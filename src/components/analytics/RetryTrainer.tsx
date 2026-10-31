@@ -1,5 +1,6 @@
 import { createEffect, createMemo, createSignal, on, Show } from "solid-js";
 
+import { t, tCategory, tSide } from "../../i18n";
 import { gameStore } from "../../stores/gameStore";
 import { settingsStore } from "../../stores/settingsStore";
 import type { Color, MoveEvaluation } from "../../types/models";
@@ -108,23 +109,23 @@ export function RetryTrainer() {
           <div class="empty-icon">
             <Icon name="target" />
           </div>
-          <div style={{ "font-weight": "600" }}>Ошибок для тренировки нет</div>
-          <div style={{ "font-size": "11px" }}>Партия проведена чисто — так держать.</div>
+          <div style={{ "font-weight": "600" }}>{t("studio.noMistakesToTrain")}</div>
+          <div style={{ "font-size": "11px" }}>{t("studio.cleanGameWellDone")}</div>
         </div>
       }
     >
       {(move) => (
         <div>
           <div style={{ display: "flex", "align-items": "center", "justify-content": "space-between" }}>
-            <div class="card-title">Работа над ошибками</div>
+            <div class="card-title">{t("studio.retryTitle")}</div>
             <span class="chip accent">
-              решено {solved().length} / {mistakes().length}
+              {t("studio.solvedCount", { solved: solved().length, total: mistakes().length })}
             </span>
           </div>
           <div class="sync-log" style={{ "margin-top": "4px" }}>
-            Найдите лучший ход за {userColor() === "white" ? "белых" : "чёрных"}. Стрелки скрыты.
+            {t("studio.findBestMove", { color: tSide(userColor()) })}
           </div>
-          <div style={{ display: "flex", "align-items": "center", gap: "6px", "margin": "8px 0" }}>
+          <div style={{ display: "flex", "align-items": "center", gap: "6px", margin: "8px 0" }}>
             <span
               class="badge"
               style={{
@@ -133,7 +134,7 @@ export function RetryTrainer() {
               }}
             >
               <CategoryGlyph category={move().classification} size={12} />{" "}
-              {CATEGORY_META[move().classification].label}
+              {tCategory(move().classification)}
             </span>
             <span class="mono" style={{ "font-size": "11px" }}>
               {move().ply}. {move().playedSan}
@@ -156,16 +157,16 @@ export function RetryTrainer() {
           </div>
           <div style={{ "margin-top": "8px", "font-size": "11.5px", "line-height": "1.45" }}>
             <Show when={status() === "idle"}>
-              <span class="muted">Ход ещё не сделан. Попыток: {attempts()}.</span>
+              <span class="muted">{t("studio.moveNotMade", { attempts: attempts() })}</span>
             </Show>
             <Show when={status() === "correct"}>
               <span style={{ color: "#9ccf8f" }}>
-                Верно! Лучший ход — {move().bestSan ?? "найден"}.
+                {t("studio.correctMove", { san: move().bestSan ?? "" })}
               </span>
             </Show>
             <Show when={status() === "wrong"}>
               <span style={{ color: "#e79a90" }}>
-                Неверно. Лучший ход: {move().bestSan ?? "—"}.
+                {t("studio.wrongMove", { san: move().bestSan ?? "—" })}
               </span>
             </Show>
           </div>
@@ -177,14 +178,14 @@ export function RetryTrainer() {
               disabled={status() === "correct"}
             >
               <Icon name="eye" size={12} />
-              Показать решение
+              {t("studio.showSolution")}
             </button>
             <button type="button" class="btn btn-sm" onClick={retry}>
               <Icon name="retry" size={12} />
-              Повторить
+              {t("studio.retryBtn")}
             </button>
             <button type="button" class="btn btn-sm" onClick={next} disabled={index() >= mistakes().length - 1}>
-              Следующая
+              {t("studio.nextMistake")}
               <Icon name="chevron-right" size={12} />
             </button>
           </div>

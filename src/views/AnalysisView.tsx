@@ -6,6 +6,7 @@ import { KeyMomentsTab } from "../components/analytics/KeyMomentsTab";
 import { MovesTab } from "../components/analytics/MovesTab";
 import { ReportTab } from "../components/analytics/ReportTab";
 import { Icon } from "../components/ui/Icon";
+import { t } from "../i18n";
 import { analysisStore } from "../stores/analysisStore";
 import { gameStore } from "../stores/gameStore";
 import { libraryStore } from "../stores/libraryStore";
@@ -114,7 +115,7 @@ export function AnalysisView() {
     void (async () => {
       try {
         const confirmed = await libraryStore.stopBatchWithConfirm(
-          "Остановить текущий пакетный анализ и переанализировать эту партию?",
+          t("studio.confirmStopBatch"),
         );
         if (!confirmed) return;
         analysisStore.setLiveEnabled(false);
@@ -136,10 +137,10 @@ export function AnalysisView() {
               <Icon name="analysis" size={22} />
             </div>
             <div style={{ "font-weight": "600", color: "var(--text)" }}>
-              {gameStore.loading() ? "Открываю партию…" : "Партия не выбрана"}
+              {gameStore.loading() ? t("studio.loadingGame") : t("studio.emptyTitle")}
             </div>
             <div style={{ "font-size": "12px" }}>
-              Выберите партию в библиотеке или запустите демо-анализ.
+              {t("studio.emptyHint")}
             </div>
             <button
               type="button"
@@ -147,7 +148,7 @@ export function AnalysisView() {
               onClick={() => ui.setView("library")}
             >
               <Icon name="library" size={13} />
-              В библиотеку
+              {t("studio.toLibraryBtn")}
             </button>
           </div>
         }
@@ -172,14 +173,14 @@ export function AnalysisView() {
                 </div>
                 <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
                   <div class="sync-log" style={{ flex: "1" }}>
-                    {gameStore.progress()?.message ?? "Запускаю Stockfish…"}
+                    {gameStore.progress()?.message ?? t("studio.startingStockfish")}
                   </div>
                   <button
                     type="button"
                     class="btn btn-ghost btn-sm"
                     onClick={() => void gameStore.cancelAnalysis()}
                   >
-                    Остановить
+                    {t("studio.stop")}
                   </button>
                 </div>
               </div>
@@ -199,7 +200,7 @@ export function AnalysisView() {
                     classList={{ active: tab() === "report" }}
                     onClick={() => setTab("report")}
                   >
-                    Отчёт
+                    {t("studio.reportTab")}
                   </button>
                   <button
                     type="button"
@@ -207,7 +208,7 @@ export function AnalysisView() {
                     classList={{ active: tab() === "moves" }}
                     onClick={() => setTab("moves")}
                   >
-                    Ходы и тренер
+                    {t("studio.movesTab")}
                   </button>
                   <button
                     type="button"
@@ -215,18 +216,17 @@ export function AnalysisView() {
                     classList={{ active: tab() === "moments" }}
                     onClick={() => setTab("moments")}
                   >
-                    Моменты и Retry
+                    {t("studio.momentsTab")}
                   </button>
-                  <Show when={fullscreen()}>
-                    <button
+                  <Show when={fullscreen()}>\n                    <button
                       type="button"
                       class="btn btn-ghost btn-sm"
                       style={{ "flex": "none", "margin-left": "auto" }}
-                      title="Выйти из полноэкранного режима"
+                      title={t("studio.closeFullscreen")}
                       onClick={() => setFullscreen(false)}
                     >
                       <Icon name="close" size={13} />
-                      Закрыть
+                      {t("studio.closeFullscreen")}
                     </button>
                   </Show>
                 </div>
@@ -239,10 +239,10 @@ export function AnalysisView() {
                           <Icon name="analyze" size={20} />
                         </div>
                         <div style={{ "font-weight": "600", color: "var(--text)" }}>
-                          Партия ещё не разобрана
+                          {t("studio.notAnalyzedTitle")}
                         </div>
                         <div style={{ "font-size": "11.5px", "max-width": "280px" }}>
-                          Запустите Stockfish, чтобы получить разбор партии.
+                          {t("studio.notAnalyzedHint")}
                         </div>
                         <button
                           type="button"
@@ -251,7 +251,7 @@ export function AnalysisView() {
                           onClick={startAnalysis}
                         >
                           <Icon name="analyze" size={12} />
-                          Анализировать
+                          {t("studio.analyze")}
                         </button>
                       </div>
                     }
