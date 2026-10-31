@@ -5,8 +5,8 @@ import statistics
 from pathlib import Path
 
 DB = os.environ.get(
-    "CHENAL_DB",
-    str(Path.home() / "Library/Application Support/com.chenal.studio/chenal.db"),
+    "CHEDUM_DB",
+    str(Path.home() / "Library/Application Support/com.chedum.studio/chedum.db"),
 )
 con = sqlite3.connect(DB)
 con.row_factory = sqlite3.Row
@@ -120,7 +120,7 @@ for gid in (843, 842, 841, 839, 840, 838):
     lich = lichess_from_db(gid)
     cc = chesscom.get(gid, ("?", "?"))
     print(f"game {gid}  plies={v['n']}")
-    print(f"  stored (chenal)   W {v['stored'][0]:.1f}  B {v['stored'][1]:.1f}")
+    print(f"  stored (chedum)   W {v['stored'][0]:.1f}  B {v['stored'][1]:.1f}")
     print(f"  flat w=1.5        W {v['flat_w15'][0]:.1f}  B {v['flat_w15'][1]:.1f}")
     print(f"  flat w=1          W {v['flat'][0]:.1f}  B {v['flat'][1]:.1f}")
     print(f"  harmonic          W {v['harmonic'][0]:.1f}  B {v['harmonic'][1]:.1f}")

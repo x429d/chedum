@@ -1,11 +1,11 @@
 #!/bin/bash
-# Chenal audit summary. Read-only; the database is never modified.
+# Chedum audit summary. Read-only; the database is never modified.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DB="${CHENAL_DB:-$HOME/Library/Application Support/com.chenal.studio/chenal.db}"
+DB="${CHEDUM_DB:-$HOME/Library/Application Support/com.chedum.studio/chedum.db}"
 
-echo "== Chenal audit =="
+echo "== Chedum audit =="
 echo "date: $(date '+%Y-%m-%d %H:%M:%S')"
 echo "root: $ROOT"
 echo "db: $DB"

@@ -1,4 +1,4 @@
-# Chenal — progress log
+# Chedum — progress log
 
 ## Stage 1 — Initialization, disk profile, database, ECO
 
@@ -71,7 +71,7 @@
 - [x] Settings: profile, analysis depth/MultiPV, board theme, piece set, arrows, engine diagnostics.
 - [x] Headless Playwright smoke test of all views with mocked IPC: no console errors.
 - [x] Native macOS `.app` bundle built successfully (105.4 MiB, Stockfish resource executable):
-      `src-tauri/target/release/bundle/macos/Chenal.app`.
+      `src-tauri/target/release/bundle/macos/Chedum.app`.
 
 ### Final Gate 6 audit
 

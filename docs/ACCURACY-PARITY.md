@@ -1,7 +1,7 @@
-# Почему «Точность» Chenal не совпадает с Chess.com
+# Почему «Точность» Chedum не совпадает с Chess.com
 
 Дата: 28.10.2026. Замеры сделаны на ваших же партиях из локальной базы
-(`~/Library/Application Support/com.chenal.studio/chenal.db`), эталон — `accuracies` из
+(`~/Library/Application Support/com.chedum.studio/chedum.db`), эталон — `accuracies` из
 Chess.com PubAPI (тот же источник, что и цифры в вашем скриншоте).
 
 > **Статус:** V2 реализован — точность в приложении считается полностью по открытому

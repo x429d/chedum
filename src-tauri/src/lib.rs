@@ -34,7 +34,7 @@ static LOG_GUARD: OnceLock<WorkerGuard> = OnceLock::new();
 fn init_logging(app: &tauri::AppHandle) -> Option<PathBuf> {
     let log_dir = app.path().app_log_dir().ok()?;
     std::fs::create_dir_all(&log_dir).ok()?;
-    let appender = tracing_appender::rolling::daily(&log_dir, "chenal.log");
+    let appender = tracing_appender::rolling::daily(&log_dir, "chedum.log");
     let (writer, guard) = tracing_appender::non_blocking(appender);
     let _ = LOG_GUARD.set(guard);
     let _ = tracing_subscriber::registry()
@@ -69,7 +69,7 @@ pub fn run() {
                 std::io::Error::other(format!("Could not resolve the data directory: {err}"))
             })?;
             std::fs::create_dir_all(&data_dir)?;
-            let db_path = data_dir.join("chenal.db");
+            let db_path = data_dir.join("chedum.db");
             let db = Db::open(&db_path)?;
             let seeded = match seed::ensure_demo(&db) {
                 Ok(count) => {

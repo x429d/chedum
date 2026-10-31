@@ -35,7 +35,7 @@ pub fn annotations_for_games(db: &Db, ids: &[i64]) -> AppResult<HashMap<i64, Str
             };
             out.insert(
                 game_id,
-                format!("Chenal · {engine} · depth {depth} · {label}"),
+                format!("Chedum · {engine} · depth {depth} · {label}"),
             );
         }
         Ok(out)

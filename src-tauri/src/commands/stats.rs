@@ -20,7 +20,7 @@ pub async fn get_hub_stats(
 #[tauri::command]
 pub async fn get_app_info(state: State<'_, AppState>) -> AppResult<AppInfo> {
     Ok(AppInfo {
-        name: "Chenal".to_string(),
+        name: "Chedum".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
         eco_openings: EcoBook::global().count(),
         max_analysis_workers: u32::try_from(crate::engine::default_workers()).unwrap_or(16),
@@ -35,7 +35,7 @@ pub async fn get_app_info(state: State<'_, AppState>) -> AppResult<AppInfo> {
 pub async fn get_diagnostics(state: State<'_, AppState>) -> AppResult<String> {
     let engine = state.engine.status();
     Ok(format!(
-        "Chenal {}\nOS: {} {}\nDatabase: {}\nLog: {}\nEngine available: {}\nEngine: {}\nEngine path: {}\nEngine error: {}",
+        "Chedum {}\nOS: {} {}\nDatabase: {}\nLog: {}\nEngine available: {}\nEngine: {}\nEngine path: {}\nEngine error: {}",
         env!("CARGO_PKG_VERSION"),
         std::env::consts::OS,
         std::env::consts::ARCH,

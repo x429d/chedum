@@ -9,10 +9,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DB = os.environ.get(
-    "CHENAL_DB",
-    str(Path.home() / "Library/Application Support/com.chenal.studio/chenal.db"),
+    "CHEDUM_DB",
+    str(Path.home() / "Library/Application Support/com.chedum.studio/chedum.db"),
 )
-UA = {"User-Agent": "Chenal/0.1.0 (macOS; research)"}
+UA = {"User-Agent": "Chedum/0.1.0 (macOS; research)"}
 
 
 def fetch(url):

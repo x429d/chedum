@@ -88,13 +88,13 @@ mod tests {
         let mut annotations = HashMap::new();
         annotations.insert(
             1,
-            "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string(),
+            "Chedum · Stockfish 19 · depth 14 · Lichess accuracy".to_string(),
         );
         let out = export_games_with_annotations(
             &[game("[White \"A\"]\n[Black \"B\"]\n\n1. e4 e5 *")],
             &annotations,
         );
-        assert!(out.contains("[Annotator \"Chenal · Stockfish 19 · depth 14 · Lichess accuracy\"]"));
+        assert!(out.contains("[Annotator \"Chedum · Stockfish 19 · depth 14 · Lichess accuracy\"]"));
         assert!(out.contains("1. e4 e5 *"));
     }
 
@@ -103,7 +103,7 @@ mod tests {
         let mut annotations = HashMap::new();
         annotations.insert(
             1,
-            "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string(),
+            "Chedum · Stockfish 19 · depth 14 · Lichess accuracy".to_string(),
         );
         let out = export_games_with_annotations(
             &[game("[White \"A\"]\n[Annotator \"old\"]\n\n1. e4 *")],

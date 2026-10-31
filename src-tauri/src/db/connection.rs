@@ -122,9 +122,9 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let dir = std::env::temp_dir().join(format!("chenal-backup-{stamp}"));
+        let dir = std::env::temp_dir().join(format!("chedum-backup-{stamp}"));
         std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.join("chenal.db");
+        let path = dir.join("chedum.db");
         {
             let db = Db::open(&path).unwrap();
             db.with(|conn| {
@@ -140,7 +140,7 @@ mod tests {
             Ok(())
         })
         .unwrap();
-        assert!(dir.join("chenal.pre-v1.db").exists());
+        assert!(dir.join("chedum.pre-v1.db").exists());
         std::fs::remove_dir_all(&dir).ok();
     }
 }

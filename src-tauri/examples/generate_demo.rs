@@ -2,12 +2,12 @@ use std::path::Path;
 
 use serde::Serialize;
 
-use chenal_lib::domain::analysis::{GameAnalysis, MoveEvaluation};
-use chenal_lib::domain::game::{GameDraft, GameSource};
-use chenal_lib::engine::EngineManager;
-use chenal_lib::pgn::{build_draft, parse_single};
-use chenal_lib::service::build::{build_analysis, BuildInput};
-use chenal_lib::service::evaluation::evaluate_positions;
+use chedum_lib::domain::analysis::{GameAnalysis, MoveEvaluation};
+use chedum_lib::domain::game::{GameDraft, GameSource};
+use chedum_lib::engine::EngineManager;
+use chedum_lib::pgn::{build_draft, parse_single};
+use chedum_lib::service::build::{build_analysis, BuildInput};
+use chedum_lib::service::evaluation::evaluate_positions;
 
 #[derive(Serialize)]
 struct SeedEntry {
@@ -41,7 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             &parsed,
             GameSource::Chesscom,
             external_id.to_string(),
-            "chenal_player",
+            "chedum_player",
             None,
             Some(pgn),
         );

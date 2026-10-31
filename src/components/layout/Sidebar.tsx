@@ -46,7 +46,7 @@ export function Sidebar() {
           <BrandMark size={21} />
         </div>
         <div class="brand-text">
-          <div class="brand-title">Chenal</div>
+          <div class="brand-title">Chedum</div>
         </div>
         <Show when={!ui.navSidebarCollapsed()}>
           <button

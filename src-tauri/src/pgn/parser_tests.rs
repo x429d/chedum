@@ -22,13 +22,13 @@ fn builds_game_draft_with_user_color() {
         &parsed,
         GameSource::Manual,
         "test-1".to_string(),
-        "CHENAL_PLAYER",
+        "CHEDUM_PLAYER",
         None,
         None,
     );
     assert_eq!(draft.user_color, UserColor::Black);
     assert_eq!(draft.white_username, "pawn_storm");
-    assert_eq!(draft.black_username, "chenal_player");
+    assert_eq!(draft.black_username, "chedum_player");
     assert_eq!(draft.total_plies, 13);
     assert_eq!(draft.eco.as_deref(), Some("C41"));
     assert_eq!(

@@ -2,18 +2,18 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SOURCE="$ROOT/src-tauri/target/release/bundle/macos/Chenal.app"
-DESTINATION="/Applications/Chenal.app"
+SOURCE="$ROOT/src-tauri/target/release/bundle/macos/Chedum.app"
+DESTINATION="/Applications/Chedum.app"
 
 if [[ ! -d "$SOURCE" ]]; then
-  echo "Chenal.app не собран. Сначала: npm run tauri build -- --bundles app" >&2
+  echo "Chedum.app не собран. Сначала: npm run tauri build -- --bundles app" >&2
   exit 1
 fi
 
-# Remove only stale or duplicate copies of Chenal.app, leaving other apps untouched.
+# Remove only stale or duplicate copies of Chedum.app, leaving other apps untouched.
 for directory in /Applications "$HOME/Applications"; do
   if [[ -d "$directory" ]]; then
-    find "$directory" -maxdepth 1 -name "Chenal.app" -type d -exec rm -rf {} + 2>/dev/null || true
+    find "$directory" -maxdepth 1 -name "Chedum.app" -type d -exec rm -rf {} + 2>/dev/null || true
   fi
 done
 

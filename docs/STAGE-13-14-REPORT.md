@@ -1,9 +1,9 @@
-# Chenal — отчёт по этапам 13–14
+# Chedum — отчёт по этапам 13–14
 
 **Ветка:** `stage-13-14` · **Дата:** 2026-10-29
 **Журнал:** `docs/STAGE-13-14-LOG.md` · **База:** локальная копия
-`~/Library/Application Support/com.chenal.studio/chenal.db`, резервная копия
-`chenal.db.bak-20261029`.
+`~/Library/Application Support/com.chedum.studio/chedum.db`, резервная копия
+`chedum.db.bak-20261029`.
 
 ## 1. Сводка
 
@@ -22,7 +22,7 @@ CI, CSP и декомпозиция файлов.
 - T14.7: полный прогон **остановлен по просьбе пользователя** на 174 из 839
   анализов. Незавершённый остаток (665 партий) остаётся в очереди и
   продолжается кнопкой «Продолжить разбор (665)» или
-  `chenal-cli analyze --limit 1000`.
+  `chedum-cli analyze --limit 1000`.
 - F-04, F-06 и N-07 в объём этапов не входили; они закрыты отдельной
   правкой после отчёта (см. §6.1).
 
@@ -60,7 +60,7 @@ cargo test                         134 passed, 0 failed (3.3 s)
 cargo clippy --all-targets -D warnings   clean
 npx tsc --noEmit                   clean
 npm run build                      clean (Vite 1.0–1.6 s)
-npx tauri build --debug --no-bundle  built src-tauri/target/debug/chenal
+npx tauri build --debug --no-bundle  built src-tauri/target/debug/chedum
 ```
 
 CI: `.github/workflows/ci.yml` содержит те же четыре шага на `macos-14`.

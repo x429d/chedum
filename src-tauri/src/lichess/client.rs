@@ -7,7 +7,7 @@ use tokio::time::{sleep, Instant};
 
 use crate::domain::error::{AppError, AppResult};
 
-const USER_AGENT: &str = "Chenal/0.1.0 (macOS; native chess analytics studio)";
+const USER_AGENT: &str = "Chedum/0.1.0 (macOS; native chess analytics studio)";
 const MIN_INTERVAL: Duration = Duration::from_secs(1);
 
 #[async_trait]

@@ -1,6 +1,6 @@
 # Third-party notices
 
-Chenal bundles or links the following third-party works. The full texts are
+Chedum bundles or links the following third-party works. The full texts are
 shipped in `src-tauri/resources/` and `src/assets/pieces/ATTRIBUTION.md`.
 
 | Component | License | Source |
@@ -12,7 +12,7 @@ shipped in `src-tauri/resources/` and `src/assets/pieces/ATTRIBUTION.md`.
 
 ## Stockfish and GPL
 
-Stockfish is distributed under GPL-3.0. If you distribute a Chenal bundle that
+Stockfish is distributed under GPL-3.0. If you distribute a Chedum bundle that
 contains the Stockfish binary, you must also provide the corresponding source
 code and the GPL notice. The binary is currently built from the official
 Stockfish source; keep the exact source revision next to the binary when
@@ -20,5 +20,5 @@ publishing a release.
 
 ## Project license
 
-No license has been declared for Chenal's own source code yet. Do not assume
+No license has been declared for Chedum's own source code yet. Do not assume
 that the third-party licenses above apply to the application itself.

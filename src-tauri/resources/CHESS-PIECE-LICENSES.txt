@@ -1,4 +1,4 @@
-Chenal — third-party licenses for chess piece sets
+Chedum — third-party licenses for chess piece sets
 =====================================================
 
 The SVG piece sets bundled in src/assets/pieces are distributed under the

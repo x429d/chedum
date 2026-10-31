@@ -1,11 +1,11 @@
 use std::path::Path;
 
-use chenal_lib::db::{analyses_repo, Db};
+use chedum_lib::db::{analyses_repo, Db};
 
 fn default_db_path() -> String {
     std::env::var("HOME")
-        .map(|home| format!("{home}/Library/Application Support/com.chenal.studio/chenal.db"))
-        .unwrap_or_else(|_| "chenal.db".to_string())
+        .map(|home| format!("{home}/Library/Application Support/com.chedum.studio/chedum.db"))
+        .unwrap_or_else(|_| "chedum.db".to_string())
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

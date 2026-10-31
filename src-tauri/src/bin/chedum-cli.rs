@@ -1,4 +1,4 @@
-//! Internal console for operations on the local Chenal database.
+//! Internal console for operations on the local Chedum database.
 //! Not shipped in the app bundle; used for audits and batch analysis.
 
 use std::path::{Path, PathBuf};
@@ -6,21 +6,21 @@ use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Instant;
 
-use chenal_lib::db::connection::Db;
-use chenal_lib::domain::error::AppResult;
-use chenal_lib::engine::pool::{hash_mb_for, workers_from_setting, EnginePool};
-use chenal_lib::service::openings;
+use chedum_lib::db::connection::Db;
+use chedum_lib::domain::error::AppResult;
+use chedum_lib::engine::pool::{hash_mb_for, workers_from_setting, EnginePool};
+use chedum_lib::service::openings;
 
 fn default_db() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join("Library/Application Support/com.chenal.studio/chenal.db")
+    PathBuf::from(home).join("Library/Application Support/com.chedum.studio/chedum.db")
 }
 
 fn main() -> ExitCode {
     match run() {
         Ok(()) => ExitCode::SUCCESS,
         Err(err) => {
-            eprintln!("chenal-cli: {err}");
+            eprintln!("chedum-cli: {err}");
             ExitCode::FAILURE
         }
     }
@@ -44,9 +44,9 @@ fn run() -> AppResult<()> {
             audit(&db)
         }
         "backfill" => {
-            let fen_accuracy = chenal_lib::db::analyses_repo::backfill_fen_accuracy(&db)?;
-            let summaries = chenal_lib::db::analyses_repo::backfill_summaries(&db)?;
-            let moments = chenal_lib::db::analyses_repo::backfill_key_moments(&db)?;
+            let fen_accuracy = chedum_lib::db::analyses_repo::backfill_fen_accuracy(&db)?;
+            let summaries = chedum_lib::db::analyses_repo::backfill_summaries(&db)?;
+            let moments = chedum_lib::db::analyses_repo::backfill_key_moments(&db)?;
             let openings = openings::backfill_openings(&db)?;
             println!(
                 "fen accuracy: {fen_accuracy}, summaries: {summaries}, key moments: {moments}, openings: {openings}"
@@ -69,7 +69,7 @@ where
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
-        .map_err(|err| chenal_lib::domain::error::AppError::Internal(err.to_string()))?;
+        .map_err(|err| chedum_lib::domain::error::AppError::Internal(err.to_string()))?;
     runtime.block_on(future)
 }
 
@@ -81,14 +81,14 @@ fn arg_value(args: &[String], name: &str) -> Option<String> {
 }
 
 fn engine_path() -> PathBuf {
-    if let Ok(path) = std::env::var("CHENAL_STOCKFISH") {
+    if let Ok(path) = std::env::var("CHEDUM_STOCKFISH") {
         return PathBuf::from(path);
     }
     Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin")
 }
 
 async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
-    let settings = chenal_lib::db::settings_repo::get_settings(db)?;
+    let settings = chedum_lib::db::settings_repo::get_settings(db)?;
     let depth = arg_value(args, "--depth")
         .and_then(|value| value.parse::<u32>().ok())
         .unwrap_or(settings.analysis_depth);
@@ -123,10 +123,10 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
     let ids: Vec<i64> = match explicit_ids {
         Some(ids) => ids,
         None => {
-            let key = chenal_lib::service::queue::target_config_key(db, &settings)?;
-            let mut plan = chenal_lib::db::games_repo::pending_analysis(
+            let key = chedum_lib::service::queue::target_config_key(db, &settings)?;
+            let mut plan = chedum_lib::db::games_repo::pending_analysis(
                 db,
-                &chenal_lib::domain::game::GameFilter::default(),
+                &chedum_lib::domain::game::GameFilter::default(),
                 &key,
                 settings.analysis_depth,
                 settings.multipv,
@@ -174,12 +174,12 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
                 let outcome = if parallel {
                     // One game's positions are spread across the whole pool:
                     // only worthwhile with a small number of games.
-                    chenal_lib::service::analysis::analyze_game_parallel(
+                    chedum_lib::service::analysis::analyze_game_parallel(
                         &db, &pool, id, depth, multipv, None,
                     )
                     .await
                 } else {
-                    chenal_lib::service::analysis::analyze_game(
+                    chedum_lib::service::analysis::analyze_game(
                         &db,
                         lease.manager(),
                         id,
@@ -261,7 +261,7 @@ fn audit(db: &Db) -> AppResult<()> {
 }
 
 fn hub(db: &Db) -> AppResult<()> {
-    let stats = chenal_lib::db::stats_repo::hub_stats(db, None)?;
+    let stats = chedum_lib::db::stats_repo::hub_stats(db, None)?;
     if let Some(config) = &stats.config {
         println!(
             "config: {} {} · depth {} · MultiPV {} · classifier {} · accuracy {} · included {} of {}",

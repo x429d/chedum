@@ -1,6 +1,6 @@
-# Chenal — native chess analytics studio
+# Chedum — native chess analytics studio
 
-[![CI](https://github.com/x429d/chenal/actions/workflows/ci.yml/badge.svg)](https://github.com/x429d/chenal/actions/workflows/ci.yml)
+[![CI](https://github.com/x429d/chedum/actions/workflows/ci.yml/badge.svg)](https://github.com/x429d/chedum/actions/workflows/ci.yml)
 
 Local-first macOS (Apple Silicon) chess analytics studio built with Tauri v2, Rust, SolidJS and
 Stockfish. Games are stored in local SQLite, analyzed offline, and presented in a Linear/Raycast
@@ -65,10 +65,10 @@ npm install
 npm run fetch:stockfish   # pinned Stockfish 19 binary, not stored in git
 npm run tauri dev         # development app
 npm run tauri build       # macOS .app / .dmg bundle
-npm run install:app       # keep exactly one Chenal.app in /Applications
+npm run install:app       # keep exactly one Chedum.app in /Applications
 ```
 
-If the bundled engine is missing, Chenal also looks for `/opt/homebrew/bin/stockfish` and
+If the bundled engine is missing, Chedum also looks for `/opt/homebrew/bin/stockfish` and
 `/usr/local/bin/stockfish`. Stockfish is GPLv3; its license is bundled at
 `src-tauri/resources/STOCKFISH-COPYING.txt`.
 
@@ -87,7 +87,7 @@ npm run build
 npm audit --omit=dev
 ```
 
-The local database lives in `~/Library/Application Support/com.chenal.studio/chenal.db`.
+The local database lives in `~/Library/Application Support/com.chedum.studio/chedum.db`.
 The app is offline-first; the network is used only for the public Chess.com Published Data API and
 the public Lichess game-export API.
 

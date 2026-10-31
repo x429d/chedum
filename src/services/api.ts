@@ -48,7 +48,7 @@ export const api = {
 
   confirmDelete(message: string): Promise<boolean> {
     return confirmDialog(message, {
-      title: "Chenal",
+      title: "Chedum",
       kind: "warning",
       okLabel: t("library.delete"),
       cancelLabel: t("library.cancel"),
@@ -57,7 +57,7 @@ export const api = {
 
   confirmStopBatch(message: string): Promise<boolean> {
     return confirmDialog(message, {
-      title: "Chenal",
+      title: "Chedum",
       kind: "warning",
       okLabel: t("library.stopAndProceed"),
       cancelLabel: t("library.cancel"),
@@ -66,7 +66,7 @@ export const api = {
 
   confirmDisconnect(message: string): Promise<boolean> {
     return confirmDialog(message, {
-      title: "Chenal",
+      title: "Chedum",
       kind: "warning",
       okLabel: t("accounts.remove"),
       cancelLabel: t("library.cancel"),
@@ -75,7 +75,7 @@ export const api = {
 
   confirmSyncReset(message: string): Promise<boolean> {
     return confirmDialog(message, {
-      title: "Chenal",
+      title: "Chedum",
       kind: "warning",
       okLabel: t("accounts.syncReset"),
       cancelLabel: t("library.cancel"),
@@ -113,7 +113,7 @@ export const api = {
   async exportGames(ids: number[]): Promise<string | null> {
     const path = await save({
       title: `${t("library.export")} PGN`,
-      defaultPath: "chenal-export.pgn",
+      defaultPath: "chedum-export.pgn",
       filters: PGN_FILTER,
     });
     if (!path) return null;

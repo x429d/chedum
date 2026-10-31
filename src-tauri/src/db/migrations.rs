@@ -19,7 +19,7 @@ pub fn backup_before_upgrade(conn: &Connection, path: &Path) -> AppResult<Option
     if version == 0 || version >= CURRENT_SCHEMA_VERSION {
         return Ok(None);
     }
-    let backup = path.with_file_name(format!("chenal.pre-v{version}.db"));
+    let backup = path.with_file_name(format!("chedum.pre-v{version}.db"));
     if backup.exists() {
         return Ok(Some(backup));
     }

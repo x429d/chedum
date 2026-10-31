@@ -1,5 +1,5 @@
 /**
- * Chenal brand mark: the same king silhouette as the app icon, punched out of the
+ * Chedum brand mark: the same king silhouette as the app icon, punched out of the
  * teal tile that `.brand-mark` paints behind it.
  */
 const KING_CROSS = "M20.9 5.2h3.2v1.9h3.4v3h-3.4V14.6h-3.2v-4.5h-3.4v-3h3.4z";

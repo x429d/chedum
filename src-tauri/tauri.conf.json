@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Chenal",
+  "productName": "Chedum",
   "version": "0.1.0",
-  "identifier": "com.chenal.studio",
+  "identifier": "com.chedum.studio",
   "build": {
     "beforeDevCommand": "npm run fetch:stockfish && npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Chenal",
+        "title": "Chedum",
         "width": 1480,
         "height": 940,
         "minWidth": 1180,

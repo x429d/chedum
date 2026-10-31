@@ -372,7 +372,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "chenal"
+name = "chedum"
 version = "0.1.0"
 dependencies = [
  "async-trait",

@@ -8,8 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DB = os.environ.get(
-    "CHENAL_DB",
-    str(Path.home() / "Library/Application Support/com.chenal.studio/chenal.db"),
+    "CHEDUM_DB",
+    str(Path.home() / "Library/Application Support/com.chedum.studio/chedum.db"),
 )
 SF = str(ROOT / "src-tauri" / "binaries" / "stockfish-aarch64-apple-darwin")
 GAME = int(sys.argv[1]) if len(sys.argv) > 1 else 843

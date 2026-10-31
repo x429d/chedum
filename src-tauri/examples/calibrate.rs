@@ -2,11 +2,11 @@ use std::path::Path;
 
 use serde::Serialize;
 
-use chenal_lib::domain::game::GameSource;
-use chenal_lib::engine::EngineManager;
-use chenal_lib::pgn::{build_draft, parse_single};
-use chenal_lib::service::build::{build_analysis, BuildInput};
-use chenal_lib::service::evaluation::evaluate_positions;
+use chedum_lib::domain::game::GameSource;
+use chedum_lib::engine::EngineManager;
+use chedum_lib::pgn::{build_draft, parse_single};
+use chedum_lib::service::build::{build_analysis, BuildInput};
+use chedum_lib::service::evaluation::evaluate_positions;
 
 #[derive(Serialize)]
 struct Row {
@@ -27,8 +27,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
     let db_path = args.next().unwrap_or_else(|| {
         std::env::var("HOME")
-            .map(|home| format!("{home}/Library/Application Support/com.chenal.studio/chenal.db"))
-            .unwrap_or_else(|_| "chenal.db".to_string())
+            .map(|home| format!("{home}/Library/Application Support/com.chedum.studio/chedum.db"))
+            .unwrap_or_else(|_| "chedum.db".to_string())
     });
     let depth: u32 = args.next().and_then(|v| v.parse().ok()).unwrap_or(14);
     let ids: Vec<i64> = args.filter_map(|v| v.parse().ok()).collect();

@@ -9,8 +9,8 @@ export interface Toast {
   kind: ToastKind;
 }
 
-const LIBRARY_SIDEBAR_KEY = "chenal.librarySidebarCollapsed";
-const NAV_SIDEBAR_KEY = "chenal.navSidebarCollapsed";
+const LIBRARY_SIDEBAR_KEY = "chedum.librarySidebarCollapsed";
+const NAV_SIDEBAR_KEY = "chedum.navSidebarCollapsed";
 
 function readFlag(key: string): boolean {
   try {

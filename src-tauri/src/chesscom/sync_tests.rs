@@ -9,10 +9,10 @@ use crate::db::games_repo::count_games;
 use crate::domain::AccountPlatform;
 
 const LEGAL: &str = include_str!("../../resources/demo_legal.pgn");
-const ARCHIVE: &str = "https://api.chess.com/pub/player/chenal_player/games/2020/05";
+const ARCHIVE: &str = "https://api.chess.com/pub/player/chedum_player/games/2020/05";
 
 fn account(db: &Db) -> i64 {
-    accounts_repo::create(db, AccountPlatform::Chesscom, "chenal_player")
+    accounts_repo::create(db, AccountPlatform::Chesscom, "chedum_player")
         .unwrap()
         .id
 }
@@ -68,7 +68,7 @@ fn parses_archive_urls() {
 #[test]
 fn incremental_plan_skips_finished_archives() {
     let existing = vec![ArchiveRecord {
-        username: "chenal_player".to_string(),
+        username: "chedum_player".to_string(),
         archive_url: ARCHIVE.to_string(),
         year: 2020,
         month: 5,
@@ -77,7 +77,7 @@ fn incremental_plan_skips_finished_archives() {
     }];
     let archives = vec![
         ARCHIVE.to_string(),
-        "https://api.chess.com/pub/player/chenal_player/games/2026/10".to_string(),
+        "https://api.chess.com/pub/player/chedum_player/games/2026/10".to_string(),
     ];
     let plan = plan_archives(&existing, &archives, 2026, 10, false);
     assert_eq!(plan.len(), 1);
@@ -99,7 +99,7 @@ async fn sync_imports_then_dedupes() {
         &db,
         &api,
         account_id,
-        "chenal_player",
+        "chedum_player",
         false,
         &cancel,
         |_| events += 1,
@@ -116,7 +116,7 @@ async fn sync_imports_then_dedupes() {
         &db,
         &api,
         account_id,
-        "chenal_player",
+        "chedum_player",
         false,
         &cancel,
         |_| {},
@@ -130,7 +130,7 @@ async fn sync_imports_then_dedupes() {
         &db,
         &api,
         account_id,
-        "chenal_player",
+        "chedum_player",
         true,
         &cancel,
         |_| {},
@@ -164,7 +164,7 @@ async fn sync_separates_filtered_games_from_parse_errors() {
         &db,
         &api,
         account_id,
-        "chenal_player",
+        "chedum_player",
         false,
         &AtomicBool::new(false),
         |_| {},
@@ -185,7 +185,7 @@ async fn cancelled_sync_stops_before_network() {
         &db,
         &api,
         account_id,
-        "chenal_player",
+        "chedum_player",
         false,
         &AtomicBool::new(true),
         |_| {},

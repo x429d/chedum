@@ -200,7 +200,7 @@ fn export_pgn_keeps_game_importable_and_adds_annotator() {
 
     let exported = crate::service::import::export_pgn(&db, &[id]).unwrap();
     assert!(
-        exported.contains("[Annotator \"Chenal · Stockfish 19 · depth 14 · Lichess accuracy\"]"),
+        exported.contains("[Annotator \"Chedum · Stockfish 19 · depth 14 · Lichess accuracy\"]"),
         "{exported}"
     );
 
