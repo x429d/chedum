@@ -1,27 +1,27 @@
 use crate::domain::analysis::{GameAnalysis, MoveCategory, Phase};
 use crate::domain::game::{Color, UserColor};
 
-fn category_ru(category: MoveCategory) -> &'static str {
+fn category_en(category: MoveCategory) -> &'static str {
     match category {
-        MoveCategory::Book => "теория",
-        MoveCategory::Forced => "единственный ход",
-        MoveCategory::Brilliant => "бриллиантовые ходы",
-        MoveCategory::Great => "отличные ходы",
-        MoveCategory::Best => "лучшие ходы",
-        MoveCategory::Excellent => "прекрасные ходы",
-        MoveCategory::Good => "хорошие ходы",
-        MoveCategory::Miss => "упущенные шансы",
-        MoveCategory::Inaccuracy => "неточности",
-        MoveCategory::Mistake => "ошибки",
-        MoveCategory::Blunder => "зевки",
+        MoveCategory::Book => "theory",
+        MoveCategory::Forced => "forced moves",
+        MoveCategory::Brilliant => "brilliant moves",
+        MoveCategory::Great => "great moves",
+        MoveCategory::Best => "best moves",
+        MoveCategory::Excellent => "excellent moves",
+        MoveCategory::Good => "good moves",
+        MoveCategory::Miss => "missed chances",
+        MoveCategory::Inaccuracy => "inaccuracies",
+        MoveCategory::Mistake => "mistakes",
+        MoveCategory::Blunder => "blunders",
     }
 }
 
-fn phase_ru(phase: Phase) -> &'static str {
+fn phase_en(phase: Phase) -> &'static str {
     match phase {
-        Phase::Opening => "дебюте",
-        Phase::Middlegame => "миттельшпиле",
-        Phase::Endgame => "эндшпиле",
+        Phase::Opening => "opening",
+        Phase::Middlegame => "middlegame",
+        Phase::Endgame => "endgame",
     }
 }
 
@@ -29,8 +29,8 @@ fn fmt1(value: f64) -> String {
     format!("{value:.1}")
 }
 
-/// Поля партии, которые нужны резюме. Отдельная структура позволяет строить
-/// текст и из доменной модели, и из строки SQL без повторного чтения всей партии.
+/// Fields needed for the summary. Keeping this separate lets the text be built
+/// both from the domain model and from a SQL row without re-reading the game.
 pub struct SummaryContext<'a> {
     pub white: &'a str,
     pub black: &'a str,
@@ -53,9 +53,8 @@ impl<'a> SummaryContext<'a> {
     }
 }
 
-/// Резюме партии — единственный источник чисел: поля `GameAnalysis`.
-/// Ничего не пересчитывается из ходов, поэтому текст не может разойтись
-/// с карточками точности и ACPL на том же экране.
+/// The game summary is derived only from `GameAnalysis` fields, never
+/// recalculated from moves, so it cannot disagree with the accuracy cards.
 pub fn summary_from_analysis(
     context: &SummaryContext<'_>,
     analysis: &GameAnalysis,
@@ -70,32 +69,28 @@ pub fn summary_from_analysis(
         (None, None) => None,
     };
     if let Some(opening) = opening {
-        parts.push(format!("Дебют: {opening}."));
+        parts.push(format!("Opening: {opening}."));
     }
     let user_color = context.user_color.color();
     match (user_color, context.result) {
-        (Some(Color::White), "1-0") => parts.push(format!(
-            "Вы играли белыми и победили соперника {}.",
-            context.black
-        )),
-        (Some(Color::White), "0-1") => parts.push(format!(
-            "Вы играли белыми и уступили сопернику {}.",
-            context.black
-        )),
-        (Some(Color::Black), "0-1") => parts.push(format!(
-            "Вы играли чёрными и победили соперника {}.",
-            context.white
-        )),
-        (Some(Color::Black), "1-0") => parts.push(format!(
-            "Вы играли чёрными и уступили сопернику {}.",
-            context.white
-        )),
+        (Some(Color::White), "1-0") => {
+            parts.push(format!("You played White and beat {}.", context.black))
+        }
+        (Some(Color::White), "0-1") => {
+            parts.push(format!("You played White and lost to {}.", context.black))
+        }
+        (Some(Color::Black), "0-1") => {
+            parts.push(format!("You played Black and beat {}.", context.white))
+        }
+        (Some(Color::Black), "1-0") => {
+            parts.push(format!("You played Black and lost to {}.", context.white))
+        }
         (_, "1/2-1/2") => parts.push(format!(
-            "Партия {} — {} завершилась вничью.",
+            "{} — {} ended in a draw.",
             context.white, context.black
         )),
         _ => parts.push(format!(
-            "Партия {} — {} завершилась со счётом {}.",
+            "{} — {} ended {}.",
             context.white, context.black, context.result
         )),
     }
@@ -113,7 +108,7 @@ pub fn summary_from_analysis(
         let acpl_text = acpl
             .map(|value| format!(", ACPL {}", fmt1(value)))
             .unwrap_or_default();
-        parts.push(format!("Точность ваших ходов — {accuracy:.1}%{acpl_text}."));
+        parts.push(format!("Your move accuracy was {accuracy:.1}%{acpl_text}."));
     }
     if let Some(color) = user_color {
         let errors: Vec<String> = [
@@ -126,16 +121,16 @@ pub fn summary_from_analysis(
         .filter_map(|category| {
             let count = analysis.counts.get(color, *category);
             if count > 0 {
-                Some(format!("{}: {count}", category_ru(*category)))
+                Some(format!("{}: {count}", category_en(*category)))
             } else {
                 None
             }
         })
         .collect();
         if errors.is_empty() {
-            parts.push("Грубых ошибок не обнаружено — партия проведена чисто.".to_string());
+            parts.push("No serious errors were found — a clean game.".to_string());
         } else {
-            parts.push(format!("Слабое место — {}.", errors.join(", ")));
+            parts.push(format!("Weak spot: {}.", errors.join(", ")));
         }
         let phases = [Phase::Opening, Phase::Middlegame, Phase::Endgame];
         let user_phases = user_phase_accuracies(analysis, color);
@@ -146,19 +141,19 @@ pub fn summary_from_analysis(
             .min_by(|left, right| left.1.total_cmp(&right.1));
         if let Some((phase, value)) = weakest {
             parts.push(format!(
-                "Наименьшая точность в {} — {}%.",
-                phase_ru(phase),
+                "Lowest accuracy in the {}: {}%.",
+                phase_en(phase),
                 fmt1(value)
             ));
         }
     }
     if analysis.key_moments_count > 0 {
         parts.push(format!(
-            "Ключевых моментов: {}. В цейтноте пройдено ходов: {}, поспешных ошибок: {}.",
+            "Key moments: {}. Time-trouble moves: {}, impulsive errors: {}.",
             analysis.key_moments_count, time_trouble, impulsive_errors
         ));
     } else {
-        parts.push("Ключевых переломных моментов не зафиксировано.".to_string());
+        parts.push("No key turning points were recorded.".to_string());
     }
     parts.join(" ")
 }
@@ -233,11 +228,14 @@ mod tests {
         let text = summary_from_analysis(&context(), &analysis, 2, 1);
         assert!(text.contains("63.4%"), "{text}");
         assert!(text.contains("ACPL 101.6"), "{text}");
-        assert!(text.contains("зевки: 1"), "{text}");
-        assert!(text.contains("ошибки: 2"), "{text}");
-        assert!(text.contains("миттельшпиле — 68.4%"), "{text}");
-        assert!(text.contains("Ключевых моментов: 5"), "{text}");
-        assert!(text.contains("В цейтноте пройдено ходов: 2, поспешных ошибок: 1"), "{text}");
+        assert!(text.contains("blunders: 1"), "{text}");
+        assert!(text.contains("mistakes: 2"), "{text}");
+        assert!(text.contains("middlegame: 68.4%"), "{text}");
+        assert!(text.contains("Key moments: 5"), "{text}");
+        assert!(
+            text.contains("Time-trouble moves: 2, impulsive errors: 1"),
+            "{text}"
+        );
         assert!(!text.contains("74.6"), "{text}");
     }
 
@@ -259,6 +257,6 @@ mod tests {
             ..context()
         };
         let text = summary_from_analysis(&context, &analysis, 0, 0);
-        assert!(!text.contains("Точность ваших ходов"), "{text}");
+        assert!(!text.contains("Your move accuracy"), "{text}");
     }
 }

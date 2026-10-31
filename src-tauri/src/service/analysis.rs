@@ -11,6 +11,7 @@ use crate::domain::game::GameDetail;
 use crate::engine::{is_cancelled_error, EngineManager, EnginePool};
 use crate::pgn::parse_single;
 use crate::service::build::{build_analysis, BuildInput};
+use crate::service::checkpoint::Checkpoint;
 use crate::service::evaluation::{evaluate_positions, evaluate_positions_pooled};
 
 pub fn emit_progress(
@@ -32,8 +33,8 @@ pub fn emit_progress(
     }
 }
 
-/// Кто считает позиции: один процесс (партия в очереди) или пул, который
-/// раскладывает позиции одной партии по свободным процессам.
+/// Who evaluates positions: a single process (a queued game) or the pool, which
+/// spreads one game's positions across free processes.
 enum Evaluator<'a> {
     Single(&'a EngineManager),
     Pooled(&'a Arc<EnginePool>),
@@ -81,14 +82,14 @@ pub async fn analyze_game(
     .await
 }
 
-/// Разбор одной партии силами всего пула: позиции режутся на блоки и
-/// считаются параллельно. Имеет смысл, когда свободных процессов больше,
-/// чем партий в работе, — иначе очередь и так занимает все ядра.
+/// Analyzes one game with the whole pool: positions are split into blocks and
+/// evaluated in parallel. Makes sense when free processes outnumber games in
+/// flight — otherwise the queue already occupies all cores.
 ///
-/// Результат не совпадает побитово с последовательным разбором: блоки стартуют
-/// с чистой таблицей, поэтому у каждой позиции нет «прогретой» истории
-/// предыдущих позиций. Зато оценка не зависит от того, какой процесс и в каком
-/// порядке взял блок, — то есть воспроизводима при любом размере пула.
+/// The result does not match sequential analysis bit for bit: blocks start with
+/// a clean table, so each position lacks the "warmed" history of previous
+/// positions. But the evaluation does not depend on which process took a block
+/// or in what order — that is, it is reproducible for any pool size.
 pub async fn analyze_game_parallel(
     db: &Db,
     pool: &Arc<EnginePool>,
@@ -120,7 +121,7 @@ async fn analyze_game_with(
     match &outcome {
         Ok(_) => {
             if let Err(err) = games_repo::reset_analysis_attempts(db, game_id) {
-                eprintln!("Chenal: не удалось сбросить попытки анализа #{game_id}: {err}");
+                tracing::warn!("Could not reset analysis attempts for game #{game_id}: {err}");
             }
         }
         Err(err) => {
@@ -129,7 +130,9 @@ async fn analyze_game_with(
                 if let Err(record) =
                     games_repo::record_analysis_failure(db, game_id, &err.to_string())
                 {
-                    eprintln!("Chenal: не удалось записать ошибку анализа #{game_id}: {record}");
+                    tracing::warn!(
+                        "Could not record the analysis error for game #{game_id}: {record}"
+                    );
                 }
             }
         }
@@ -152,11 +155,11 @@ async fn analyze_game_inner(
         0,
         0,
         2.0,
-        "Разбор PGN и подготовка позиций",
+        "Parsing PGN and preparing positions",
     );
     let parsed = parse_single(&game.pgn)?;
     if parsed.moves.is_empty() {
-        return Err(AppError::Validation("В партии нет ходов".to_string()));
+        return Err(AppError::Validation("The game has no moves".to_string()));
     }
     let total_positions = parsed.moves.len() + 1;
     let mut fens = Vec::with_capacity(total_positions);
@@ -165,23 +168,40 @@ async fn analyze_game_inner(
         fens.push(mv.fen_after.clone());
     }
     let total_plies = parsed.moves.len() as u32;
+    let checkpoint = Checkpoint::new(
+        db,
+        game_id,
+        depth,
+        multipv,
+        evaluator.name(),
+        evaluator.version(),
+    );
+    checkpoint.prepare()?;
     let evaluations = match evaluator {
         Evaluator::Single(engine) => {
-            // Одна задача на движок: отмена больше не сбрасывается каждой позицией.
+            // One job per engine: cancellation is no longer reset per position.
             let _job = engine.begin_job().await?;
-            // Пустая хеш-таблица перед партией: ACPL не зависит от порядка партий.
+            // Empty hash table before the game: ACPL must not depend on the
+            // order in which games were processed.
             engine.prepare_game().await?;
-            evaluate_positions(engine, &fens, depth, multipv, |done, total| {
-                let percent = 5.0 + 70.0 * (done as f64 / total as f64);
-                emit_progress(
-                    progress,
-                    "engine",
-                    done as u32,
-                    total as u32,
-                    percent,
-                    &format!("Stockfish: позиция {done} из {total}"),
-                );
-            })
+            evaluate_positions(
+                engine,
+                &fens,
+                depth,
+                multipv,
+                Some(&checkpoint),
+                |done, total| {
+                    let percent = 5.0 + 70.0 * (done as f64 / total as f64);
+                    emit_progress(
+                        progress,
+                        "engine",
+                        done as u32,
+                        total as u32,
+                        percent,
+                        &format!("Stockfish: position {done} of {total}"),
+                    );
+                },
+            )
             .await?
         }
         Evaluator::Pooled(pool) => {
@@ -195,10 +215,18 @@ async fn analyze_game_inner(
                     done as u32,
                     total as u32,
                     percent,
-                    &format!("Stockfish: позиция {done} из {total}"),
+                    &format!("Stockfish: position {done} of {total}"),
                 );
             });
-            evaluate_positions_pooled(pool, &fens, depth, multipv, on_done).await?
+            evaluate_positions_pooled(
+                pool,
+                &fens,
+                depth,
+                multipv,
+                Some(checkpoint.clone()),
+                on_done,
+            )
+            .await?
         }
     };
     emit_progress(
@@ -207,7 +235,7 @@ async fn analyze_game_inner(
         total_plies,
         total_plies,
         82.0,
-        "Классификация ходов и расчёт метрик",
+        "Classifying moves and computing metrics",
     );
     let draft = build_analysis(&BuildInput {
         game: &game,
@@ -224,16 +252,19 @@ async fn analyze_game_inner(
         total_plies,
         total_plies,
         92.0,
-        "Сохранение анализа в локальную базу",
+        "Saving analysis to the local database",
     );
     analyses_repo::insert_analysis_draft(db, &draft)?;
+    if let Err(err) = checkpoint.clear() {
+        tracing::warn!("Could not clear analysis checkpoints for game #{game_id}: {err}");
+    }
     emit_progress(
         progress,
         "done",
         total_plies,
         total_plies,
         100.0,
-        "Анализ завершён",
+        "Analysis complete",
     );
     Ok(GameDetail {
         game,

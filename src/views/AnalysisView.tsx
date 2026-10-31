@@ -11,6 +11,7 @@ import { analysisStore } from "../stores/analysisStore";
 import { gameStore } from "../stores/gameStore";
 import { libraryStore } from "../stores/libraryStore";
 import { ui } from "../stores/uiStore";
+import { analysisProgressLabel } from "../utils/progress";
 
 type Tab = "report" | "moves" | "moments";
 
@@ -18,6 +19,10 @@ export function AnalysisView() {
   const [tab, setTab] = createSignal<Tab>("report");
   const [fullscreen, setFullscreen] = createSignal(false);
   const [startingAnalysis, setStartingAnalysis] = createSignal(false);
+  const progressLabel = (): string => {
+    const progress = gameStore.progress();
+    return progress ? analysisProgressLabel(progress) : t("studio.startingStockfish");
+  };
 
   createEffect(
     on(
@@ -66,11 +71,11 @@ export function AnalysisView() {
           return;
         }
       }
-      // Cmd/Ctrl+Z — отменить ход, Cmd/Ctrl+Shift+Z и Ctrl+Y — вернуть.
+      // Cmd/Ctrl+Z undoes a move; Cmd/Ctrl+Shift+Z and Ctrl+Y redo it.
       if (event.metaKey || event.ctrlKey) {
         if (event.altKey) return;
         const key = event.key.toLowerCase();
-        // На нелатинской раскладке key может быть другим, поэтому смотрим и code.
+        // Non-Latin layouts can report a different `key`, so check `code` too.
         const undoKey = key === "z" || event.code === "KeyZ";
         const redoKey = key === "y" || event.code === "KeyY";
         if (undoKey) {
@@ -173,7 +178,7 @@ export function AnalysisView() {
                 </div>
                 <div style={{ display: "flex", "align-items": "center", gap: "8px" }}>
                   <div class="sync-log" style={{ flex: "1" }}>
-                    {gameStore.progress()?.message ?? t("studio.startingStockfish")}
+                    {progressLabel()}
                   </div>
                   <button
                     type="button"

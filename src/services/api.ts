@@ -73,6 +73,15 @@ export const api = {
     });
   },
 
+  confirmSyncReset(message: string): Promise<boolean> {
+    return confirmDialog(message, {
+      title: "Chenal",
+      kind: "warning",
+      okLabel: t("accounts.syncReset"),
+      cancelLabel: t("library.cancel"),
+    });
+  },
+
   toggleFavorite(gameId: number, favorite: boolean): Promise<void> {
     return invoke<void>("toggle_favorite", { gameId, favorite });
   },
@@ -193,5 +202,17 @@ export const api = {
       force,
       onProgress: channel(onProgress),
     });
+  },
+
+  cancelSync(): Promise<void> {
+    return invoke<void>("cancel_sync");
+  },
+
+  resetSyncHistory(accountId: number): Promise<void> {
+    return invoke<void>("reset_sync_history", { accountId });
+  },
+
+  getDiagnostics(): Promise<string> {
+    return invoke<string>("get_diagnostics");
   },
 };

@@ -15,13 +15,14 @@ use crate::engine::types::{EngineLine, EngineUpdate};
 use crate::engine::uci::{parse_bestmove, parse_info};
 
 const THROTTLE: Duration = Duration::from_millis(75);
-const CANCELLED: &str = "Анализ отменён";
-/// Сколько новая задача ждёт освобождения движка, прежде чем получить `busy`.
-/// Короткая пауза покрывает остановку live-анализа, долгая очередь — ошибка.
+const CANCELLED: &str = "Analysis cancelled";
+/// How long a new job waits for the engine to be released before getting `busy`.
+/// A short pause covers stopping live analysis; a long wait means the engine is
+/// busy and should return an error.
 const JOB_WAIT: Duration = Duration::from_secs(2);
 
-/// Право на использование движка. Живёт весь анализ партии, поэтому
-/// параллельные пакеты не могут незаметно встать в бесконечную очередь.
+/// Right to use the engine. Held for the whole game analysis, so parallel
+/// batches cannot silently queue up indefinitely.
 pub struct EngineJob<'a> {
     _slot: MutexGuard<'a, ()>,
 }
@@ -40,7 +41,7 @@ impl EngineManager {
         EngineManager::spawn_with(path, 2, 128).await
     }
 
-    /// Один процесс пула: обычно `threads = 1` и умеренный `Hash`.
+    /// One pool process: usually `threads = 1` and a moderate `Hash`.
     pub async fn spawn_with(path: &Path, threads: usize, hash_mb: u32) -> AppResult<Self> {
         let process = EngineProcess::spawn_with(path, threads, hash_mb).await?;
         let name = process.name().to_string();
@@ -59,7 +60,7 @@ impl EngineManager {
         &self.name
     }
 
-    /// Версия из `id name Stockfish 19` — «19». Хранится в записи анализа.
+    /// Version from `id name Stockfish 19` — "19". Stored in the analysis record.
     pub fn version(&self) -> &str {
         &self.version
     }
@@ -72,21 +73,21 @@ impl EngineManager {
         self.cancel.load(Ordering::SeqCst)
     }
 
-    /// Начинает новую задачу анализа: одна задача на движок.
-    /// Сбрасывает флаг отмены только здесь, а не на каждой позиции.
+    /// Starts a new analysis job: one job per engine.
+    /// The cancel flag is reset only here, not on every position.
     pub async fn begin_job(&self) -> AppResult<EngineJob<'_>> {
         let Ok(slot) = timeout(JOB_WAIT, self.slot.lock()).await else {
             return Err(AppError::Busy(
-                "Движок уже анализирует другую партию".to_string(),
+                "The engine is already analyzing another game".to_string(),
             ));
         };
         self.cancel.store(false, Ordering::SeqCst);
         Ok(EngineJob { _slot: slot })
     }
 
-    /// Начинает партию с чистого состояния движка. Без `ucinewgame`
-    /// transposition table переходит из партии в партию, и ACPL зависит от
-    /// порядка обработки в пуле.
+    /// Starts a game from a clean engine state. Without `ucinewgame`, the
+    /// transposition table carries over from game to game, and ACPL depends on
+    /// processing order in the pool.
     pub async fn prepare_game(&self) -> AppResult<()> {
         let mut process = self.process.lock().await;
         if !process.is_running() {
@@ -94,7 +95,7 @@ impl EngineManager {
         }
         let outcome = process.new_game().await;
         if outcome.is_err() {
-            // Сдвинутый UCI-поток нельзя переиспользовать.
+            // A desynchronized UCI stream cannot be reused.
             if let Ok(fresh) = EngineProcess::spawn(&self.path).await {
                 *process = fresh;
             }
@@ -102,8 +103,8 @@ impl EngineManager {
         outcome
     }
 
-    /// Анализирует позицию, транслируя обновления с троттлингом 75 мс.
-    /// Вызывается только внутри задачи, открытой `begin_job`.
+    /// Analyzes a position, streaming updates throttled to 75 ms.
+    /// Must be called only inside a job opened by `begin_job`.
     pub async fn analyze<F>(
         &self,
         fen: &str,
@@ -130,12 +131,12 @@ impl EngineManager {
             Ok(_) => {}
             Err(err) if is_cancel_error(err) => {}
             Err(_) => {
-                // Сдвинутый или зависший UCI-поток нельзя переиспользовать:
-                // следующий вызов начал бы искать поверх прошлого search.
+                // A desynchronized or stuck UCI stream cannot be reused:
+                // the next call would start a search on top of the previous one.
                 match EngineProcess::spawn(&self.path).await {
                     Ok(fresh) => *process = fresh,
                     Err(restart) => {
-                        eprintln!("Chenal: не удалось перезапустить Stockfish: {restart}");
+                        tracing::warn!("Could not restart Stockfish: {restart}");
                     }
                 }
             }
@@ -225,10 +226,10 @@ impl EngineManager {
     }
 }
 
-/// Переносит найденные линии в `update`, переводя UCI-варианты в SAN.
-/// SAN считается только в момент отправки: пакетному анализу обновления
-/// не нужны вовсе, а при построении на каждой строке `info` пришлось бы
-/// заново разбирать FEN и пересчитывать весь вариант — десятки раз на позицию.
+/// Moves the found lines into `update`, converting UCI variations to SAN.
+/// SAN is computed only at emit time: batch analysis does not need updates at
+/// all, and building them on every `info` line would re-parse the FEN and replay
+/// the whole variation — dozens of times per position.
 fn fill_lines(update: &mut EngineUpdate, lines: &BTreeMap<u32, EngineLine>, fen: &str) {
     update.lines = lines
         .values()
@@ -251,12 +252,12 @@ fn is_cancel_error(err: &AppError) -> bool {
     matches!(err, AppError::Engine(message) if message.as_str() == CANCELLED)
 }
 
-/// Отмена пользователем — не сбой партии: попытки разбора не растут.
+/// User cancellation is not a game failure: analysis attempts do not grow.
 pub fn is_cancelled_error(err: &AppError) -> bool {
     is_cancel_error(err)
 }
 
-/// Ошибка отмены в том же виде, что отдаёт движок.
+/// Cancellation error in the same shape the engine returns.
 pub fn cancelled_error() -> AppError {
     AppError::Engine(CANCELLED.to_string())
 }

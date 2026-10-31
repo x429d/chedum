@@ -4,24 +4,24 @@ export interface ArrowPoint {
 }
 
 export interface ArrowGeometry {
-  /** SVG-путь древка: прямой отрезок или «буква Г» для коня. */
+  /** SVG path for the shaft: a straight segment or an L-shape for a knight. */
   shaft: string;
-  /** Точки наконечника. */
+  /** Arrowhead points. */
   head: string;
 }
 
 /**
- * Отступы подобраны так, чтобы хвост выходил из-под фигуры, а острие мягко
- * останавливалось перед центром цели. На коротких ходах отступы ужимаются
- * пропорционально: иначе стрелка на одну клетку превращается в огрызок.
+ * The gaps are tuned so the tail emerges from under the piece and the tip stops
+ * just before the target center. On short moves the gaps shrink proportionally;
+ * otherwise a one-square arrow becomes a stub.
  */
 const TAIL_GAP = 0.3;
 const TIP_GAP = 0.15;
-/** Максимальная длина наконечника. */
+/** Maximum arrowhead length. */
 const HEAD_LENGTH = 0.32;
-/** Полуширина наконечника относительно его длины. */
+/** Arrowhead half-width relative to its length. */
 const HEAD_RATIO = 0.55;
-/** Радиус скругления излома стрелки коня. */
+/** Corner rounding radius for a knight's arrow. */
 const BEND_RADIUS = 0.34;
 
 const round = (value: number): number => Math.round(value * 1000) / 1000;
@@ -31,7 +31,7 @@ function unit(dx: number, dy: number): ArrowPoint & { len: number } {
   return { x: dx / len, y: dy / len, len };
 }
 
-/** Ход коня: две клетки по одной оси и одна по другой. */
+/** Knight move: two squares along one axis and one along the other. */
 function isKnight(from: ArrowPoint, to: ArrowPoint): boolean {
   const ax = Math.abs(to.x - from.x);
   const ay = Math.abs(to.y - from.y);
@@ -42,8 +42,8 @@ function isKnight(from: ArrowPoint, to: ArrowPoint): boolean {
 }
 
 /**
- * Путь стрелки между центрами клеток. Конь идёт «буквой Г»: сначала две
- * клетки по длинной оси, затем одна по короткой — как на шахматной доске.
+ * Arrow path between square centers. A knight moves in an L: first two squares
+ * along the long axis, then one along the short one, as on a chessboard.
  */
 export function arrowGeometry(from: ArrowPoint, to: ArrowPoint): ArrowGeometry | null {
   const dx = to.x - from.x;
@@ -63,7 +63,7 @@ export function arrowGeometry(from: ArrowPoint, to: ArrowPoint): ArrowGeometry |
   const last = unit(to.x - (corner?.x ?? from.x), to.y - (corner?.y ?? from.y));
 
   const tail = Math.min(TAIL_GAP, length * 0.22);
-  // Наконечник не должен съесть всё древко, поэтому его длина ограничена остатком.
+  // The arrowhead must not consume the whole shaft, so its length is capped by what remains.
   const headLength = Math.min(HEAD_LENGTH, Math.max(0.18, (length - tail) * 0.5));
   const tip = Math.min(TIP_GAP, length * 0.1);
   const headWidth = headLength * HEAD_RATIO;

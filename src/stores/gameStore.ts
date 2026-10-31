@@ -5,35 +5,28 @@ import { api } from "../services/api";
 import type {
   AnalysisProgress,
   ArrowSpec,
-  BoardBadge,
   Color,
   GameDetail,
   MoveCategory,
 } from "../types/models";
-import { applyLine, checkSquare, playMove, START_FEN, targetSquare } from "../utils/chess";
-import { buildArrows, groupMoves } from "../utils/moveView";
-import { formatEval, toErrorMessage } from "../utils/format";
+import { checkSquare, playMove } from "../utils/chess";
+import { toErrorMessage } from "../utils/format";
+import { bumpDataVersion } from "./dataVersion";
+import { createGameHistory, type VariationState } from "./gameHistory";
+import { createPreviewController, type PreviewState } from "./gamePreview";
+import { persistComment, persistNotes } from "./gamePersistence";
+import {
+  arrowsFor,
+  badgeFor,
+  boardFenFor,
+  currentFenFor,
+  evalLabelFor,
+  initialFenFor,
+  lastMoveUciFor,
+  movePairsFor,
+} from "./gameSelectors";
 import { settingsStore } from "./settingsStore";
 import { ui } from "./uiStore";
-
-interface VariationState {
-  fens: string[];
-  sans: string[];
-  ucis: string[];
-  basePly: number;
-}
-
-interface PreviewState {
-  fens: string[];
-  index: number;
-}
-
-/** Позиция доски для undo/redo: вариант, номер хода в партии и свои стрелки. */
-interface BoardSnapshot {
-  variation: VariationState | null;
-  ply: number;
-  arrows: ArrowSpec[];
-}
 
 const [detail, setDetail] = createSignal<GameDetail | null>(null);
 const [loading, setLoading] = createSignal(false);
@@ -45,14 +38,20 @@ const [preview, setPreview] = createSignal<PreviewState | null>(null);
 const [userArrows, setUserArrows] = createSignal<ArrowSpec[]>([]);
 const [analyzing, setAnalyzing] = createSignal(false);
 const [progress, setProgress] = createSignal<AnalysisProgress | null>(null);
-let previewTimer: number | undefined;
-let previewEndTimer: number | undefined;
 let analysisCancelled = false;
-/** История действий: каждое изменение доски кладёт сюда снимок «как было». */
-const undoHistory: BoardSnapshot[] = [];
-/** Снимки, снятые через undo, — их возвращает redo. */
-const redoHistory: BoardSnapshot[] = [];
-const HISTORY_LIMIT = 200;
+
+const previewController = createPreviewController(setPreview);
+const stopPreview = previewController.stop;
+const playPreview = previewController.play;
+const history = createGameHistory({
+  variation,
+  ply,
+  arrows: userArrows,
+  setVariation,
+  setPly,
+  setArrows: setUserArrows,
+  stopPreview,
+});
 
 const moves = () => detail()?.moves ?? [];
 const analysis = () => detail()?.analysis ?? null;
@@ -60,45 +59,17 @@ const currentMove = () => {
   const index = ply();
   return index > 0 ? moves()[index - 1] ?? null : null;
 };
-const initialFen = () => {
-  const data = detail();
-  if (!data) return START_FEN;
-  return data.moves[0]?.fenBefore ?? data.game.initialFen ?? START_FEN;
-};
-const currentFen = () => {
-  const line = variation();
-  if (line) return line.fens[line.fens.length - 1] ?? initialFen();
-  return currentMove()?.fenAfter ?? initialFen();
-};
-const boardFen = () => {
-  const frames = preview();
-  return frames ? frames.fens[frames.index] ?? currentFen() : currentFen();
-};
-const lastMoveUci = () => {
-  if (preview()) return null;
-  const line = variation();
-  if (line) return line.ucis[line.ucis.length - 1] ?? null;
-  return currentMove()?.playedUci ?? null;
-};
-const badge = (): BoardBadge | null => {
-  if (preview() || variation()) return null;
-  const move = currentMove();
-  if (!move) return null;
-  const square = targetSquare(move.playedUci);
-  return square ? { square, category: move.classification } : null;
-};
+const initialFen = () => initialFenFor(detail());
+const currentFen = () => currentFenFor(initialFen(), currentMove(), variation());
+const boardFen = () => boardFenFor(currentFen(), preview());
+const lastMoveUci = () => lastMoveUciFor(currentMove(), variation(), preview());
+const badge = () => badgeFor(currentMove(), variation(), preview());
 const checkSquareName = () => checkSquare(boardFen());
 const winProbWhite = () => currentMove()?.winProbWhite ?? 50;
-const evalLabel = () => {
-  const move = currentMove();
-  return move ? formatEval(move.evalCp, move.evalMate) : "0.00";
-};
-const arrows = (): ArrowSpec[] => {
-  if (!settingsStore.settings().showArrows || preview() || variation()) return [];
-  return buildArrows(currentMove());
-};
-
-const movePairs = () => groupMoves(moves());
+const evalLabel = () => evalLabelFor(currentMove());
+const arrows = (): ArrowSpec[] =>
+  arrowsFor(currentMove(), settingsStore.settings().showArrows, variation(), preview());
+const movePairs = () => movePairsFor(moves());
 
 async function load(id: number): Promise<void> {
   if (analyzing() && detail()?.game.id === id) return;
@@ -115,8 +86,7 @@ async function load(id: number): Promise<void> {
     setPly(0);
     setVariation(null);
     setUserArrows([]);
-    undoHistory.length = 0;
-    redoHistory.length = 0;
+    history.reset();
     stopPreview();
     setCategoryFilter(null);
     setOrientation(data.game.userColor === "black" ? "black" : "white");
@@ -131,7 +101,7 @@ async function load(id: number): Promise<void> {
 function goTo(index: number): void {
   const target = Math.max(0, Math.min(index, moves().length));
   if (target === ply() && !variation()) return;
-  record();
+  history.record();
   stopPreview();
   setVariation(null);
   setPly(target);
@@ -156,39 +126,6 @@ function toggleCategory(category: MoveCategory): void {
   setCategoryFilter((current) => (current === category ? null : category));
 }
 
-function stopPreview(): void {
-  if (previewTimer !== undefined) {
-    window.clearInterval(previewTimer);
-    previewTimer = undefined;
-  }
-  if (previewEndTimer !== undefined) {
-    window.clearTimeout(previewEndTimer);
-    previewEndTimer = undefined;
-  }
-  setPreview(null);
-}
-
-function playPreview(fen: string, uciMoves: string[]): void {
-  stopPreview();
-  const fens = applyLine(fen, uciMoves.slice(0, 4));
-  if (fens.length < 2) return;
-  let index = 0;
-  setPreview({ fens, index });
-  previewTimer = window.setInterval(() => {
-    index += 1;
-    if (index >= fens.length) {
-      if (previewTimer !== undefined) window.clearInterval(previewTimer);
-      previewTimer = undefined;
-      previewEndTimer = window.setTimeout(() => {
-        previewEndTimer = undefined;
-        setPreview(null);
-      }, 950);
-      return;
-    }
-    setPreview({ fens, index });
-  }, 680);
-}
-
 function playBestLine(): void {
   const move = currentMove();
   const line = move?.pvLines[0];
@@ -201,7 +138,7 @@ function enterVariation(from: string, to: string): boolean {
   const baseFen = currentFen();
   const played = playMove(baseFen, from, to);
   if (!played) return false;
-  record();
+  history.record();
   const existing = variation();
   const fens = existing ? [...existing.fens, played.fenAfter] : [baseFen, played.fenAfter];
   const sans = existing ? [...existing.sans, played.san] : [played.san];
@@ -213,12 +150,12 @@ function enterVariation(from: string, to: string): boolean {
 
 function clearVariation(): void {
   if (!variation()) return;
-  record();
+  history.record();
   setVariation(null);
   setUserArrows([]);
 }
 
-/** Свои стрелки на доске — обычное действие, которое тоже отменяется. */
+/** User arrows on the board are a regular action and are undone too. */
 function updateUserArrows(next: ArrowSpec[]): void {
   const current = userArrows();
   if (
@@ -235,53 +172,23 @@ function updateUserArrows(next: ArrowSpec[]): void {
   ) {
     return;
   }
-  record();
+  history.record();
   setUserArrows(next);
 }
 
-function snapshot(): BoardSnapshot {
-  return { variation: variation(), ply: ply(), arrows: userArrows() };
-}
-
-/** Запомнить текущее состояние перед действием; новая ветка сбрасывает redo. */
-function record(): void {
-  undoHistory.push(snapshot());
-  if (undoHistory.length > HISTORY_LIMIT) undoHistory.shift();
-  redoHistory.length = 0;
-}
-
-function applySnapshot(state: BoardSnapshot): void {
-  stopPreview();
-  setVariation(state.variation);
-  setPly(state.ply);
-  setUserArrows(state.arrows);
-}
-
 function undo(): void {
-  const previous = undoHistory.pop();
-  if (!previous) return;
-  redoHistory.push(snapshot());
-  applySnapshot(previous);
+  history.undo();
 }
 
 function redo(): void {
-  const next = redoHistory.pop();
-  if (!next) return;
-  undoHistory.push(snapshot());
-  applySnapshot(next);
+  history.redo();
 }
 
 async function saveComment(index: number, comment: string): Promise<void> {
   const data = detail();
   if (!data) return;
   try {
-    await api.saveUserComment(data.game.id, index, comment);
-    setDetail({
-      ...data,
-      moves: data.moves.map((move) =>
-        move.ply === index ? { ...move, userComment: comment } : move,
-      ),
-    });
+    setDetail(await persistComment(data, index, comment));
   } catch (error) {
     ui.notify(toErrorMessage(error), "error");
   }
@@ -291,8 +198,7 @@ async function saveNotes(notes: string): Promise<void> {
   const data = detail();
   if (!data) return;
   try {
-    await api.updateNotes(data.game.id, notes);
-    setDetail({ ...data, game: { ...data.game, notes } });
+    setDetail(await persistNotes(data, notes));
   } catch (error) {
     ui.notify(toErrorMessage(error), "error");
   }
@@ -311,8 +217,8 @@ async function runAnalysis(): Promise<void> {
       gameId,
       settings.analysisDepth,
       settings.multipv,
-      // Экран одной партии: остальные движки пула свободны, считаем позиции
-      // параллельно.
+      // Single-game screen: the rest of the engine pool is free, so positions
+      // are analyzed in parallel.
       true,
       (update) => {
         if (detail()?.game.id === gameId) setProgress(update);
@@ -323,8 +229,8 @@ async function runAnalysis(): Promise<void> {
     setPly(0);
     setVariation(null);
     setUserArrows([]);
-    undoHistory.length = 0;
-    redoHistory.length = 0;
+    history.reset();
+    bumpDataVersion();
     ui.notify(t("library.analysisFinished"), "success");
     await settingsStore.refreshEngine();
   } catch (error) {

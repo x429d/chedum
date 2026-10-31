@@ -21,7 +21,7 @@ pub fn phase_index(phase: Phase) -> usize {
     }
 }
 
-/// Материал игрока после первых `plies` ходов линии (UCI).
+/// Player's material after the first `plies` moves of the line (UCI).
 pub fn material_after_line(
     fen: &str,
     uci_moves: &[String],
@@ -35,7 +35,7 @@ pub fn material_after_line(
     Some(material_value(&pos, player))
 }
 
-/// Win% стороны `player` в терминальной позиции (мат/пат).
+/// Win% of `player`'s side in a terminal position (checkmate/stalemate).
 pub fn terminal_win_prob(fen: &str, player: Color) -> Option<f64> {
     let pos = parse_fen(fen).ok()?;
     if is_checkmate(&pos) {
@@ -61,7 +61,7 @@ pub struct MaterialProfile {
     pub best_material_gain_cp: i32,
 }
 
-/// Сравнивает материальные последствия сделанного хода и главной линии.
+/// Compares the material consequences of the move played and of the main line.
 #[allow(clippy::too_many_arguments)]
 pub fn material_profile(
     before_pos: &Chess,
@@ -111,7 +111,7 @@ pub struct AfterEval {
     pub allowed_mate: bool,
 }
 
-/// Оценка позиции после сделанного хода, включая терминальные позиции.
+/// Evaluation of the position after the move played, including terminal positions.
 pub fn after_evaluation(
     fen_after: &str,
     after_score: Option<Score>,
@@ -138,7 +138,7 @@ pub fn after_evaluation(
         ),
         None => {
             let white = terminal_white
-                .ok_or_else(|| AppError::Engine("Нет оценки после хода".to_string()))?;
+                .ok_or_else(|| AppError::Engine("No evaluation after the move".to_string()))?;
             (white, terminal_player.unwrap_or(50.0), Score::default())
         }
     };
@@ -171,7 +171,7 @@ pub struct TimeInfo {
     pub flag: TimeFlag,
 }
 
-/// Время на ход и флаг тайм-менеджмента.
+/// Time per move and the time-management flag.
 pub fn time_info(
     previous_clock: Option<f64>,
     current_clock: Option<f64>,
@@ -209,12 +209,14 @@ pub struct AggregateInput<'a> {
     pub user_impulsive: u32,
 }
 
-/// Собирает итоговые метрики партии из накопленных данных по ходам.
+/// Builds the game's final metrics from the data accumulated per move.
 pub fn finalize(input: AggregateInput<'_>) -> GameAnalysis {
-    let [white_accuracy, black_accuracy] = game_accuracy(&input.accuracy_samples, input.first_color);
+    let [white_accuracy, black_accuracy] =
+        game_accuracy(&input.accuracy_samples, input.first_color);
     let white_acpl = average_cp_loss(input.white_cp);
     let black_acpl = average_cp_loss(input.black_cp);
-    let [white_phase_acc, black_phase_acc] = phase_accuracy(&input.phase_samples, &input.phase_first);
+    let [white_phase_acc, black_phase_acc] =
+        phase_accuracy(&input.phase_samples, &input.phase_first);
     let mut analysis = GameAnalysis {
         game_id: input.game.id,
         engine_name: input.engine_name.to_string(),

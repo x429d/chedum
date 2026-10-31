@@ -4,4 +4,8 @@ dist/
 *.log
 src-tauri/target/
 src-tauri/gen/
+src-tauri/binaries/stockfish-*
 tmp/
+
+__pycache__/
+*.pyc

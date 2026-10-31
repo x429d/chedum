@@ -3,6 +3,7 @@ import { createSignal, For, onMount, Show } from "solid-js";
 import { t } from "../i18n";
 import { accountsStore } from "../stores/accountsStore";
 import { ui } from "../stores/uiStore";
+import { syncProgressLabel } from "../utils/progress";
 import { AccountCard } from "../components/accounts/AccountCard";
 import { AddAccountCard } from "../components/accounts/AddAccountCard";
 import { Icon } from "../components/ui/Icon";
@@ -12,11 +13,18 @@ export function AccountsView() {
   const lastResultLabel = (): string | null => {
     const result = accountsStore.lastResult();
     if (!result) return null;
-    return t("accounts.syncDone", {
+    return t("accounts.syncResult", {
       account: `${accountsStore.platformName(result.platform)} @${result.username}`,
       imported: result.gamesImported,
-      skipped: result.gamesSkipped,
+      duplicates: result.duplicates,
+      filtered: result.filtered,
+      errors: result.errors.length,
     });
+  };
+  const progressAccount = () => {
+    const id = accountsStore.syncingAccountId();
+    const account = accountsStore.accounts().find((value) => value.id === id);
+    return account ? accountsStore.accountName(account) : null;
   };
 
   onMount(() => {
@@ -64,6 +72,15 @@ export function AccountsView() {
             </Show>
             {accountsStore.syncingAll() ? t("accounts.syncAllBusy") : t("accounts.syncAll")}
           </button>
+          <Show when={accountsStore.busy()}>
+            <button
+              type="button"
+              class="btn btn-danger"
+              onClick={() => void accountsStore.cancel()}
+            >
+              {t("accounts.cancelSync")}
+            </button>
+          </Show>
         </div>
       </header>
 
@@ -132,7 +149,12 @@ export function AccountsView() {
                         style={{ width: `${progress().percent}%` }}
                       />
                     </div>
-                    <div class="sync-log">{progress().message}</div>
+                    <div class="sync-log">
+                      <Show when={progressAccount()}>
+                        {(account) => <span>{account()}: </span>}
+                      </Show>
+                      {syncProgressLabel(progress())}
+                    </div>
                   </div>
                 )}
               </Show>

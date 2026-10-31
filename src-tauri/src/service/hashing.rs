@@ -1,6 +1,6 @@
 use sha2::{Digest, Sha256};
 
-/// SHA-256 в hex — стабильный идентификатор ручных импортов.
+/// SHA-256 in hex — a stable identifier for manual imports.
 pub fn sha256_hex(value: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(value.as_bytes());

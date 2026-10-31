@@ -4,7 +4,7 @@ use rusqlite::{params, Connection};
 
 use crate::db::connection::Db;
 use crate::domain::error::{AppError, AppResult};
-use crate::domain::stats::{AppSettings, PIECE_SETS};
+use crate::domain::stats::{AppSettings, BOARD_THEMES, PIECE_SETS};
 
 pub fn get_settings(db: &Db) -> AppResult<AppSettings> {
     db.with(|conn| {
@@ -36,55 +36,56 @@ pub fn set_setting(db: &Db, key: &str, value: &str) -> AppResult<()> {
         "language",
     ];
     if !allowed.contains(&key) {
-        return Err(AppError::Validation(format!(
-            "Неизвестный параметр «{key}»"
-        )));
+        return Err(AppError::Validation(format!("Unknown setting «{key}»")));
     }
     if key == "language"
         && (!value.chars().all(|c| c.is_ascii_lowercase()) || !(2..=5).contains(&value.len()))
     {
         return Err(AppError::Validation(format!(
-            "Некорректный код языка «{value}»"
+            "Invalid language code «{value}»"
         )));
     }
     if key == "active_account_id" && !value.trim().is_empty() {
         value
             .parse::<i64>()
-            .map_err(|_| AppError::Validation("Аккаунт должен быть числом".to_string()))?;
+            .map_err(|_| AppError::Validation("Account id must be a number".to_string()))?;
     }
     if key == "analysis_depth" {
         let depth: u32 = value
             .parse()
-            .map_err(|_| AppError::Validation("Глубина должна быть числом".to_string()))?;
+            .map_err(|_| AppError::Validation("Depth must be a number".to_string()))?;
         if !(6..=24).contains(&depth) {
             return Err(AppError::Validation(
-                "Глубина анализа должна быть от 6 до 24".to_string(),
+                "Analysis depth must be between 6 and 24".to_string(),
             ));
         }
     }
     if key == "multipv" {
         let multipv: u32 = value
             .parse()
-            .map_err(|_| AppError::Validation("MultiPV должен быть числом".to_string()))?;
+            .map_err(|_| AppError::Validation("MultiPV must be a number".to_string()))?;
         if !(1..=3).contains(&multipv) {
             return Err(AppError::Validation(
-                "MultiPV должен быть от 1 до 3".to_string(),
+                "MultiPV must be between 1 and 3".to_string(),
             ));
         }
     }
     if key == "analysis_threads" {
         let threads: u32 = value
             .parse()
-            .map_err(|_| AppError::Validation("Потоки анализа должны быть числом".to_string()))?;
+            .map_err(|_| AppError::Validation("Analysis workers must be a number".to_string()))?;
         if threads > 64 {
             return Err(AppError::Validation(
-                "Потоки анализа: допустимо 0 (авто) или 1…64".to_string(),
+                "Analysis workers must be 0 (auto) or between 1 and 64".to_string(),
             ));
         }
     }
     if key == "piece_set" && !PIECE_SETS.contains(&value) {
+        return Err(AppError::Validation(format!("Unknown piece set «{value}»")));
+    }
+    if key == "board_theme" && !BOARD_THEMES.contains(&value) {
         return Err(AppError::Validation(format!(
-            "Неизвестный набор фигур «{value}»"
+            "Unknown board theme «{value}»"
         )));
     }
     db.with(|conn| {
@@ -98,6 +99,7 @@ pub fn set_setting(db: &Db, key: &str, value: &str) -> AppResult<()> {
 }
 
 pub fn set_many(db: &Db, settings: &AppSettings) -> AppResult<()> {
+    settings.validate()?;
     db.with_tx(|tx| {
         let values = [
             ("player_username", settings.player_username.clone()),
@@ -148,14 +150,21 @@ fn settings_from_map(map: &HashMap<String, String>) -> AppSettings {
     if let Some(value) = map
         .get("analysis_depth")
         .and_then(|value| value.parse().ok())
+        .filter(|value| (6..=24).contains(value))
     {
         settings.analysis_depth = value;
     }
-    if let Some(value) = map.get("multipv").and_then(|value| value.parse().ok()) {
+    if let Some(value) = map
+        .get("multipv")
+        .and_then(|value| value.parse().ok())
+        .filter(|value| (1..=3).contains(value))
+    {
         settings.multipv = value;
     }
     if let Some(value) = map.get("board_theme") {
-        settings.board_theme = value.clone();
+        if BOARD_THEMES.contains(&value.as_str()) {
+            settings.board_theme = value.clone();
+        }
     }
     if let Some(value) = map.get("piece_set") {
         if PIECE_SETS.contains(&value.as_str()) {
@@ -171,6 +180,7 @@ fn settings_from_map(map: &HashMap<String, String>) -> AppSettings {
     if let Some(value) = map
         .get("analysis_threads")
         .and_then(|value| value.parse().ok())
+        .filter(|value| *value <= 64)
     {
         settings.analysis_threads = value;
     }
@@ -239,5 +249,26 @@ mod tests {
         let db = Db::in_memory().unwrap();
         assert!(set_setting(&db, "language", "INVALID_123").is_err());
         assert!(set_setting(&db, "language", "x").is_err());
+    }
+
+    #[test]
+    fn set_many_rejects_invalid_depth() {
+        let db = Db::in_memory().unwrap();
+        let settings = AppSettings {
+            analysis_depth: 99,
+            ..AppSettings::default()
+        };
+        assert!(set_many(&db, &settings).is_err());
+        assert_eq!(get_settings(&db).unwrap().analysis_depth, 14);
+    }
+
+    #[test]
+    fn set_many_rejects_unknown_board_theme() {
+        let db = Db::in_memory().unwrap();
+        let settings = AppSettings {
+            board_theme: "neon".to_string(),
+            ..AppSettings::default()
+        };
+        assert!(set_many(&db, &settings).is_err());
     }
 }

@@ -25,17 +25,19 @@ struct Row {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
-    let db_path = args
-        .next()
-        .unwrap_or_else(|| "/Users/suze/Library/Application Support/com.chenal.studio/chenal.db".into());
+    let db_path = args.next().unwrap_or_else(|| {
+        std::env::var("HOME")
+            .map(|home| format!("{home}/Library/Application Support/com.chenal.studio/chenal.db"))
+            .unwrap_or_else(|_| "chenal.db".to_string())
+    });
     let depth: u32 = args.next().and_then(|v| v.parse().ok()).unwrap_or(14);
     let ids: Vec<i64> = args.filter_map(|v| v.parse().ok()).collect();
 
-    let con = rusqlite::Connection::open_with_flags(
-        db_path,
-        rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
-    )?;
-    let engine = EngineManager::spawn(Path::new("binaries/stockfish-aarch64-apple-darwin")).await?;
+    let con =
+        rusqlite::Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+    let engine_path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
+    let engine = EngineManager::spawn(&engine_path).await?;
 
     for id in ids {
         let (pgn, white, black, result): (String, String, String, String) = con.query_row(
@@ -57,7 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut fens = Vec::with_capacity(parsed.moves.len() + 1);
         fens.push(first.fen_before.clone());
         fens.extend(parsed.moves.iter().map(|mv| mv.fen_after.clone()));
-        let evaluations = evaluate_positions(&engine, &fens, depth, 2, |_, _| {}).await?;
+        let evaluations = evaluate_positions(&engine, &fens, depth, 2, None, |_, _| {}).await?;
         let built = build_analysis(&BuildInput {
             game: &game,
             parsed: &parsed,

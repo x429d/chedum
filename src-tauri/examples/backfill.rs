@@ -1,12 +1,17 @@
-use chenal_lib::db::{analyses_repo, Db};
 use std::path::Path;
 
+use chenal_lib::db::{analyses_repo, Db};
+
+fn default_db_path() -> String {
+    std::env::var("HOME")
+        .map(|home| format!("{home}/Library/Application Support/com.chenal.studio/chenal.db"))
+        .unwrap_or_else(|_| "chenal.db".to_string())
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let path = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "/Users/suze/Library/Application Support/com.chenal.studio/chenal.db".into());
+    let path = std::env::args().nth(1).unwrap_or_else(default_db_path);
     let db = Db::open(Path::new(&path))?;
     let updated = analyses_repo::backfill_lichess_accuracy(&db, true)?;
-    println!("пересчитано партий: {updated}");
+    println!("recalculated analyses: {updated}");
     Ok(())
 }

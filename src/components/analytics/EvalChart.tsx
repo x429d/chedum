@@ -1,28 +1,36 @@
 import { createMemo, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 
-import { t, tCategory, tPhase } from "../../i18n";
-import type { MoveEvaluation, Phase, UserColor } from "../../types/models";
-import { CATEGORY_META } from "../../types/models";
-import { formatClock, formatEval, formatNumber } from "../../utils/format";
+import { t, tPhase } from "../../i18n";
+import {
+  CATEGORY_META,
+  type MoveEvaluation,
+  type Phase,
+  type UserColor,
+} from "../../types/models";
 import { layoutPhaseLabels } from "./chartLabels";
+import { EvalChartTooltip } from "./EvalChartTooltip";
+import {
+  type ChartScope,
+  inScope,
+  markerPoints,
+  maxMoveTime,
+  phaseMarksFor,
+  scopedMovesFor,
+} from "./evalChartData";
+import {
+  buildLinePath,
+  buildPhaseRuns,
+  chartX,
+  chartY,
+  H,
+  ML,
+  MR,
+  MT,
+  PHASE_COLORS,
+} from "./evalChartLayout";
+import { TimeHistogram } from "./TimeHistogram";
 
-export type ChartScope = "user" | "opponent" | "all";
-
-const H = 214;
-const ML = 38;
-const MR = 14;
-const MT = 12;
-const EH = 138;
-const HIST_TOP = 166;
-const HIST_H = 38;
-
-/** Цвета фаз: три разных тона, чтобы подложка читалась на тёмном фоне. */
-const PHASE_COLORS: Record<Phase, string> = {
-  opening: "#2f9e8b",
-  middlegame: "#d9a441",
-  endgame: "#6d8fe0",
-};
-
+export type { ChartScope } from "./evalChartData";
 export function EvalChart(props: {
   moves: MoveEvaluation[];
   totalPlies: number;
@@ -36,14 +44,7 @@ export function EvalChart(props: {
   let wrapRef: HTMLDivElement | undefined;
 
   const scope = () => props.scope ?? "user";
-  const isPlyInScope = (ply: number): boolean => {
-    const s = scope();
-    if (s === "all") return true;
-    const isWhiteMove = ply % 2 === 1;
-    const userCol = props.userColor === "black" ? "black" : "white";
-    const isUserMove = userCol === "white" ? isWhiteMove : !isWhiteMove;
-    return s === "user" ? isUserMove : !isUserMove;
-  };
+  const isPlyInScope = (ply: number): boolean => inScope(ply, scope(), props.userColor);
 
   onMount(() => {
     if (!wrapRef) return;
@@ -57,8 +58,8 @@ export function EvalChart(props: {
 
   const plotW = () => width() - ML - MR;
   const total = () => Math.max(1, props.totalPlies);
-  const x = (ply: number): number => ML + (ply / total()) * plotW();
-  const y = (win: number): number => MT + (1 - Math.max(0, Math.min(100, win)) / 100) * EH;
+  const x = (ply: number): number => chartX(ply, total(), plotW());
+  const y = (win: number): number => chartY(win);
   const points = createMemo(() => {
     const list: { ply: number; x: number; y: number; win: number }[] = [
       { ply: 0, x: x(0), y: y(50), win: 50 },
@@ -73,46 +74,12 @@ export function EvalChart(props: {
     });
     return list;
   });
-  const linePath = createMemo(() =>
-    points()
-      .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
-      .join(" "),
-  );
-  /** Фаза хода на этом ply: подложка графика режется по фазам. */
+  const linePath = createMemo(() => buildLinePath(points()));
+  /** Move phase at this ply: the chart backdrop is split by phase. */
   const phaseOf = (ply: number): Phase =>
     props.moves[ply <= 0 ? 0 : ply - 1]?.phase ?? "opening";
 
-  const phaseRuns = createMemo(() => {
-    const list = points();
-    const bottom = HIST_TOP + HIST_H;
-    const runs: { phase: Phase; area: string }[] = [];
-    const first = list[0];
-    if (!first) return runs;
-    let phase = phaseOf(first.ply);
-    let start = first;
-    let path = `M ${first.x.toFixed(2)} ${first.y.toFixed(2)}`;
-    const flush = (endX: number) => {
-      runs.push({
-        phase,
-        area: `${path} L ${endX.toFixed(2)} ${bottom} L ${start.x.toFixed(2)} ${bottom} Z`,
-      });
-    };
-    for (let index = 1; index < list.length; index += 1) {
-      const point = list[index];
-      if (!point) continue;
-      path += ` L ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
-      const next = phaseOf(point.ply);
-      if (next === phase) continue;
-      // Смена фазы ровно по её вертикальной линии: подложки стыкуются без зазора.
-      flush(point.x);
-      phase = next;
-      start = point;
-      path = `M ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
-    }
-    const last = list[list.length - 1];
-    flush(last ? last.x : start.x);
-    return runs;
-  });
+  const phaseRuns = createMemo(() => buildPhaseRuns(points(), phaseOf));
   const phaseLabels = createMemo(() => {
     const starts: { phase: Phase; ply: number }[] = [];
     const seen = new Set<Phase>();
@@ -124,36 +91,10 @@ export function EvalChart(props: {
     }
     return layoutPhaseLabels(starts, { left: ML, right: width() - MR }, x);
   });
-  const markers = createMemo(() =>
-    props.moves
-      .map((move, index) => ({ move, ply: index + 1 }))
-      .filter(
-        ({ move, ply }) =>
-          isPlyInScope(ply) &&
-          (["brilliant", "great", "miss", "mistake", "blunder"].includes(move.classification) ||
-            move.isCritical),
-      ),
-  );
-  const phaseMarks = createMemo(() => {
-    const marks: { phase: Phase; ply: number; x: number }[] = [];
-    const seen = new Set<Phase>();
-    props.moves.forEach((move, index) => {
-      if (!seen.has(move.phase)) {
-        seen.add(move.phase);
-        marks.push({ phase: move.phase, ply: index + 1, x: x(index + 1) });
-      }
-    });
-    return marks.filter((mark) => mark.phase !== "opening");
-  });
-  const scopedMoves = createMemo(() =>
-    props.moves.filter((move) => isPlyInScope(move.ply)),
-  );
-  const histMax = createMemo(() => {
-    const values = scopedMoves()
-      .map((move) => move.timeSpentSec)
-      .filter((value): value is number => value !== null && Number.isFinite(value));
-    return Math.max(1, ...values);
-  });
+  const markers = createMemo(() => markerPoints(props.moves, isPlyInScope));
+  const phaseMarks = createMemo(() => phaseMarksFor(props.moves, x));
+  const scopedMoves = createMemo(() => scopedMovesFor(props.moves, isPlyInScope));
+  const histMax = createMemo(() => maxMoveTime(scopedMoves()));
 
   // The svg keeps its aspect ratio (xMidYMid meet) inside a fixed-height box,
   // so the drawing is letterboxed horizontally. Every client->viewBox conversion
@@ -198,9 +139,25 @@ export function EvalChart(props: {
       <svg
         class="chart-svg"
         viewBox={`0 0 ${width()} ${H}`}
+        role="img"
+        tabIndex={0}
+        aria-label={t("studio.chartLabel")}
         onPointerMove={handleMove}
         onPointerLeave={() => setHover(null)}
         onClick={(event) => props.onSelect(plyFromEvent(event))}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowLeft" && event.key !== "ArrowRight" && event.key !== "Home" && event.key !== "End") {
+            return;
+          }
+          event.preventDefault();
+          const target =
+            event.key === "Home"
+              ? 0
+              : event.key === "End"
+                ? total()
+                : Math.max(0, Math.min(total(), props.currentPly + (event.key === "ArrowRight" ? 1 : -1)));
+          props.onSelect(target);
+        }}
       >
         <defs>
           <For each={["opening", "middlegame", "endgame"] as Phase[]}>
@@ -282,49 +239,16 @@ export function EvalChart(props: {
           opacity="0.8"
         />
 
-        <text x={ML - 7} y={HIST_TOP - 4} text-anchor="end" fill="#868d78" font-size="9">
-          t
-        </text>
-        <line x1={ML} x2={width() - MR} y1={HIST_TOP + HIST_H} y2={HIST_TOP + HIST_H} stroke="#293123" stroke-width="0.7" />
-        <For each={props.moves}>
-          {(move, index) => {
-            const height = () => {
-              if (
-                !isPlyInScope(index() + 1) ||
-                move.timeSpentSec === null ||
-                move.timeSpentSec === undefined ||
-                move.timeSpentSec <= 0
-              ) {
-                return 0;
-              }
-              return Math.max(1.5, (move.timeSpentSec / histMax()) * HIST_H);
-            };
-            const step = plotW() / total();
-            const barWidth = Math.max(1, Math.min(5, step * 0.45));
-            const rx = Math.min(barWidth / 2, 1.5);
-            const color = () =>
-              move.timeFlag === "time_trouble" || move.timeFlag === "impulsive_error"
-                ? "#e05c4f"
-                : move.timeFlag === "overthink"
-                  ? "#e08a3c"
-                  : index() + 1 === props.currentPly
-                    ? "#e0bf7d"
-                    : "#4a5344";
-            return (
-              <Show when={height() > 0}>
-                <rect
-                  x={x(index() + 1) - barWidth / 2}
-                  y={HIST_TOP + HIST_H - height()}
-                  width={barWidth}
-                  height={height()}
-                  rx={rx}
-                  fill={color()}
-                  opacity="0.85"
-                />
-              </Show>
-            );
-          }}
-        </For>
+        <TimeHistogram
+          moves={props.moves}
+          total={total()}
+          currentPly={props.currentPly}
+          isPlyInScope={isPlyInScope}
+          histMax={histMax()}
+          x={x}
+          plotW={plotW()}
+          width={width()}
+        />
 
         <Show when={hovered()}>
           {(state) => (
@@ -350,37 +274,7 @@ export function EvalChart(props: {
       </svg>
 
       <Show when={hovered()}>
-        {(state) => (
-          <div
-            class="chart-tooltip"
-            style={{
-              left: `${Math.max(12, Math.min(88, state().left))}%`,
-              top: "6px",
-              transform: "translateX(-50%)",
-            }}
-          >
-            <Show
-              when={state().move}
-              fallback={<span class="muted">{t("studio.startPosition")}</span>}
-            >
-              {(move) => (
-                <div style={{ display: "flex", "flex-direction": "column", gap: "2px" }}>
-                  <div style={{ display: "flex", gap: "6px", "align-items": "center" }}>
-                    <span class="mono">{state().label}</span>
-                    <span style={{ "font-weight": "700" }}>{move().playedSan}</span>
-                    <span style={{ color: CATEGORY_META[move().classification].color }}>
-                      {tCategory(move().classification)}
-                    </span>
-                  </div>
-                  <div class="mono" style={{ color: "var(--muted)" }}>
-                    {formatEval(move().evalCp, move().evalMate)}, Win{" "}
-                    {formatNumber(move().winProbWhite, 1)}%, {formatClock(move().timeSpentSec)}
-                  </div>
-                </div>
-              )}
-            </Show>
-          </div>
-        )}
+        {(state) => <EvalChartTooltip state={state()} />}
       </Show>
     </div>
   );

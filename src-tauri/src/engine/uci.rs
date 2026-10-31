@@ -10,7 +10,7 @@ pub struct ParsedInfo {
     pub pv: Vec<String>,
 }
 
-/// Разбирает строку `info ...` протокола UCI.
+/// Parses an `info ...` line of the UCI protocol.
 pub fn parse_info(line: &str) -> Option<ParsedInfo> {
     let mut tokens = line.split_whitespace();
     if tokens.next()? != "info" {
@@ -76,7 +76,7 @@ pub fn parse_info(line: &str) -> Option<ParsedInfo> {
     Some(info)
 }
 
-/// Разбирает `bestmove e2e4 ponder e7e5`.
+/// Parses `bestmove e2e4 ponder e7e5`.
 pub fn parse_bestmove(line: &str) -> Option<String> {
     let mut tokens = line.split_whitespace();
     if tokens.next()? != "bestmove" {

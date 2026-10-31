@@ -83,7 +83,7 @@ pub fn list_games(db: &Db, filter: &GameFilter) -> AppResult<PagedGames> {
             "FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
              LEFT JOIN accounts acc ON acc.id = g.account_id {where_sql}"
         );
-        // Счётчики считаются по всей выборке, а не по текущей странице.
+        // Counters describe the whole result set, not just the current page.
         let (total, analyzed, favorites): (i64, i64, i64) = conn.query_row(
             &format!(
                 "SELECT COUNT(*),

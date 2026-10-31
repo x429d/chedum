@@ -10,6 +10,8 @@ inspired dark interface.
 
 - **Accounts**: connect any number of Chess.com and Lichess profiles, sync incrementally, switch the
   active account or analyze all accounts together; each game keeps its source and account.
+  Synchronization reports new, duplicate, filtered, and failed games separately, can be cancelled,
+  and its cursor history can be reset per account.
 - **Human games only**: Lichess AI, Computer and BOT-titled games are filtered out of sync and PGN
   import, and existing engine games are purged by migration.
 - **Library**: import/export PGN, Chess.com PubAPI and Lichess export sync with rate limiting and
@@ -26,8 +28,9 @@ inspired dark interface.
   time-management flags.
 - **No downgrades**: analyses deeper than current settings are treated as complete; re-analysis is
   offered only for games whose analysis is shallower than the current depth/MultiPV.
-- **Move Coach**: Russian explanations for brilliant/great/inaccuracy/mistake/miss/blunder moves,
-  MultiPV lines and animated main-line playback.
+- **Move Coach**: localized explanations for brilliant/great/inaccuracy/mistake/miss/blunder moves,
+  MultiPV lines and animated main-line playback. Board, move list, evaluation chart, and dialogs
+  support keyboard navigation.
 - **Retry Mistake**: trainer for your own mistakes with instant verification against MultiPV 1.
 - **Player Hub**: KPI cards, separate Elo rows per account/platform, opening repertoire matrix,
   vulnerable phases, accuracy trend, color splits and time-management statistics for one account
@@ -43,8 +46,10 @@ inspired dark interface.
   `src/assets/pieces/ATTRIBUTION.md` and `src-tauri/resources/CHESS-PIECE-LICENSES.txt`.
 - Demo games use classic games with fictional local handles and generated clock comments; all
   evaluations are produced locally by Stockfish at depth 14.
-- Interface typeface: [Spectral](https://github.com/productiontype/Spectral) (SIL OFL 1.1),
-  bundled locally with its license at `src/assets/fonts/OFL.txt`.
+- Interface typeface: [JetBrains Mono Nerd Font](https://github.com/ryanoasis/nerd-fonts)
+  (SIL OFL 1.1), bundled locally with its license at `src/assets/fonts/OFL.txt`.
+- Third-party license texts shipped with the app live in `src-tauri/resources/`.
+  A summary and the Stockfish GPL note are in [`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md).
 
 ## Stack
 
@@ -57,9 +62,10 @@ inspired dark interface.
 
 ```bash
 npm install
-npm run tauri dev      # development app
-npm run tauri build    # macOS .app / .dmg bundle
-npm run install:app    # keep exactly one Chenal.app in /Applications
+npm run fetch:stockfish   # pinned Stockfish 19 binary, not stored in git
+npm run tauri dev         # development app
+npm run tauri build       # macOS .app / .dmg bundle
+npm run install:app       # keep exactly one Chenal.app in /Applications
 ```
 
 If the bundled engine is missing, Chenal also looks for `/opt/homebrew/bin/stockfish` and
@@ -70,12 +76,15 @@ If the bundled engine is missing, Chenal also looks for `/opt/homebrew/bin/stock
 
 ```bash
 cd src-tauri
+cargo fmt --all -- --check
 cargo test
 cargo clippy --all-targets -- -D warnings
 
 cd ..
+npm test
 npx tsc --noEmit
 npm run build
+npm audit --omit=dev
 ```
 
 The local database lives in `~/Library/Application Support/com.chenal.studio/chenal.db`.
@@ -89,20 +98,21 @@ src-tauri/src/
   domain/     pure models, AppError, FEN/material helpers
   analytics/  Win%, CAPS, ACPL, Elo, 11-category classifier, phases, clocks, coach, summary
   engine/     Stockfish process, UCI parser, 75 ms throttled channel, lazy EngineState
-  db/         SQLite migrations, accounts and games repositories, SQL aggregations, demo seed
+  db/         SQLite migrations, repositories, analysis checkpoints, SQL aggregations, demo seed
   chesscom/   PubAPI client, 1 req/s limiter, 429 backoff, incremental archive sync
   lichess/    PGN export client, since-based incremental sync
   pgn/        streaming PGN parser, [%clk] extraction, export writer
-  service/    evaluation collection, analysis builder, PGN import/export
+  service/    evaluation collection, resumable analysis, PGN import/export
   commands/   thin Tauri IPC handlers
 
 src/
   types/      strict DTO mirrors and category palette
   services/   single typed Tauri IPC layer (no invoke in UI components)
   stores/     account, library, game, analysis, settings and UI state
+  utils/      chess/board helpers, localized summary and progress formatters
   components/ accounts, board, analytics, library, hub, layout, ui
   views/      Library, Analysis Studio, Player Hub, Accounts, Settings
 ```
 
-All source files stay under 300 lines; business logic is not placed in `lib.rs`, `main.rs`,
-command handlers or `App.tsx`.
+All new source files should stay under 300 lines. Business logic is not placed in `lib.rs`,
+`main.rs`, command handlers or `App.tsx`.

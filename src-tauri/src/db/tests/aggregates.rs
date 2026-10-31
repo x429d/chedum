@@ -37,7 +37,7 @@ fn hub_aggregates_only_the_configured_account() {
             TimeClass::Blitz,
             200,
         ),
-        // Игра, импортированная под другим профилем: в агрегаты alice не входит.
+        // Game imported under another profile: it does not enter alice's aggregates.
         draft(
             "c-white",
             "carol",
@@ -79,11 +79,11 @@ fn hub_aggregates_only_the_configured_account() {
     assert_eq!(stats.trend.len(), 2);
     let config = stats.config.as_ref().unwrap();
     assert_eq!(config.included, 2);
-    // Анализ carol существует, но в выборку аккаунта не входит.
+    // Carol's analysis exists, but it does not enter the account's selection.
     assert_eq!(config.total, 2);
     assert!(config.mismatched_game_ids.is_empty());
 
-    // Без фильтра видны все три партии, включая чужой профиль.
+    // Without the filter all three games are visible, including the other profile.
     assert_eq!(hub_stats(&db, None).unwrap().kpis.total_games, 3);
 }
 
@@ -180,7 +180,7 @@ fn fen_game_uses_player_color_not_ply_parity() {
         TimeClass::Rapid,
         100,
     );
-    // Начальная позиция с ходом чёрных: чётность полухода инвертирована.
+    // Starting position with Black to move: ply parity is inverted.
     game.initial_fen = Some("8/8/8/8/8/8/8/K6k b - - 0 1".to_string());
     let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
 
@@ -222,10 +222,7 @@ fn fen_game_uses_player_color_not_ply_parity() {
             )?)
         })
         .unwrap();
-    assert!(
-        summary.contains("В цейтноте пройдено ходов: 0"),
-        "{summary}"
-    );
+    assert!(summary.contains("Time-trouble moves: 0"), "{summary}");
 }
 
 #[test]
@@ -243,7 +240,7 @@ fn fen_accuracy_backfill_keeps_sides_with_player_color() {
     game.initial_fen = Some("8/8/8/8/8/8/8/K6k b - - 0 1".to_string());
     let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
 
-    // Чёрные (первый полуход) теряют почти всё преимущество, белые играют точно.
+    // Black (the first half-move) loses almost the whole advantage; White plays precisely.
     let mut black_move = move_eval(id, 1, Phase::Opening, MoveCategory::Best, TimeFlag::Normal);
     black_move.player_color = Color::Black;
     black_move.best_eval_cp = Some(50);
@@ -304,7 +301,7 @@ fn legacy_analysis_without_engine_version_stays_readable() {
         stored.engine_version,
         crate::domain::analysis::DEFAULT_ENGINE_VERSION
     );
-    // Без config_key анализ не выдаёт себя за проверенную конфигурацию.
+    // Without config_key the analysis does not present itself as a verified configuration.
     let stats = hub_stats(&db, None).unwrap();
     assert!(stats.config.is_none());
     assert_eq!(stats.kpis.analyzed_games, 1);
@@ -330,7 +327,7 @@ fn migration_backfills_player_color_from_fen() {
     insert_analysis_draft(&db, &analysis(id, 90.0, 80.0, vec![black_move, white_move])).unwrap();
 
     db.with(|conn| {
-        // Имитация базы версии 5: колонка есть, значения неверные.
+        // Simulates a version-5 database: the column exists, the values are wrong.
         conn.execute("UPDATE move_evaluations SET player_color = 'white'", [])?;
         conn.pragma_update(None, "user_version", 5)?;
         migrations::run(conn)?;

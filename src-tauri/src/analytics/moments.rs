@@ -2,15 +2,15 @@ use crate::domain::analysis::{MoveCategory, MoveEvaluation};
 use crate::domain::game::Color;
 use crate::domain::position::side_to_move;
 
-/// Сколько ключевых моментов максимум показываем в одной партии.
+/// Maximum number of key moments shown per game.
 pub const KEY_MOMENT_MAX: usize = 8;
-/// Минимальная потеря Win%, чтобы ход считался ключевым.
+/// Minimum Win% loss for a move to count as a key moment.
 pub const KEY_MOMENT_MIN_LOSS: f64 = 8.0;
-/// Минимальное расстояние между ключевыми моментами в полуходах.
+/// Minimum distance between key moments, in plies.
 pub const KEY_MOMENT_MIN_GAP: u32 = 3;
-/// Бонус к приоритету, если до хода позиция была равной или выигрышной.
+/// Priority bonus when the position was equal or winning before the move.
 pub const KEY_MOMENT_EQUAL_BONUS: f64 = 10.0;
-/// Порог «было не хуже», в Win%.
+/// Threshold for "was not worse", in Win%.
 pub const KEY_MOMENT_EQUAL_WIN: f64 = 50.0;
 
 #[derive(Debug, Clone, Copy)]
@@ -31,8 +31,8 @@ impl MomentCandidate {
     }
 }
 
-/// Значимая потеря Win% важнее ярлыка: неточность с потерей ≥ порога
-/// тоже становится ключевым моментом.
+/// A significant Win% loss outranks the category label: an inaccuracy at or
+/// above the threshold also becomes a key moment.
 fn is_error_category(category: MoveCategory) -> bool {
     matches!(
         category,
@@ -43,9 +43,10 @@ fn is_error_category(category: MoveCategory) -> bool {
     )
 }
 
-/// Отбирает ключевые моменты игрока: ошибки/зевки/упущенные шансы с потерей
-/// не меньше порога, не ближе `KEY_MOMENT_MIN_GAP` полуходов друг к другу.
-/// Возвращает индексы выбранных ходов в исходном массиве.
+/// Selects the player's key moments: inaccuracies, mistakes, blunders, and
+/// missed chances with a loss of at least the threshold, no closer than
+/// `KEY_MOMENT_MIN_GAP` plies to each other. Returns the indices of the selected
+/// moves in the original array.
 pub fn select_key_moments(
     moves: &[MoveEvaluation],
     user_color: Option<Color>,
@@ -93,10 +94,13 @@ pub fn select_key_moments(
         }
     }
     chosen.sort_by_key(|candidate| candidate.ply);
-    chosen.into_iter().map(|candidate| candidate.index).collect()
+    chosen
+        .into_iter()
+        .map(|candidate| candidate.index)
+        .collect()
 }
 
-/// Сторона, делавшая ход: надёжнее чётности полухода, работает и для FEN-партий.
+/// Side that made the move: more reliable than ply parity, and also works for FEN games.
 pub fn player_from_fen(mv: &MoveEvaluation) -> Option<Color> {
     crate::domain::position::parse_fen(&mv.fen_before)
         .ok()
@@ -140,6 +144,7 @@ mod tests {
             time_spent_sec: None,
             time_flag: TimeFlag::Normal,
             explanation_tag: None,
+            explanation_params: None,
             explanation_text: None,
             pv_lines: vec![PvLine {
                 rank: 1,

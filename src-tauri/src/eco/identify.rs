@@ -1,5 +1,5 @@
-/// Приводит имя из PGN-заголовка к читаемому виду: схлопывает пробелы,
-/// убирает хвостовую пунктуацию и повторяющиеся сегменты.
+/// Normalizes a name from a PGN header into readable form: collapses whitespace,
+/// strips trailing punctuation and repeated segments.
 pub fn normalize_opening_name(value: &str) -> Option<String> {
     let cleaned = value.split_whitespace().collect::<Vec<_>>().join(" ");
     let trimmed = cleaned.trim_matches(|ch: char| ch == '.' || ch == ',' || ch.is_whitespace());
@@ -15,7 +15,7 @@ pub fn normalize_opening_name(value: &str) -> Option<String> {
     Some(segments.join(", "))
 }
 
-/// Имя из slug-URL Chess.com: `.../openings/Vienna-Game` → `Vienna Game`.
+/// Opening name from a Chess.com slug URL: `.../openings/Vienna-Game` → `Vienna Game`.
 pub fn name_from_eco_url(url: &str) -> Option<String> {
     let slug = url.trim().trim_end_matches('/').rsplit('/').next()?;
     if slug.is_empty() {

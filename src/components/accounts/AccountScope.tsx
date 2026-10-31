@@ -17,8 +17,8 @@ export function AccountScope() {
     if (!select) return;
     const next =
       active !== null && accounts.some((account) => account.id === active) ? String(active) : "";
-    // For пересоздаёт <option> после синхронизации, и браузер сбрасывает
-    // выбранное значение на первый пункт. Возвращаем его после рендера.
+    // For recreates the <option> elements after a sync, and the browser resets
+    // the selected value to the first item. Restore it after rendering.
     const apply = () => {
       if (select && select.value !== next) select.value = next;
     };

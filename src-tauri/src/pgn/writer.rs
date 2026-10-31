@@ -3,7 +3,7 @@ use shakmaty::Position;
 use crate::domain::position::parse_fen;
 use crate::pgn::parser::ParsedGame;
 
-/// Сериализует разобранную партию обратно в PGN, сохраняя теги и комментарии.
+/// Serializes a parsed game back to PGN, preserving tags and comments.
 pub fn game_to_pgn(game: &ParsedGame) -> String {
     let mut headers: Vec<(String, String)> = Vec::new();
     const ORDER: [&str; 18] = [

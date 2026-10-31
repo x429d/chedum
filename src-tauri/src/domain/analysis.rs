@@ -7,7 +7,6 @@ use crate::domain::game::Color;
 pub use crate::domain::move_category::MoveCategory;
 pub use crate::domain::phase::{Phase, TimeFlag};
 
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PvLine {
@@ -24,8 +23,8 @@ pub struct PvLine {
 pub struct MoveEvaluation {
     pub game_id: i64,
     pub ply: i32,
-    /// Сторона, сделавшая ход. Хранится отдельно, потому что `ply % 2`
-    /// неверен для партий, начатых с FEN.
+    /// Side that made the move. Stored explicitly because `ply % 2` is wrong
+    /// for games started from a FEN position.
     pub player_color: Color,
     pub phase: Phase,
     pub fen_before: String,
@@ -50,6 +49,10 @@ pub struct MoveEvaluation {
     pub time_spent_sec: Option<f64>,
     pub time_flag: TimeFlag,
     pub explanation_tag: Option<String>,
+    /// Localization parameters for `explanation_tag`. New analyses render the
+    /// explanation in the UI language; `explanation_text` is a legacy fallback.
+    #[serde(default)]
+    pub explanation_params: Option<BTreeMap<String, String>>,
     pub explanation_text: Option<String>,
     pub pv_lines: Vec<PvLine>,
     pub user_comment: String,
@@ -89,7 +92,7 @@ impl CategoryCounts {
     }
 }
 
-/// Версии методик, с которыми получены метрики конкретного анализа.
+/// Methodology versions attached to each analysis.
 pub const CLASSIFIER_VERSION: &str = "classifier-v1";
 pub const ACCURACY_METHOD_VERSION: &str = "lichess-v1";
 pub const DEFAULT_ENGINE_VERSION: &str = "19";

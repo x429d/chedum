@@ -46,7 +46,7 @@ pub fn get(db: &Db, id: i64) -> AppResult<Account> {
             map_account,
         )
         .optional()?
-        .ok_or_else(|| AppError::NotFound(format!("Аккаунт #{id} не найден")))
+        .ok_or_else(|| AppError::NotFound(format!("Account #{id} not found")))
     })
 }
 
@@ -78,13 +78,12 @@ pub fn create(db: &Db, platform: AccountPlatform, username: &str) -> AppResult<A
         let account = create_conn(tx, platform, username)?;
         attach_existing_games_conn(tx, &account)?;
         get_conn(tx, account.id)?
-            .ok_or_else(|| AppError::Internal("Не удалось прочитать созданный аккаунт".to_string()))
+            .ok_or_else(|| AppError::Internal("Could not read the created account".to_string()))
     })
 }
 
-/// Привязывает к аккаунту уже лежащие в базе партии этого игрока, у которых
-/// нет владельца. Так повторное подключение восстанавливает связь без
-/// повторной загрузки архивов.
+/// Attaches existing ownerless games of this player to the account. This lets
+/// a reconnected account restore its links without downloading archives again.
 pub fn attach_existing_games_conn(conn: &Connection, account: &Account) -> AppResult<u32> {
     let source = match account.platform {
         AccountPlatform::Chesscom => "chesscom",
@@ -106,7 +105,7 @@ pub fn create_conn(
 ) -> AppResult<Account> {
     if let Some(existing) = find_conn(conn, platform, username)? {
         return Err(AppError::Validation(format!(
-            "Аккаунт {} уже подключён",
+            "Account {} is already connected",
             existing.username
         )));
     }
@@ -116,9 +115,8 @@ pub fn create_conn(
         params![platform.as_str(), username.trim(), created_at],
     )?;
     let id = conn.last_insert_rowid();
-    get_conn(conn, id)?.ok_or_else(|| {
-        AppError::Internal("Не удалось прочитать только что созданный аккаунт".to_string())
-    })
+    get_conn(conn, id)?
+        .ok_or_else(|| AppError::Internal("Could not read the newly created account".to_string()))
 }
 
 fn find_conn(
@@ -145,9 +143,9 @@ pub fn get_conn(conn: &Connection, id: i64) -> AppResult<Option<Account>> {
     .map_err(Into::into)
 }
 
-/// Удаляет аккаунт, но оставляет его партии в библиотеке: они становятся
-/// «ручными» и доступны в режиме «Все аккаунты». Кэш архивов Chess.com
-/// очищается, чтобы повторное подключение заново сверило историю.
+/// Deletes an account but keeps its games in the library: they lose the account
+/// link and stay visible in the "All accounts" scope. The Chess.com archive
+/// cache is cleared so reconnecting re-checks the full history.
 pub fn remove(db: &Db, id: i64) -> AppResult<()> {
     db.with_tx(|tx| {
         let (platform, username): (String, String) = tx
@@ -157,7 +155,7 @@ pub fn remove(db: &Db, id: i64) -> AppResult<()> {
                 |row| Ok((row.get(0)?, row.get(1)?)),
             )
             .optional()?
-            .ok_or_else(|| AppError::NotFound(format!("Аккаунт #{id} не найден")))?;
+            .ok_or_else(|| AppError::NotFound(format!("Account #{id} not found")))?;
         tx.execute("DELETE FROM accounts WHERE id = ?1", [id])?;
         if platform == AccountPlatform::Chesscom.as_str() {
             tx.execute(
@@ -179,9 +177,35 @@ pub fn touch_sync(db: &Db, id: i64, synced_at: &str) -> AppResult<()> {
     })
 }
 
-/// Возвращает аккаунт для ручного импорта: явно выбранный или единственный
-/// подключённый. При нескольких аккаунтах владельца PGN определить нельзя,
-/// поэтому партия остаётся без привязки.
+/// Clears all incremental sync cursors for an account. The next sync downloads
+/// the full history again, which is useful after deleting games locally.
+pub fn reset_sync_state(db: &Db, id: i64) -> AppResult<()> {
+    db.with_tx(|tx| {
+        let (platform, username): (String, String) = tx
+            .query_row(
+                "SELECT platform, username FROM accounts WHERE id = ?1",
+                [id],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .optional()?
+            .ok_or_else(|| AppError::NotFound(format!("Account #{id} not found")))?;
+        if platform == AccountPlatform::Chesscom.as_str() {
+            tx.execute(
+                "DELETE FROM synced_archives WHERE username = ?1 COLLATE NOCASE",
+                params![username],
+            )?;
+        }
+        tx.execute(
+            "UPDATE accounts SET last_synced_at = NULL WHERE id = ?1",
+            [id],
+        )?;
+        Ok(())
+    })
+}
+
+/// Resolves the account for manual PGN import: the explicitly selected one or
+/// the only connected one. With several accounts the owner cannot be inferred,
+/// so the game stays unassigned.
 pub fn resolve_import_account(db: &Db, requested: Option<i64>) -> AppResult<Option<Account>> {
     if let Some(id) = requested {
         return get(db, id).map(Some);

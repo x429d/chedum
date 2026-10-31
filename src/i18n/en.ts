@@ -107,6 +107,11 @@ export const en: TranslationSchema = {
     gamesAlreadyDeleted: "Games already deleted",
     gameDeleted: "Game deleted",
     gamesDeletedCount: "Deleted games: {count}",
+    analysisFailedTimes: "Analysis failed {count} times",
+    analysisFailedHint: "{count} failed attempts: {error}",
+    selectAll: "Select all games",
+    selectGame: "Select game",
+    openGame: "Open game",
   },
   studio: {
     backToLibrary: "Back to library",
@@ -177,6 +182,8 @@ export const en: TranslationSchema = {
     scopeUser: "My moves only",
     scopeOpponent: "Opponent moves",
     scopeAll: "All moves (both)",
+    chartLabel: "Evaluation and move-time chart",
+    chartHint: "Use the left and right arrow keys to step through the game.",
   },
   board: {
     first: "Start",
@@ -189,6 +196,8 @@ export const en: TranslationSchema = {
     live: "Live Stockfish analysis",
     fullscreen: "Fullscreen",
     exitFullscreen: "Exit fullscreen",
+    label: "Chess board",
+    focusHint: "Use the arrow keys to move the cursor, Enter to select or move a piece, and Escape to clear the selection.",
   },
   hub: {
     title: "Player Analytics",
@@ -264,6 +273,11 @@ export const en: TranslationSchema = {
     appearanceTitle: "Appearance",
     showArrows: "Show move arrows",
     pieceSet: "Piece Set",
+    diagnosticsTitle: "Diagnostics",
+    copyDiagnostics: "Copy diagnostics",
+    diagnosticsCopied: "Diagnostics copied to clipboard",
+    dbPath: "Database",
+    logPath: "Logs",
   },
   accounts: {
     title: "Accounts",
@@ -291,7 +305,7 @@ export const en: TranslationSchema = {
     syncAllBusy: "Syncing all…",
     syncDone: "{account}: +{imported} games, skipped {skipped}",
     syncEmpty: "{account}: no new games",
-    syncAllDone: "All accounts: +{imported} games, skipped {skipped}",
+    syncAllDone: "All accounts: +{imported} new, {duplicates} already present, {filtered} filtered, {errors} errors",
     syncAllEmpty: "All accounts are up to date",
     syncSomeFailed: "Sync finished with errors: {count}",
     scope: "Account",
@@ -302,6 +316,13 @@ export const en: TranslationSchema = {
     remove: "Disconnect",
     confirmRemove: "Disconnect {account}? Games stay in the library.",
     syncProgress: "Sync progress",
+    cancelSync: "Cancel sync",
+    syncCancelled: "Synchronization cancelled",
+    syncResult: "{account}: +{imported} new, {duplicates} already present, {filtered} filtered, {errors} errors",
+    syncReset: "Reset sync history",
+    syncResetConfirm: "Reset the sync history for {account}? The next sync will download the full history again.",
+    syncResetDone: "Sync history reset for {account}",
+    syncForceHint: "Force re-download ignores saved sync cursors.",
     howTitle: "How it works",
     howStep1: "Connect any number of chess.com and lichess accounts.",
     howStep2: "Sync downloads only new games; everything is stored locally.",
@@ -339,5 +360,78 @@ export const en: TranslationSchema = {
   sides: {
     white: "white",
     black: "black",
+  },
+  sync: {
+    progressArchives: "Fetching archive list…",
+    progressArchive: "Archive {done} of {total} · {imported} games imported",
+    progressDownload: "Downloading games…",
+    progressParse: "Parsing PGN…",
+    progressImport: "Importing games…",
+    progressDone: "Synchronization complete: +{imported} games",
+    progressEmpty: "No new games",
+  },
+  coach: {
+    brilliant_sacrifice:
+      "Brilliant sacrifice: {playedSan} gives up material but keeps a strong evaluation. Main line: {line}.",
+    strong_continuation:
+      "The strongest continuation {playedSan} keeps the advantage. Key line: {line}.",
+    allowed_mate:
+      "Allows a forced mate in {distance}. Instead of {playedSan}, {bestSan} was more precise.",
+    missed_mate:
+      "A forced mate in {distance} was missed. Instead of {playedSan}, {bestSan} was winning.",
+    hung_piece:
+      "Material loss: after {playedSan} a piece is left undefended; the opponent's main line gives at least {pawns} pawns. More precise was {bestSan}.",
+    missed_tactic:
+      "A tactical strike was missed: {bestSan} won about {pawns} pawns of material.",
+    king_safety:
+      "The king's cover is weakened: {playedSan} creates immediate threats; the opponent replies with check. Safer was {bestSan}.",
+    positional_concession:
+      "Positional concession: a loss of {pawns} pawns of evaluation and control of key squares. More precise was {bestSan}.",
+  },
+  progress: {
+    prepare: "Parsing PGN and preparing positions…",
+    engine: "Stockfish: position {done} of {total}",
+    aggregate: "Classifying moves and computing metrics…",
+    save: "Saving analysis to the local database…",
+    done: "Analysis complete",
+  },
+  summary: {
+    opening: "Opening: {eco} «{name}».",
+    openingEco: "Opening: {eco}.",
+    openingName: "Opening: {name}.",
+    wonAsWhite: "You played White and beat {opponent}.",
+    lostAsWhite: "You played White and lost to {opponent}.",
+    wonAsBlack: "You played Black and beat {opponent}.",
+    lostAsBlack: "You played Black and lost to {opponent}.",
+    draw: "{white} — {black} ended in a draw.",
+    result: "{white} — {black} ended {result}.",
+    accuracy: "Your move accuracy was {accuracy}% (ACPL {acpl}).",
+    accuracyNoAcpl: "Your move accuracy was {accuracy}%.",
+    clean: "No serious errors were found — a clean game.",
+    weakness: "Weak spot: {errors}.",
+    weakestPhase: "Lowest accuracy in the {phase}: {accuracy}%.",
+    keyMoments:
+      "Key moments: {count}. Time-trouble moves: {timeTrouble}, impulsive errors: {impulsive}.",
+    noKeyMoments: "No key turning points were recorded.",
+  },
+  errors: {
+    database: "Database error",
+    io: "File access error",
+    network: "Network error",
+    engine: "Engine error",
+    parse: "Could not parse the data",
+    not_found: "Not found",
+    validation: "Invalid input",
+    rate_limited: "Rate limit exceeded. Try again later.",
+    busy: "The engine is busy",
+    cancelled: "Cancelled",
+    internal: "Internal error",
+    unknown: "Unknown error",
+  },
+  app: {
+    unexpectedError: "Something went wrong while rendering this view.",
+    reloadView: "Reload view",
+    errorDetails: "Details",
+    dismiss: "Dismiss",
   },
 };

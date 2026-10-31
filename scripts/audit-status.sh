@@ -1,5 +1,5 @@
 #!/bin/bash
-# Сводка состояния Chenal для аудита. Только чтение; БД не изменяется.
+# Chenal audit summary. Read-only; the database is never modified.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

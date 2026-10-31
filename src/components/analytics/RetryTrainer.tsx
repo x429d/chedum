@@ -21,8 +21,8 @@ export function RetryTrainer() {
   const [resultFen, setResultFen] = createSignal<string | null>(null);
   const userColor = (): Color =>
     gameStore.detail()?.game.userColor === "black" ? "black" : "white";
-  // Retry работает только с отобранными ключевыми моментами игрока,
-  // а не со всеми ошибками партии.
+  // Retry only works with the player's selected key moments,
+  // not with every mistake in the game.
   const mistakes = createMemo<MoveEvaluation[]>(() =>
     gameStore
       .moves()

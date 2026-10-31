@@ -12,8 +12,8 @@ const MIN_INTERVAL: Duration = Duration::from_secs(1);
 
 #[async_trait]
 pub trait LichessApi: Send + Sync {
-    /// Возвращает PGN всех партий пользователя; `since_ms` — нижняя граница
-    /// времени окончания партии в миллисекундах Unix.
+    /// Returns the PGN of all games for a user; `since_ms` is the inclusive
+    /// lower bound on game end time in Unix milliseconds.
     async fn user_games_pgn(&self, username: &str, since_ms: Option<i64>) -> AppResult<String>;
 }
 
@@ -29,7 +29,7 @@ impl LichessClient {
             .user_agent(USER_AGENT)
             .timeout(Duration::from_secs(900))
             .build()
-            .map_err(|err| AppError::Network(format!("Не удалось создать HTTP-клиент: {err}")))?;
+            .map_err(|err| AppError::Network(format!("Could not create the HTTP client: {err}")))?;
         Ok(LichessClient {
             http,
             base: "https://lichess.org".to_string(),
@@ -50,7 +50,7 @@ impl LichessClient {
 
     fn games_url(&self, username: &str, since_ms: Option<i64>) -> String {
         let mut url = format!(
-            "{}/api/games/user/{username}?clocks=true&opening=true",
+            "{}/api/games/user/{username}?clocks=true&opening=true&sort=dateAsc",
             self.base
         );
         if let Some(since) = since_ms {
@@ -72,13 +72,13 @@ impl LichessClient {
             let status = response.status();
             if status == StatusCode::NOT_FOUND {
                 return Err(AppError::NotFound(
-                    "Профиль Lichess не найден. Проверьте ник.".to_string(),
+                    "Lichess profile not found. Check the username.".to_string(),
                 ));
             }
             if status == StatusCode::TOO_MANY_REQUESTS || status.is_server_error() {
                 if attempt >= 2 {
                     return Err(AppError::RateLimited(format!(
-                        "Lichess вернул {status} после трёх попыток"
+                        "Lichess returned {status} after three attempts"
                     )));
                 }
                 let retry_after = response
@@ -93,7 +93,7 @@ impl LichessClient {
             }
             if !status.is_success() {
                 return Err(AppError::Network(format!(
-                    "Lichess вернул {status} для {url}"
+                    "Lichess returned {status} for {url}"
                 )));
             }
             return response.text().await.map_err(AppError::from);
@@ -120,11 +120,11 @@ mod tests {
         let client = LichessClient::new().unwrap();
         assert_eq!(
             client.games_url("alice", None),
-            "https://lichess.org/api/games/user/alice?clocks=true&opening=true"
+            "https://lichess.org/api/games/user/alice?clocks=true&opening=true&sort=dateAsc"
         );
         assert_eq!(
             client.games_url("alice", Some(1_700_000_000_000)),
-            "https://lichess.org/api/games/user/alice?clocks=true&opening=true&since=1700000000000"
+            "https://lichess.org/api/games/user/alice?clocks=true&opening=true&sort=dateAsc&since=1700000000000"
         );
     }
 }

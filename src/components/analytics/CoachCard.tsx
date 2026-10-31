@@ -1,6 +1,6 @@
 import { For, Show } from "solid-js";
 
-import { t, tCategory } from "../../i18n";
+import { currentLanguage, t, tCategory, tCoach } from "../../i18n";
 import type { MoveEvaluation } from "../../types/models";
 import { CATEGORY_META } from "../../types/models";
 import { formatClock, formatEval } from "../../utils/format";
@@ -21,6 +21,17 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
     >
       {(move) => {
         const meta = () => CATEGORY_META[move().classification];
+        const explanation = (): string | null => {
+          const tag = move().explanationTag;
+          const params = move().explanationParams;
+          if (tag && params) {
+            const text = tCoach(tag, params);
+            if (text) return text;
+          }
+          // Older analyses only have Russian prose. Keep it for Russian users,
+          // but never leak it into the English interface.
+          return currentLanguage() === "ru" ? move().explanationText : null;
+        };
         return (
           <div class="coach-card">
             <div class="coach-head">
@@ -39,10 +50,10 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
                 {move().winProbLoss.toFixed(1)}%
               </span>
             </div>
-            <Show when={move().explanationText}>
-              <div class="coach-text">{move().explanationText}</div>
+            <Show when={explanation()}>
+              {(text) => <div class="coach-text">{text()}</div>}
             </Show>
-            <Show when={!move().explanationText}>
+            <Show when={!explanation()}>
               <div class="coach-text muted">{t("studio.bestMove", { san: move().bestSan ?? "—" })}</div>
             </Show>
             <div class="pv-list">

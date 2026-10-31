@@ -96,7 +96,7 @@ fn counts_analyzed_and_favorites_for_whole_selection() {
     .unwrap();
     assert_eq!(page.total, 3);
     assert_eq!(page.games.len(), 1);
-    // Счётчики описывают всю выборку, а не одну страницу.
+    // Counters describe the whole selection, not a single page.
     assert_eq!(page.analyzed, 1);
     assert_eq!(page.favorites, 1);
 
@@ -104,6 +104,6 @@ fn counts_analyzed_and_favorites_for_whole_selection() {
     let pending = pending_analysis(&db, &GameFilter::default(), key, 14, 2).unwrap();
     assert_eq!(pending.ids.len(), 2);
     assert!(!pending.ids.contains(&ids[1]));
-    // По две партии по три позиции: стартовая + два полухода.
+    // Two games with three positions each: the start position plus two half-moves.
     assert_eq!(pending.positions, 6);
 }

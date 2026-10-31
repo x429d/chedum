@@ -2,16 +2,13 @@ use std::collections::HashMap;
 
 use crate::domain::game::Game;
 
-/// Экспортирует партии в один PGN-документ, разделяя их пустой строкой.
+/// Exports games as a single PGN document, separating them with a blank line.
 pub fn export_games(games: &[Game]) -> String {
     export_games_with_annotations(games, &HashMap::new())
 }
 
-/// То же, но с подписью происхождения анализа в заголовке `Annotator`.
-pub fn export_games_with_annotations(
-    games: &[Game],
-    annotations: &HashMap<i64, String>,
-) -> String {
+/// Same as `export_games`, but adds analysis provenance to the `Annotator` header.
+pub fn export_games_with_annotations(games: &[Game], annotations: &HashMap<i64, String>) -> String {
     let mut out = String::new();
     for game in games {
         let pgn = game.pgn.trim_end();
@@ -26,7 +23,7 @@ pub fn export_games_with_annotations(
     out
 }
 
-/// Вставляет или заменяет `[Annotator "…"]`, не ломая остальные заголовки.
+/// Inserts or replaces `[Annotator "…"]` without disturbing the other headers.
 fn apply_annotator(pgn: &str, value: &str) -> String {
     let escaped = value.replace('\\', "\\\\").replace('"', "\\\"");
     let line = format!("[Annotator \"{escaped}\"]");
@@ -89,7 +86,10 @@ mod tests {
     #[test]
     fn adds_annotator_header_without_touching_movetext() {
         let mut annotations = HashMap::new();
-        annotations.insert(1, "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string());
+        annotations.insert(
+            1,
+            "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string(),
+        );
         let out = export_games_with_annotations(
             &[game("[White \"A\"]\n[Black \"B\"]\n\n1. e4 e5 *")],
             &annotations,
@@ -101,7 +101,10 @@ mod tests {
     #[test]
     fn replaces_existing_annotator_instead_of_duplicating() {
         let mut annotations = HashMap::new();
-        annotations.insert(1, "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string());
+        annotations.insert(
+            1,
+            "Chenal · Stockfish 19 · depth 14 · Lichess accuracy".to_string(),
+        );
         let out = export_games_with_annotations(
             &[game("[White \"A\"]\n[Annotator \"old\"]\n\n1. e4 *")],
             &annotations,

@@ -8,20 +8,20 @@ use tokio::time::timeout;
 
 use crate::domain::error::{AppError, AppResult};
 
-/// Stockfish печатает прогресс не реже раза в секунду, поэтому долгая тишина
-/// означает зависший процесс. Короткий таймаут не даёт очереди анализа
-/// застрять на одной позиции на минуты.
+/// Stockfish prints progress at least once a second, so a long silence means a
+/// hung process. The short timeout keeps the analysis queue from getting stuck
+/// on a single position for minutes.
 const READ_TIMEOUT: Duration = Duration::from_secs(30);
-/// Защита от бесконечной строки, если движок начнёт печатать мусор.
+/// Guards against an unbounded line if the engine starts printing garbage.
 const MAX_LINE_BYTES: usize = 1024 * 1024;
 
 pub struct EngineProcess {
     child: Child,
     stdin: ChildStdin,
     reader: BufReader<ChildStdout>,
-    /// Байты, уже прочитанные из канала, но ещё не составившие строку.
-    /// Хранятся в структуре, иначе таймаут выбрасывал бы половину строки
-    /// и весь UCI-поток после него был бы сдвинут.
+    /// Bytes already read from the channel but not yet forming a line.
+    /// Kept in the struct, otherwise a timeout would discard half a line
+    /// and shift the entire UCI stream after it.
     pending: Vec<u8>,
     name: String,
 }
@@ -34,11 +34,11 @@ impl EngineProcess {
         EngineProcess::spawn_with(path, threads, 128).await
     }
 
-    /// `threads` — потоков на процесс, `hash_mb` — размер хеш-таблицы.
+    /// `threads` — threads per process, `hash_mb` — transposition table size.
     pub async fn spawn_with(path: &Path, threads: usize, hash_mb: u32) -> AppResult<Self> {
         if !path.is_file() {
             return Err(AppError::Engine(format!(
-                "Исполняемый файл Stockfish не найден: {}",
+                "Stockfish executable not found: {}",
                 path.display()
             )));
         }
@@ -48,15 +48,15 @@ impl EngineProcess {
             .stderr(Stdio::null())
             .kill_on_drop(true)
             .spawn()
-            .map_err(|err| AppError::Engine(format!("Не удалось запустить Stockfish: {err}")))?;
+            .map_err(|err| AppError::Engine(format!("Could not start Stockfish: {err}")))?;
         let stdin = child
             .stdin
             .take()
-            .ok_or_else(|| AppError::Engine("Не удалось открыть stdin Stockfish".to_string()))?;
+            .ok_or_else(|| AppError::Engine("Could not open Stockfish stdin".to_string()))?;
         let stdout = child
             .stdout
             .take()
-            .ok_or_else(|| AppError::Engine("Не удалось открыть stdout Stockfish".to_string()))?;
+            .ok_or_else(|| AppError::Engine("Could not open Stockfish stdout".to_string()))?;
         let mut process = EngineProcess {
             child,
             stdin,
@@ -100,18 +100,18 @@ impl EngineProcess {
         self.stdin
             .write_all(command.as_bytes())
             .await
-            .map_err(|err| AppError::Engine(format!("Ошибка записи в Stockfish: {err}")))?;
+            .map_err(|err| AppError::Engine(format!("Could not write to Stockfish: {err}")))?;
         self.stdin
             .write_all(b"\n")
             .await
-            .map_err(|err| AppError::Engine(format!("Ошибка записи в Stockfish: {err}")))?;
+            .map_err(|err| AppError::Engine(format!("Could not write to Stockfish: {err}")))?;
         self.stdin
             .flush()
             .await
-            .map_err(|err| AppError::Engine(format!("Ошибка flush Stockfish: {err}")))
+            .map_err(|err| AppError::Engine(format!("Could not flush Stockfish: {err}")))
     }
 
-    /// Читает одну строку, сохраняя частично полученные данные между вызовами.
+    /// Reads one line, preserving partially received data between calls.
     pub async fn read_line(&mut self) -> AppResult<String> {
         loop {
             if let Some(index) = self.pending.iter().position(|byte| *byte == b'\n') {
@@ -125,28 +125,30 @@ impl EngineProcess {
             if self.pending.len() > MAX_LINE_BYTES {
                 self.pending.clear();
                 return Err(AppError::Engine(
-                    "Слишком длинная строка вывода Stockfish".to_string(),
+                    "Stockfish output line is too long".to_string(),
                 ));
             }
             let mut chunk: Vec<u8> = Vec::new();
             match timeout(READ_TIMEOUT, self.reader.fill_buf()).await {
                 Ok(Ok([])) => {
                     return Err(AppError::Engine(
-                        "Stockfish закрыл поток вывода".to_string(),
+                        "Stockfish closed its output stream".to_string(),
                     ))
                 }
                 Ok(Ok(buffer)) => chunk.extend_from_slice(buffer),
                 Ok(Err(err)) => {
-                    return Err(AppError::Engine(format!("Ошибка чтения Stockfish: {err}")))
+                    return Err(AppError::Engine(format!(
+                        "Could not read from Stockfish: {err}"
+                    )))
                 }
-                Err(_) => return Err(AppError::Engine("Таймаут ответа Stockfish".to_string())),
+                Err(_) => return Err(AppError::Engine("Stockfish response timed out".to_string())),
             }
             self.reader.consume(chunk.len());
             self.pending.extend_from_slice(&chunk);
         }
     }
 
-    /// Процесс ещё жив и готов принимать команды.
+    /// The process is still alive and ready to accept commands.
     pub fn is_running(&mut self) -> bool {
         matches!(self.child.try_wait(), Ok(None))
     }
@@ -183,7 +185,7 @@ impl EngineProcess {
         }
     }
 
-    /// Аккуратно завершает процесс, при необходимости добивая его.
+    /// Gracefully shuts down the process, killing it if necessary.
     pub async fn shutdown(&mut self) {
         let _ = self.send("quit").await;
         let _ = timeout(Duration::from_secs(2), self.child.wait()).await;

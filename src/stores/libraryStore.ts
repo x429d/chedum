@@ -50,16 +50,16 @@ async function load(): Promise<void> {
   }
 }
 
-/// Очередь — производная состояния: партии без анализа текущей конфигурации,
-/// у которых меньше трёх неудачных попыток. Считает бэкенд.
+/// The queue is derived state: games without analysis for the current
+/// configuration that have fewer than three failed attempts. The backend computes it.
 async function refreshQueue(): Promise<void> {
   try {
     const plan = await api.listPendingAnalysis(filter());
     setQueuePending(plan.ids.length);
     setQueueExcluded(plan.excluded);
   } catch (error) {
-    // Счётчик не критичен для загрузки библиотеки, но молча терять ошибку нельзя:
-    // иначе очередь выглядит пустой, хотя партии без анализа есть.
+    // The counter is not critical for loading the library, but the error must not
+    // be swallowed: otherwise the queue looks empty despite unanalyzed games.
     ui.notify(`${t("library.queueTitle")}: ${toErrorMessage(error)}`, "error");
   }
 }

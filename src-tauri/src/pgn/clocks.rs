@@ -1,6 +1,6 @@
 use crate::domain::game::TimeClass;
 
-/// Извлекает секунды из комментария `[%clk H:MM:SS.d]` или `[%clk MM:SS]`.
+/// Extracts seconds from a `[%clk H:MM:SS.d]` or `[%clk MM:SS]` comment.
 pub fn parse_clock_comment(comment: &str) -> Option<f64> {
     let start = comment.find("[%clk")?;
     let rest = &comment[start + 5..];
@@ -30,7 +30,7 @@ fn parse_num(value: &str) -> Option<f64> {
     value.trim().parse::<f64>().ok()
 }
 
-/// Разбирает `[%emt 0:00:12]` в секунды.
+/// Parses `[%emt 0:00:12]` into seconds.
 pub fn parse_elapsed_comment(comment: &str) -> Option<f64> {
     let start = comment.find("[%emt")?;
     let rest = &comment[start + 5..];
@@ -38,7 +38,7 @@ pub fn parse_elapsed_comment(comment: &str) -> Option<f64> {
     parse_clock_value(rest[..end].trim())
 }
 
-/// Базовое время и инкремент из строки `600+5` или `40/7200:1800`.
+/// Base time and increment from a `600+5` or `40/7200:1800` string.
 pub fn parse_time_control(value: &str) -> Option<(u32, u32)> {
     let trimmed = value.trim();
     if trimmed.is_empty() {
@@ -52,7 +52,7 @@ pub fn parse_time_control(value: &str) -> Option<(u32, u32)> {
     Some((base, increment))
 }
 
-/// Класс контроля времени по базовому времени и инкременту.
+/// Time class from base time and increment, estimated as `base + 40 × increment`.
 pub fn classify_time_class(base_secs: u32, increment_secs: u32) -> TimeClass {
     let estimated = u64::from(base_secs) + 40 * u64::from(increment_secs);
     if estimated < 180 {

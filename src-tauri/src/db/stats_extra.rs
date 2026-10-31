@@ -5,8 +5,8 @@ use crate::domain::error::AppResult;
 use crate::domain::game::Color;
 use crate::domain::stats::{AccuracyPoint, TimeStats};
 
-/// Последние 200 разобранных партий, развёрнутые в хронологический порядок.
-/// Пустые даты не попадают в тренд.
+/// The last 200 analyzed games, reversed into chronological order.
+/// Games with an empty date do not enter the trend.
 pub(crate) fn trend(
     conn: &Connection,
     key: Option<&str>,

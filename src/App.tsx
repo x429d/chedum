@@ -1,11 +1,14 @@
-import { onMount, Show } from "solid-js";
+import { createEffect, ErrorBoundary, onCleanup, onMount, Show } from "solid-js";
 
+import { ViewError } from "./components/layout/ViewError";
 import { Sidebar } from "./components/layout/Sidebar";
 import { Toasts } from "./components/layout/Toasts";
+import { applyDocumentLanguage, currentLanguage } from "./i18n";
 import { accountsStore } from "./stores/accountsStore";
 import { libraryStore } from "./stores/libraryStore";
 import { settingsStore } from "./stores/settingsStore";
 import { ui } from "./stores/uiStore";
+import { toErrorMessage } from "./utils/format";
 import { AccountsView } from "./views/AccountsView";
 import { AnalysisView } from "./views/AnalysisView";
 import { HubView } from "./views/HubView";
@@ -20,6 +23,23 @@ export default function App() {
       await libraryStore.load();
       await libraryStore.startAutoResume();
     })();
+    const onError = (event: ErrorEvent): void => {
+      ui.notify(toErrorMessage(event.error ?? event.message), "error");
+    };
+    const onRejection = (event: PromiseRejectionEvent): void => {
+      ui.notify(toErrorMessage(event.reason), "error");
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    onCleanup(() => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    });
+  });
+
+  createEffect(() => {
+    currentLanguage();
+    applyDocumentLanguage();
   });
 
   return (
@@ -28,21 +48,23 @@ export default function App() {
       <Sidebar />
       <main class="main">
         <div class="drag-strip" />
-        <Show when={ui.view() === "library"}>
-          <LibraryView />
-        </Show>
-        <Show when={ui.view() === "analysis"}>
-          <AnalysisView />
-        </Show>
-        <Show when={ui.view() === "hub"}>
-          <HubView />
-        </Show>
-        <Show when={ui.view() === "accounts"}>
-          <AccountsView />
-        </Show>
-        <Show when={ui.view() === "settings"}>
-          <SettingsView />
-        </Show>
+        <ErrorBoundary fallback={(error, reset) => <ViewError error={error} reset={reset} />}>
+          <Show when={ui.view() === "library"}>
+            <LibraryView />
+          </Show>
+          <Show when={ui.view() === "analysis"}>
+            <AnalysisView />
+          </Show>
+          <Show when={ui.view() === "hub"}>
+            <HubView />
+          </Show>
+          <Show when={ui.view() === "accounts"}>
+            <AccountsView />
+          </Show>
+          <Show when={ui.view() === "settings"}>
+            <SettingsView />
+          </Show>
+        </ErrorBoundary>
       </main>
       <Toasts />
     </div>

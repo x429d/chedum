@@ -29,10 +29,7 @@ fn pending_queue_is_derived_from_the_target_configuration() {
         TimeClass::Rapid,
         20,
     );
-    let shallow_id = db
-        .with_tx(|tx| insert_game(tx, &shallow))
-        .unwrap()
-        .unwrap();
+    let shallow_id = db.with_tx(|tx| insert_game(tx, &shallow)).unwrap().unwrap();
     let deep_id = db.with_tx(|tx| insert_game(tx, &deep)).unwrap().unwrap();
     let shallow_analysis = analysis(
         shallow_id,
@@ -64,9 +61,11 @@ fn pending_queue_is_derived_from_the_target_configuration() {
     let deep_key = crate::db::analyses_repo::analysis_config_key(&deep_analysis.analysis);
     insert_analysis_draft(&db, &deep_analysis).unwrap();
 
-    let shallow_queue =
-        pending_analysis(&db, &GameFilter::default(), &shallow_key, 14, 2).unwrap();
-    assert!(shallow_queue.ids.is_empty(), "более глубокий анализ не пересчитываем");
+    let shallow_queue = pending_analysis(&db, &GameFilter::default(), &shallow_key, 14, 2).unwrap();
+    assert!(
+        shallow_queue.ids.is_empty(),
+        "более глубокий анализ не пересчитываем"
+    );
     let deep_queue = pending_analysis(&db, &GameFilter::default(), &deep_key, 18, 2).unwrap();
     assert_eq!(deep_queue.ids, vec![shallow_id]);
 }
@@ -156,7 +155,7 @@ fn legacy_analyses_without_config_key_do_not_break_the_queue() {
         )],
     );
     insert_analysis_draft(&db, &legacy).unwrap();
-    // Так выглядит запись, сделанная сборкой, которая не знала о config_key.
+    // This is what a row written by a build that knew nothing about config_key looks like.
     db.with(|conn| {
         conn.execute(
             "UPDATE game_analyses SET config_key = '', engine_version = NULL WHERE game_id = ?1",
@@ -169,7 +168,10 @@ fn legacy_analyses_without_config_key_do_not_break_the_queue() {
     let key = crate::service::queue::target_config_key(&db, &AppSettings::default()).unwrap();
     assert_eq!(key, "Stockfish 19|19|14|2|classifier-v1|lichess-v1");
     let queue = pending_analysis(&db, &GameFilter::default(), &key, 14, 2).unwrap();
-    assert!(queue.ids.is_empty(), "старая запись не должна проситься заново");
+    assert!(
+        queue.ids.is_empty(),
+        "старая запись не должна проситься заново"
+    );
 }
 
 #[test]
@@ -220,7 +222,11 @@ fn backfill_restores_config_key_of_legacy_analyses() {
         .unwrap();
     assert_eq!(restored.1, "19");
     assert_eq!(restored.0, expected);
-    assert_eq!(backfill_config_keys(&db).unwrap(), 0, "повторный запуск ничего не меняет");
+    assert_eq!(
+        backfill_config_keys(&db).unwrap(),
+        0,
+        "повторный запуск ничего не меняет"
+    );
 }
 
 #[test]
@@ -256,4 +262,3 @@ fn failed_analyses_leave_the_queue_after_three_attempts() {
     assert_eq!(queue.ids, vec![id]);
     assert_eq!(queue.excluded, 0);
 }
-

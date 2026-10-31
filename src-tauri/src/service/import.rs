@@ -26,7 +26,7 @@ pub fn import_pgn_text(db: &Db, text: &str, account_id: Option<i64>) -> AppResul
                 .errors
                 .first()
                 .cloned()
-                .unwrap_or_else(|| "Ошибка PGN".to_string()),
+                .unwrap_or_else(|| "PGN error".to_string()),
         ));
     }
     let mut imported = 0u32;
@@ -96,7 +96,7 @@ pub fn export_pgn(db: &Db, ids: &[i64]) -> AppResult<String> {
         games_by_ids(db, ids)?
     };
     if games.is_empty() {
-        return Err(AppError::NotFound("Нет партий для экспорта".to_string()));
+        return Err(AppError::NotFound("No games to export".to_string()));
     }
     let ids: Vec<i64> = games.iter().map(|game| game.id).collect();
     let annotations = analyses_repo::annotations_for_games(db, &ids)?;

@@ -72,7 +72,7 @@ impl ChessComClient {
             .user_agent(USER_AGENT)
             .timeout(Duration::from_secs(30))
             .build()
-            .map_err(|err| AppError::Network(format!("Не удалось создать HTTP-клиент: {err}")))?;
+            .map_err(|err| AppError::Network(format!("Could not create the HTTP client: {err}")))?;
         Ok(ChessComClient {
             http,
             base: "https://api.chess.com/pub".to_string(),
@@ -100,7 +100,7 @@ impl ChessComClient {
             if status == StatusCode::TOO_MANY_REQUESTS || status.is_server_error() {
                 if attempt >= 2 {
                     return Err(AppError::RateLimited(format!(
-                        "Chess.com вернул {status} после трёх попыток"
+                        "Chess.com returned {status} after three attempts"
                     )));
                 }
                 let retry_after = response
@@ -115,7 +115,7 @@ impl ChessComClient {
             }
             if !status.is_success() {
                 return Err(AppError::Network(format!(
-                    "Chess.com вернул {status} для {url}"
+                    "Chess.com returned {status} for {url}"
                 )));
             }
             return response.json::<T>().await.map_err(AppError::from);
@@ -133,7 +133,7 @@ impl ChessComApi for ChessComClient {
                 .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-')
         {
             return Err(AppError::Validation(
-                "Некорректный ник Chess.com".to_string(),
+                "Invalid Chess.com username".to_string(),
             ));
         }
         let url = format!("{}/player/{username}/games/archives", self.base);

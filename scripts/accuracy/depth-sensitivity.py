@@ -1,13 +1,20 @@
 import json
+import os
 import sqlite3
 import subprocess
 import sys
 import time
+from pathlib import Path
 
-DB = "/Users/suze/Library/Application Support/com.chenal.studio/chenal.db"
-SF = "/Users/suze/Projects/Programming/rust/chenal/src-tauri/binaries/stockfish-aarch64-apple-darwin"
+ROOT = Path(__file__).resolve().parents[2]
+DB = os.environ.get(
+    "CHENAL_DB",
+    str(Path.home() / "Library/Application Support/com.chenal.studio/chenal.db"),
+)
+SF = str(ROOT / "src-tauri" / "binaries" / "stockfish-aarch64-apple-darwin")
 GAME = int(sys.argv[1]) if len(sys.argv) > 1 else 843
 DEPTHS = [int(x) for x in (sys.argv[2].split(",") if len(sys.argv) > 2 else ["14", "18"])]
+OUT = ROOT / "tmp" / f"depth-{GAME}.json"
 
 
 class Uci:
@@ -51,7 +58,7 @@ class Uci:
                     i = parts.index("mate")
                     score = ("mate", int(parts[i + 1]))
                 if "depth" in parts and int(parts[parts.index("depth") + 1]) != depth:
-                    score = score  # keep last
+                    score = score  # ignore scores from shallower iterations
             elif line.startswith("bestmove"):
                 best = line.split()[1]
                 return best, score
@@ -87,13 +94,13 @@ for depth in DEPTHS:
     t0 = time.time()
     recs = []
     for r in rows:
-        # best line in position before the move
+        # Best score in the position before the move.
         _, best_score = eng.search(r["fen_before"], depth)
         best_win = winpct(*best_score)
-        # eval of the resulting position (current pipeline)
+        # Score of the resulting position, as the current pipeline evaluates it.
         _, after_score = eng.search(r["fen_after"], depth)
         after_win_player = 100.0 - winpct(*after_score)
-        # eval of the played move itself at the same depth
+        # Score of the played move itself, searched to the same depth.
         _, played_score = eng.search(r["fen_before"], depth, r["played_uci"])
         played_win = winpct(*played_score)
         recs.append(
@@ -120,4 +127,4 @@ for depth in DEPTHS:
     )
     print(depth, json.dumps({k: v for k, v in out[depth].items() if k != "recs"}), flush=True)
 eng.close()
-json.dump(out, open(f"/Users/suze/Projects/Programming/rust/chenal/tmp/depth-{GAME}.json", "w"), indent=1)
+json.dump(out, open(OUT, "w"), indent=1)

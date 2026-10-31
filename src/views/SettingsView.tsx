@@ -1,5 +1,6 @@
 import { AnalysisCard } from "../components/settings/AnalysisCard";
 import { AppearanceCard } from "../components/settings/AppearanceCard";
+import { DiagnosticsCard } from "../components/settings/DiagnosticsCard";
 import { EngineCard } from "../components/settings/EngineCard";
 import { Icon } from "../components/ui/Icon";
 import { t } from "../i18n";
@@ -42,6 +43,7 @@ export function SettingsView() {
           </div>
           <AnalysisCard />
           <EngineCard />
+          <DiagnosticsCard />
         </div>
 
         <AppearanceCard />

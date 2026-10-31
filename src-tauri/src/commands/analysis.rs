@@ -22,8 +22,8 @@ pub async fn analyze_game(
     let settings = settings_repo::get_settings(&state.db)?;
     let depth = depth.unwrap_or(settings.analysis_depth).clamp(6, 24);
     let multipv = multipv.unwrap_or(settings.multipv).clamp(1, 3);
-    // Свободных процессов больше, чем партий в работе: позиции одной партии
-    // выгоднее разложить по всему пулу, чем считать одним процессом.
+    // With more free processes than games in flight, a single game is better
+    // spread across the whole pool than analyzed by one process.
     if parallel.unwrap_or(false) {
         let pool = state.engine.pool_for(settings.analysis_threads).await?;
         return analysis::analyze_game_parallel(

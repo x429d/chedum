@@ -29,11 +29,11 @@ pub struct Game {
     pub is_favorite: bool,
     pub analysis_attempts: u32,
     pub last_analysis_error: Option<String>,
-    /// Аккаунт, из которого пришла партия; у ручных PGN может быть NULL.
+    /// Account the game came from; may be NULL for manual PGNs.
     pub account_id: Option<i64>,
 }
 
-/// Партия до вставки в базу (id присваивает SQLite).
+/// Game before insertion into the database (SQLite assigns the id).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GameDraft {
@@ -60,7 +60,7 @@ pub struct GameDraft {
     pub total_plies: i32,
     pub notes: String,
     pub is_favorite: bool,
-    /// Аккаунт, к которому привязана партия при импорте.
+    /// Account the game is linked to on import.
     #[serde(default)]
     pub account_id: Option<i64>,
 }
@@ -86,7 +86,6 @@ impl Game {
 }
 
 impl GameDraft {
-    /// Превращает черновик в сущность с присвоенным идентификатором.
     pub fn into_game(self, id: i64) -> Game {
         Game {
             id,
@@ -144,11 +143,11 @@ pub struct GameListItem {
     pub user_accuracy: Option<f64>,
     pub user_acpl: Option<f64>,
     pub key_moments_count: Option<i32>,
-    /// Происхождение точности для подсказки в библиотеке.
+    /// Origin of the accuracy value for the library tooltip.
     pub engine_name: Option<String>,
     pub analysis_depth: Option<i32>,
     pub accuracy_method: Option<String>,
-    /// Сколько раз анализ партии падал; после 3 она выходит из очереди.
+    /// How many times game analysis failed; after 3 the game leaves the queue.
     pub analysis_attempts: u32,
     pub last_analysis_error: Option<String>,
 }
@@ -157,7 +156,7 @@ pub struct GameListItem {
 #[serde(rename_all = "camelCase", default)]
 pub struct GameFilter {
     pub search: Option<String>,
-    /// Показывать партии одного аккаунта; NULL — все аккаунты и ручные PGN.
+    /// Show games of a single account; NULL — all accounts and manual PGNs.
     pub account_id: Option<i64>,
     pub color: Option<UserColor>,
     pub result: Option<String>,
@@ -178,9 +177,10 @@ pub struct GameFilter {
 pub struct PagedGames {
     pub games: Vec<GameListItem>,
     pub total: u32,
-    /// Сколько партий выборки уже имеют анализ (по всей выборке, не по странице).
+    /// How many games in the selection already have an analysis (over the whole
+    /// selection, not the page).
     pub analyzed: u32,
-    /// Сколько партий выборки отмечено избранными.
+    /// How many games in the selection are marked as favorites.
     pub favorites: u32,
     pub limit: u32,
     pub offset: u32,
@@ -190,9 +190,9 @@ pub struct PagedGames {
 #[serde(rename_all = "camelCase")]
 pub struct PendingAnalysis {
     pub ids: Vec<i64>,
-    /// Суммарное число позиций очереди — база для оценки времени.
+    /// Total number of positions in the queue — the basis for the time estimate.
     pub positions: u64,
-    /// Партии, исключённые после трёх неудачных попыток.
+    /// Games excluded after three failed attempts.
     pub excluded: u32,
 }
 

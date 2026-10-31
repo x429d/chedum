@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use chrono::{Datelike, Utc};
 
 use crate::chesscom::client::{ChessComApi, RemoteGame};
@@ -5,7 +7,7 @@ use crate::db::archives_repo::{self, ArchiveRecord};
 use crate::db::connection::Db;
 use crate::db::games_repo::insert_game;
 use crate::domain::error::{AppError, AppResult};
-use crate::domain::game::{GameSource, TimeClass};
+use crate::domain::game::{GameDraft, GameSource, TimeClass};
 use crate::domain::{SyncProgress, SyncResult};
 use crate::pgn::{build_draft, is_bot_game, parse_single};
 use crate::service::hashing::sha256_hex;
@@ -17,7 +19,8 @@ pub struct ArchiveRef {
     pub month: u32,
 }
 
-/// Год и месяц из URL архива Chess.com (`.../games/2024/05`).
+/// Parses the year and month from a Chess.com archive URL
+/// (`.../games/2024/05`).
 pub fn parse_archive_url(url: &str) -> Option<(i32, u32)> {
     let mut parts = url.trim_end_matches('/').rsplit('/');
     let month = parts.next()?.parse::<u32>().ok()?;
@@ -29,7 +32,7 @@ pub fn parse_archive_url(url: &str) -> Option<(i32, u32)> {
     }
 }
 
-/// Инкрементальный план: пропускает полностью синхронизированные прошлые архивы.
+/// Incremental sync plan: skip past archives that are fully synchronized.
 pub fn plan_archives(
     existing: &[ArchiveRecord],
     archives: &[String],
@@ -60,12 +63,22 @@ pub fn plan_archives(
     plan
 }
 
+fn check_cancelled(cancel: &AtomicBool) -> AppResult<()> {
+    if cancel.load(Ordering::SeqCst) {
+        return Err(AppError::Cancelled(
+            "Chess.com synchronization cancelled".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 pub async fn sync_user<A, F>(
     db: &Db,
     api: &A,
     account_id: i64,
     username: &str,
     force: bool,
+    cancel: &AtomicBool,
     mut on_progress: F,
 ) -> AppResult<SyncResult>
 where
@@ -74,8 +87,11 @@ where
 {
     let username = username.trim();
     if username.is_empty() {
-        return Err(AppError::Validation("Укажите ник Chess.com".to_string()));
+        return Err(AppError::Validation(
+            "Enter a Chess.com username".to_string(),
+        ));
     }
+    check_cancelled(cancel)?;
     let now = Utc::now();
     let mut result = SyncResult {
         account_id,
@@ -83,12 +99,14 @@ where
         username: username.to_string(),
         archives_processed: 0,
         games_imported: 0,
-        games_skipped: 0,
+        duplicates: 0,
+        filtered: 0,
+        errors: Vec::new(),
     };
     emit(
         &mut on_progress,
         "archives",
-        "Получение списка архивов Chess.com",
+        "Fetching Chess.com archive list",
         0,
         0,
         0,
@@ -99,35 +117,37 @@ where
     let plan = plan_archives(&existing, &archives, now.year(), now.month(), force);
     let total = plan.len() as u32;
     if total == 0 {
-        emit(
-            &mut on_progress,
-            "done",
-            "Новых архивов нет",
-            0,
-            0,
-            0,
-            100.0,
-        );
+        emit(&mut on_progress, "done", "No new archives", 0, 0, 0, 100.0);
         return Ok(result);
     }
     let mut done = 0u32;
     for archive in plan {
+        check_cancelled(cancel)?;
         done += 1;
         emit(
             &mut on_progress,
             "archive",
-            &format!("Загрузка архива {:04}-{:02}", archive.year, archive.month),
+            &format!(
+                "Downloading archive {:04}-{:02}",
+                archive.year, archive.month
+            ),
             done,
             total,
             result.games_imported,
             (done as f64 - 1.0) / f64::from(total) * 90.0,
         );
         let remote_games = api.archive_games(&archive.url).await?;
+        check_cancelled(cancel)?;
         let mut drafts = Vec::new();
         for remote in remote_games {
             match remote_to_draft(&remote, username, account_id) {
-                Some(draft) => drafts.push(draft),
-                None => result.games_skipped += 1,
+                Ok(Some(draft)) => drafts.push(draft),
+                Ok(None) => result.filtered += 1,
+                Err(err) => {
+                    if result.errors.len() < 50 {
+                        result.errors.push(format!("{}: {err}", remote.url.trim()));
+                    }
+                }
             }
         }
         let total_games = drafts.len() as u32;
@@ -152,14 +172,14 @@ where
             Ok(count)
         })?;
         result.games_imported += inserted;
-        result.games_skipped += total_games - inserted;
+        result.duplicates += total_games - inserted;
         result.archives_processed += 1;
         emit(
             &mut on_progress,
             "archive",
             &format!(
-                "Архив {:04}-{:02}: +{} партий",
-                archive.year, archive.month, inserted
+                "Archive {:04}-{:02}: +{inserted} games",
+                archive.year, archive.month
             ),
             done,
             total,
@@ -170,7 +190,7 @@ where
     emit(
         &mut on_progress,
         "done",
-        &format!("Импортировано {} партий", result.games_imported),
+        &format!("Imported {} games", result.games_imported),
         total,
         total,
         result.games_imported,
@@ -179,17 +199,22 @@ where
     Ok(result)
 }
 
+/// `Ok(None)` means the game was intentionally filtered out; `Err` means the
+/// PGN could not be parsed and must be surfaced to the user.
 fn remote_to_draft(
     remote: &RemoteGame,
     username: &str,
     account_id: i64,
-) -> Option<crate::domain::game::GameDraft> {
+) -> Result<Option<GameDraft>, String> {
     if !remote.rules.is_empty() && remote.rules != "chess" {
-        return None;
+        return Ok(None);
     }
-    let parsed = parse_single(&remote.pgn).ok()?;
+    let parsed = parse_single(&remote.pgn).map_err(|err| err.to_string())?;
+    if parsed.moves.is_empty() {
+        return Err("Game has no moves".to_string());
+    }
     if is_bot_game(&parsed) {
-        return None;
+        return Ok(None);
     }
     let external_id = if remote.url.trim().is_empty() {
         format!("chesscom-{}", sha256_hex(&remote.pgn))
@@ -208,7 +233,7 @@ fn remote_to_draft(
     if remote.end_time > 0 {
         draft.played_at = remote.end_time;
     }
-    Some(draft)
+    Ok(Some(draft))
 }
 
 #[allow(clippy::too_many_arguments)]

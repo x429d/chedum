@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::game::Color;
 
-/// Оценка движка в формате UCI: со стороны игрока, чья очередь хода.
+/// Engine score in UCI format: from the perspective of the side to move.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Score {
@@ -33,7 +33,7 @@ impl Score {
         }
     }
 
-    /// Оценка относительно белых.
+    /// Score relative to White.
     pub fn white_relative(self, side_to_move: Color) -> Self {
         match side_to_move {
             Color::White => self,
@@ -41,7 +41,7 @@ impl Score {
         }
     }
 
-    /// Вероятность победы игрока, чья очередь хода.
+    /// Win probability of the side to move.
     pub fn win_prob(self) -> f64 {
         match self.mate {
             Some(mate) => win_prob_mate(mate),
@@ -49,7 +49,7 @@ impl Score {
         }
     }
 
-    /// Вероятность победы белых.
+    /// Win probability of White.
     pub fn win_prob_white(self, side_to_move: Color) -> f64 {
         match side_to_move {
             Color::White => self.win_prob(),
@@ -57,7 +57,7 @@ impl Score {
         }
     }
 
-    /// Числовое значение для ACPL: мат оценивается как ±1000 сантипешек.
+    /// Numeric value for ACPL: mate is scored as ±1000 centipawns.
     pub fn cp_value(self) -> f64 {
         match self.mate {
             Some(mate) => {
@@ -71,7 +71,7 @@ impl Score {
         }
     }
 
-    /// Человекочитаемая оценка: `+1.45`, `-0.30`, `M3`, `-M2`.
+    /// Human-readable score: `+1.45`, `-0.30`, `M3`, `-M2`.
     pub fn display(self) -> String {
         match self.mate {
             Some(mate) if mate > 0 => format!("M{mate}"),
@@ -91,7 +91,7 @@ pub fn win_prob_cp(cp: f64) -> f64 {
     value.clamp(0.0, 100.0)
 }
 
-/// Мат в N ходов: 100 - N*0.2 для матующей стороны, N*0.2 для проигрывающей.
+/// Mate in N moves: 100 − N*0.2 for the mating side, N*0.2 for the losing side.
 pub fn win_prob_mate(mate: i32) -> f64 {
     if mate == 0 {
         return 0.0;

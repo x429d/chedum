@@ -16,7 +16,7 @@ struct SeedEntry {
     moves: Vec<MoveEvaluation>,
 }
 
-/// Заполняет пустую базу демонстрационными партиями с готовым анализом.
+/// Fills an empty database with demo games that already have analysis.
 pub fn ensure_demo(db: &Db) -> AppResult<u32> {
     if count_games(db)? > 0 {
         return Ok(0);

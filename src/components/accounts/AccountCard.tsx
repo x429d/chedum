@@ -35,6 +35,13 @@ export function AccountCard(props: Props) {
     if (confirmed) await accountsStore.remove(props.account.id);
   };
 
+  const resetHistory = async (): Promise<void> => {
+    const confirmed = await api.confirmSyncReset(
+      t("accounts.syncResetConfirm", { account: accountsStore.accountName(props.account) }),
+    );
+    if (confirmed) await accountsStore.resetHistory(props.account.id);
+  };
+
   return (
     <div class="account-card" classList={{ "is-active": active() }}>
       <div
@@ -85,6 +92,16 @@ export function AccountCard(props: Props) {
             <span class="spinner" style={{ width: "12px", height: "12px" }} />
           </Show>
           {syncing() ? t("accounts.syncingBtn") : t("accounts.syncBtn")}
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          title={t("accounts.syncReset")}
+          aria-label={t("accounts.syncReset")}
+          disabled={busy()}
+          onClick={() => void resetHistory()}
+        >
+          <Icon name="refresh" size={14} />
         </button>
         <button
           type="button"

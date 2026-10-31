@@ -1,19 +1,19 @@
 use crate::domain::analysis::MoveCategory;
 
-/// Все данные, необходимые для приоритетной классификации хода.
+/// All data needed for priority-based classification of a move.
 #[derive(Debug, Clone, Copy)]
 pub struct ClassifyInput {
     pub ply: u32,
     pub in_book: bool,
     pub legal_moves: usize,
-    /// Потеря вероятности победы на полуходе, в процентах.
+    /// Loss of win probability on the ply, in percentage points.
     pub delta_w: f64,
     pub played_is_best: bool,
-    /// Win% игрока до хода (по линии MultiPV 1).
+    /// Player's Win% before the move (MultiPV 1 line).
     pub best_win: f64,
-    /// Win% игрока после фактически сделанного хода.
+    /// Player's Win% after the move actually played.
     pub played_win: f64,
-    /// W(pv1) - W(pv2) в процентах.
+    /// W(pv1) − W(pv2) in percentage points.
     pub second_gap: f64,
     pub sacrifice: bool,
     pub prev_opponent_blunder: bool,
@@ -21,7 +21,7 @@ pub struct ClassifyInput {
     pub allowed_mate: bool,
 }
 
-/// Приоритетное дерево из 11 категорий.
+/// Priority-ordered tree of 11 categories.
 pub fn classify(input: &ClassifyInput) -> MoveCategory {
     if input.in_book && input.ply <= 24 {
         return MoveCategory::Book;
@@ -64,7 +64,7 @@ pub fn classify(input: &ClassifyInput) -> MoveCategory {
     MoveCategory::Blunder
 }
 
-/// Критическая позиция: разрыв между первой и второй линией ≥ 10% WinProb.
+/// Critical position: gap between the first and second line ≥ 10% WinProb.
 pub fn is_critical(second_gap: f64) -> bool {
     second_gap >= 10.0
 }

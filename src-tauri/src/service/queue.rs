@@ -7,12 +7,12 @@ use crate::domain::analysis::{
 use crate::domain::error::AppResult;
 use crate::domain::stats::AppSettings;
 
-/// Ключ конфигурации, которую выдаст следующий анализ: движок берётся из
-/// последнего сохранённого анализа (до первого — Stockfish 19), глубина и
-/// MultiPV — из текущих настроек.
+/// Configuration key of the next analysis: the engine comes from the last saved
+/// analysis (Stockfish 19 before the first one), depth and MultiPV from the
+/// current settings.
 ///
-/// Записи старых сборок могут иметь NULL в `engine_version`: такие строки
-/// пропускаем, иначе чтение колонки как String роняет весь запрос очереди.
+/// Rows written by older builds may have NULL in `engine_version`: skip such
+/// rows, otherwise reading the column as String fails the entire queue query.
 pub fn target_config_key(db: &Db, settings: &AppSettings) -> AppResult<String> {
     let (engine, version) = db.with(|conn| {
         let row: Option<(String, String)> = conn

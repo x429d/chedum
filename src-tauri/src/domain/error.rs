@@ -1,32 +1,36 @@
 use serde::ser::{Serialize, SerializeStruct, Serializer};
 
-/// Единый тип ошибки приложения. Сериализуется во фронтенд как `{ code, message }`.
+/// Single application error type. It is serialized to the frontend as
+/// `{ code, message }`: the code is stable and localizable, the message is a
+/// technical detail for diagnostics.
 #[derive(Debug, thiserror::Error)]
 pub enum AppError {
-    #[error("Ошибка базы данных: {0}")]
+    #[error("Database error: {0}")]
     Database(String),
-    #[error("Ошибка ввода-вывода: {0}")]
+    #[error("I/O error: {0}")]
     Io(String),
-    #[error("Сетевая ошибка: {0}")]
+    #[error("Network error: {0}")]
     Network(String),
-    #[error("Ошибка движка: {0}")]
+    #[error("Engine error: {0}")]
     Engine(String),
-    #[error("Ошибка разбора: {0}")]
+    #[error("Parse error: {0}")]
     Parse(String),
-    #[error("Объект не найден: {0}")]
+    #[error("Not found: {0}")]
     NotFound(String),
-    #[error("Некорректные данные: {0}")]
+    #[error("Validation error: {0}")]
     Validation(String),
-    #[error("Превышен лимит запросов: {0}")]
+    #[error("Rate limit exceeded: {0}")]
     RateLimited(String),
-    #[error("Движок занят: {0}")]
+    #[error("Engine busy: {0}")]
     Busy(String),
-    #[error("Внутренняя ошибка: {0}")]
+    #[error("Cancelled: {0}")]
+    Cancelled(String),
+    #[error("Internal error: {0}")]
     Internal(String),
 }
 
 impl AppError {
-    /// Стабильный машинный код ошибки для фронтенда.
+    /// Stable machine-readable code consumed by the frontend.
     pub fn code(&self) -> &'static str {
         match self {
             AppError::Database(_) => "database",
@@ -38,6 +42,7 @@ impl AppError {
             AppError::Validation(_) => "validation",
             AppError::RateLimited(_) => "rate_limited",
             AppError::Busy(_) => "busy",
+            AppError::Cancelled(_) => "cancelled",
             AppError::Internal(_) => "internal",
         }
     }
@@ -73,7 +78,7 @@ impl From<std::io::Error> for AppError {
 impl From<reqwest::Error> for AppError {
     fn from(value: reqwest::Error) -> Self {
         if value.is_timeout() {
-            AppError::Network("Таймаут запроса к Chess.com".to_string())
+            AppError::Network("Request timed out".to_string())
         } else {
             AppError::Network(value.to_string())
         }

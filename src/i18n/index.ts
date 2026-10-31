@@ -69,6 +69,29 @@ export function tCategory(category: MoveCategory): string {
   return t(`categories.${category}` as TranslationKey);
 }
 
+/** Localized coach explanation for a structured backend tag. */
+export function tCoach(tag: string, params: Record<string, string>): string {
+  const key = `coach.${tag}` as TranslationKey;
+  const text = t(key, params);
+  return text === key ? "" : text;
+}
+
+/** Localized generic message for a stable `AppError` code. */
+export function tErrorCode(code: string | null | undefined): string {
+  if (code) {
+    const key = `errors.${code}` as TranslationKey;
+    const text = t(key);
+    if (text !== key) return text;
+  }
+  return t("errors.unknown");
+}
+
+export function applyDocumentLanguage(): void {
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = currentLanguage();
+  }
+}
+
 export function tPhase(phase: Phase): string {
   return t(`phases.${phase}` as TranslationKey);
 }

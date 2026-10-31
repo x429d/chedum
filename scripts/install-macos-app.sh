@@ -10,7 +10,7 @@ if [[ ! -d "$SOURCE" ]]; then
   exit 1
 fi
 
-# Удаляем только старые/дублирующиеся копии Chenal.app, не трогая другие приложения.
+# Remove only stale or duplicate copies of Chenal.app, leaving other apps untouched.
 for directory in /Applications "$HOME/Applications"; do
   if [[ -d "$directory" ]]; then
     find "$directory" -maxdepth 1 -name "Chenal.app" -type d -exec rm -rf {} + 2>/dev/null || true
@@ -19,7 +19,7 @@ done
 
 ditto "$SOURCE" "$DESTINATION"
 
-# Spotlight не должен показывать сборочную копию: в поиске остаётся только /Applications.
+# Keep Spotlight from indexing the build copy, so search only surfaces /Applications.
 touch "$ROOT/src-tauri/target/.metadata_never_index"
 
 echo "Установлено: $DESTINATION"

@@ -6,21 +6,21 @@ use shakmaty::{
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::Color;
 
-/// Разбирает FEN в позицию стандартных шахмат.
+/// Parses a FEN into a standard chess position.
 pub fn parse_fen(fen: &str) -> AppResult<Chess> {
     let parsed = Fen::from_ascii(fen.as_bytes())
-        .map_err(|err| AppError::Parse(format!("Некорректный FEN: {err}")))?;
+        .map_err(|err| AppError::Parse(format!("Invalid FEN: {err}")))?;
     parsed
         .into_position(CastlingMode::Standard)
-        .map_err(|err| AppError::Parse(format!("Недопустимая позиция: {err}")))
+        .map_err(|err| AppError::Parse(format!("Illegal position: {err}")))
 }
 
-/// Возвращает канонический FEN позиции (включая счётчики полуходов).
+/// Returns the canonical FEN of the position (including halfmove counters).
 pub fn position_fen(pos: &Chess) -> String {
     Fen::from_position(pos, EnPassantMode::Legal).to_string()
 }
 
-/// FEN без счётчиков — используется как ключ дебютного словаря.
+/// FEN without counters — used as the opening book key.
 pub fn book_key(fen: &str) -> String {
     fen.split(' ').take(4).collect::<Vec<_>>().join(" ")
 }
@@ -32,19 +32,19 @@ pub fn move_uci(mv: Move) -> String {
 pub fn parse_uci(fen: &str, uci: &str) -> AppResult<(Chess, Move)> {
     let pos = parse_fen(fen)?;
     let parsed = UciMove::from_ascii(uci.as_bytes())
-        .map_err(|err| AppError::Parse(format!("Некорректный UCI «{uci}»: {err}")))?;
+        .map_err(|err| AppError::Parse(format!("Invalid UCI «{uci}»: {err}")))?;
     let mv = parsed
         .to_move(&pos)
-        .map_err(|err| AppError::Validation(format!("Ход «{uci}» нелегален: {err}")))?;
+        .map_err(|err| AppError::Validation(format!("Illegal move «{uci}»: {err}")))?;
     Ok((pos, mv))
 }
 
-/// Применяет ход и возвращает SAN с суффиксом шаха/мата.
+/// Applies a move and returns SAN with a check/mate suffix.
 pub fn san_and_play(pos: &mut Chess, mv: Move) -> String {
     SanPlus::from_move_and_play_unchecked(pos, mv).to_string()
 }
 
-/// SAN хода без изменения позиции.
+/// SAN of a move without changing the position.
 pub fn san_of(pos: &Chess, mv: Move) -> String {
     SanPlus::from_move(pos.clone(), mv).to_string()
 }
@@ -52,15 +52,15 @@ pub fn san_of(pos: &Chess, mv: Move) -> String {
 pub fn parse_san(fen: &str, san: &str) -> AppResult<(Chess, Move)> {
     let pos = parse_fen(fen)?;
     let parsed = SanPlus::from_ascii(san.as_bytes())
-        .map_err(|err| AppError::Parse(format!("Некорректный SAN «{san}»: {err}")))?;
+        .map_err(|err| AppError::Parse(format!("Invalid SAN «{san}»: {err}")))?;
     let mv = parsed
         .san
         .to_move(&pos)
-        .map_err(|err| AppError::Validation(format!("SAN «{san}» нелегален: {err}")))?;
+        .map_err(|err| AppError::Validation(format!("Illegal SAN «{san}»: {err}")))?;
     Ok((pos, mv))
 }
 
-/// Переводит последовательность UCI-ходов в SAN, останавливаясь на первом нелегальном.
+/// Converts a sequence of UCI moves to SAN, stopping at the first illegal move.
 pub fn uci_line_to_san(fen: &str, moves: &[String]) -> Vec<String> {
     let mut pos = match parse_fen(fen) {
         Ok(pos) => pos,
@@ -81,15 +81,15 @@ pub fn uci_line_to_san(fen: &str, moves: &[String]) -> Vec<String> {
     san
 }
 
-/// Итоговый FEN после последовательности UCI-ходов.
+/// Final FEN after a sequence of UCI moves.
 pub fn apply_uci_line(fen: &str, moves: &[String]) -> AppResult<String> {
     let mut pos = parse_fen(fen)?;
     for uci in moves {
         let parsed = UciMove::from_ascii(uci.as_bytes())
-            .map_err(|err| AppError::Parse(format!("Некорректный UCI «{uci}»: {err}")))?;
+            .map_err(|err| AppError::Parse(format!("Invalid UCI «{uci}»: {err}")))?;
         let mv = parsed
             .to_move(&pos)
-            .map_err(|err| AppError::Validation(format!("Ход «{uci}» нелегален: {err}")))?;
+            .map_err(|err| AppError::Validation(format!("Illegal move «{uci}»: {err}")))?;
         pos.play_unchecked(mv);
     }
     Ok(position_fen(&pos))
@@ -119,28 +119,27 @@ fn material(pos: &Chess, color: ShakColor) -> i32 {
         + piece_value(Role::Queen) * i32::from(counts.queen)
 }
 
-/// Материальный перевес белых в пешках (без королей).
+/// White's material advantage in pawns (kings excluded).
 pub fn material_diff_white(pos: &Chess) -> i32 {
     material(pos, ShakColor::White) - material(pos, ShakColor::Black)
 }
 
-/// Суммарная ценность фигур и пешек указанной стороны (король = 0).
+/// Total value of the given side's pieces and pawns (king = 0).
 pub fn material_value(pos: &Chess, color: Color) -> i32 {
     material(pos, color_to_shakmaty(color))
 }
 
-/// Применяет UCI-ход к позиции.
 pub fn play_uci(pos: &mut Chess, uci: &str) -> AppResult<Move> {
     let parsed = UciMove::from_ascii(uci.as_bytes())
-        .map_err(|err| AppError::Parse(format!("Некорректный UCI «{uci}»: {err}")))?;
+        .map_err(|err| AppError::Parse(format!("Invalid UCI «{uci}»: {err}")))?;
     let mv = parsed
         .to_move(pos)
-        .map_err(|err| AppError::Validation(format!("Ход «{uci}» нелегален: {err}")))?;
+        .map_err(|err| AppError::Validation(format!("Illegal move «{uci}»: {err}")))?;
     pos.play_unchecked(mv);
     Ok(mv)
 }
 
-/// Оставлена ли фигура под боем менее ценной фигуры без защиты.
+/// Whether the piece is left hanging to a less valuable attacker without a defender.
 pub fn is_hanging_after(pos: &Chess, mv: Move, player: Color) -> bool {
     let square = mv.to();
     let Some(piece) = pos.board().piece_at(square) else {
@@ -168,7 +167,7 @@ pub fn is_hanging_after(pos: &Chess, mv: Move, player: Color) -> bool {
     lowest_attacker < piece_value(piece.role)
 }
 
-/// Суммарная ценность фигур (без пешек и королей) обеих сторон.
+/// Total value of pieces (without pawns and kings) for both sides.
 pub fn heavy_material_total(pos: &Chess) -> i32 {
     let counts = pos.board().material();
     let value = |c: &shakmaty::ByRole<u8>| {
@@ -180,7 +179,7 @@ pub fn heavy_material_total(pos: &Chess) -> i32 {
     value(&counts.white) + value(&counts.black)
 }
 
-/// Количество фигур (кроме пешек и королей) на доске.
+/// Number of pieces (excluding pawns and kings) on the board.
 pub fn piece_count_nonpawn(pos: &Chess) -> u32 {
     let counts = pos.board().material();
     let count = |c: &shakmaty::ByRole<u8>| {
@@ -189,7 +188,7 @@ pub fn piece_count_nonpawn(pos: &Chess) -> u32 {
     count(&counts.white) + count(&counts.black)
 }
 
-/// Число развитых фигур (всего, обе стороны): не пешки/короли вне стартовых полей.
+/// Number of developed pieces (both sides total): non-pawns/kings outside their home squares.
 pub fn developed_count(pos: &Chess) -> u32 {
     let board = pos.board();
     let mut developed = 0;
@@ -249,7 +248,6 @@ pub fn king_square(pos: &Chess, color: ShakColor) -> Option<Square> {
     pos.board().king_of(color)
 }
 
-/// Атакована ли клетка фигурами указанного цвета.
 pub fn is_attacked(pos: &Chess, sq: Square, by: ShakColor) -> bool {
     pos.board().attacks_to(sq, by, pos.board().occupied()).any()
 }

@@ -1,8 +1,8 @@
 use crate::domain::game::Color;
 
-/// Точность одного хода по потере вероятности победы.
+/// Accuracy of a single move from the loss in win probability.
 ///
-/// Формула Lichess (`AccuracyPercent.scala`) вместе с бонусом неопределённости +1:
+/// Lichess formula (`AccuracyPercent.scala`) plus the +1 uncertainty bonus:
 /// `A = 103.1668100711649 · e^(−0.04354415386753951 · ΔW) − 3.166924740191411 + 1`.
 pub fn move_accuracy(delta_w: f64) -> f64 {
     let raw = 103.166_810_071_164_9 * (-0.043_544_153_867_539_51 * delta_w.max(0.0)).exp()
@@ -11,24 +11,30 @@ pub fn move_accuracy(delta_w: f64) -> f64 {
     raw.clamp(0.0, 100.0)
 }
 
-/// Размер скользящего окна волатильности: `(позиций − 1) / 10`, зажатый в 2..8.
+/// Sliding volatility window size: `(positions − 1) / 10`, clamped to 2..8.
 fn window_size(moves: usize) -> usize {
     (moves / 10).clamp(2, 8)
 }
 
-/// Стандартное отклонение генеральной совокупности.
+/// Population standard deviation.
 fn standard_deviation(values: &[f64]) -> f64 {
     if values.len() < 2 {
         return 0.0;
     }
     let len = values.len() as f64;
     let mean = values.iter().sum::<f64>() / len;
-    (values.iter().map(|value| (value - mean).powi(2)).sum::<f64>() / len).sqrt()
+    (values
+        .iter()
+        .map(|value| (value - mean).powi(2))
+        .sum::<f64>()
+        / len)
+        .sqrt()
 }
 
-/// Вес хода по волатильности Win% в окне вокруг него.
+/// Weight of a move based on Win% volatility in the window around it.
 ///
-/// Первые `window − 2` ходов получают окно из начала партии — как в Lichess.
+/// The first `window − 2` moves get a window anchored at the start of the game —
+/// same as Lichess.
 fn volatility_weight(win_probs: &[f64], index: usize, window: usize) -> Option<f64> {
     let start = (index + 2).saturating_sub(window);
     let end = (start + window).min(win_probs.len());
@@ -77,20 +83,25 @@ where
     }
 }
 
-/// Точность партии по методу Lichess: среднее взвешенного по волатильности и
-/// гармонического среднего точности ходов.
+/// Game accuracy using the Lichess method: the mean of the volatility-weighted
+/// average and the harmonic mean of move accuracies.
 ///
-/// `moves` — пары `(Win% до хода, Win% после хода)` в перспективе ходящего, по порядку.
-/// `first_color` — сторона, которая делает первый ход этой последовательности.
-/// Возвращает `[белые, чёрные]`.
+/// `moves` — `(Win% before the move, Win% after the move)` pairs from the mover's
+/// perspective, in order.
+/// `first_color` — the side that makes the first move of this sequence.
+/// Returns `[white, black]`.
 pub fn game_accuracy(moves: &[(f64, f64)], first_color: Color) -> [Option<f64>; 2] {
     if moves.is_empty() {
         return [None, None];
     }
-    // Позиции в перспективе белых: перед первым ходом и после каждого хода.
+    // Positions from White's perspective: before the first move and after each move.
     let first_white = matches!(first_color, Color::White);
     let mut win_probs = Vec::with_capacity(moves.len() + 1);
-    win_probs.push(if first_white { moves[0].0 } else { 100.0 - moves[0].0 });
+    win_probs.push(if first_white {
+        moves[0].0
+    } else {
+        100.0 - moves[0].0
+    });
     for (index, (_, after)) in moves.iter().enumerate() {
         let white_moves = (index % 2 == 0) == first_white;
         win_probs.push(if white_moves { *after } else { 100.0 - *after });
@@ -120,16 +131,18 @@ pub fn game_accuracy(moves: &[(f64, f64)], first_color: Color) -> [Option<f64>; 
         );
         let harmonic = harmonic_mean(entries.iter().map(|(accuracy, _)| *accuracy));
         match (weighted, harmonic) {
-            // Плоская партия без волатильности: весов нет, остаётся гармоническое среднее.
+            // Flat game without volatility: no weights, so only the harmonic mean remains.
             (None, Some(harmonic)) => Some(harmonic.clamp(0.0, 100.0)),
-            (Some(weighted), Some(harmonic)) => Some(((weighted + harmonic) / 2.0).clamp(0.0, 100.0)),
+            (Some(weighted), Some(harmonic)) => {
+                Some(((weighted + harmonic) / 2.0).clamp(0.0, 100.0))
+            }
             _ => None,
         }
     })
 }
 
-/// Точность по фазам: для каждой фазы — метод Lichess на её собственных ходах.
-/// Возвращает `[белые, чёрные]`, внутри — opening / middlegame / endgame.
+/// Accuracy by phase: the Lichess method applied to each phase's own moves.
+/// Returns `[white, black]`, each containing opening / middlegame / endgame.
 pub fn phase_accuracy(
     samples: &[Vec<(f64, f64)>; 3],
     first: &[Option<Color>; 3],
@@ -145,7 +158,7 @@ pub fn phase_accuracy(
     result
 }
 
-/// ACPL с кэпом 300 сантипешек на полуход.
+/// ACPL with a 300-centipawn cap per ply.
 pub fn average_cp_loss<I>(losses: I) -> Option<f64>
 where
     I: IntoIterator<Item = f64>,
@@ -163,7 +176,6 @@ where
     }
 }
 
-/// Estimated Game Performance Elo.
 pub fn performance_elo(
     base_elo: Option<i32>,
     accuracy: Option<f64>,
@@ -179,101 +191,5 @@ pub fn performance_elo(
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn perfect_move_is_one_hundred() {
-        assert!((move_accuracy(0.0) - 100.0).abs() < 0.001);
-    }
-
-    #[test]
-    fn accuracy_decreases_with_loss() {
-        let small = move_accuracy(2.0);
-        let medium = move_accuracy(10.0);
-        let large = move_accuracy(30.0);
-        assert!(small > medium);
-        assert!(medium > large);
-        assert!(large >= 0.0);
-        assert!(move_accuracy(500.0) >= 0.0);
-    }
-
-    #[test]
-    fn accuracy_matches_lichess_reference_points() {
-        // 103.1668·e^(−0.04354·Δ) − 3.1669 + 1.
-        assert!((move_accuracy(10.0) - 64.6).abs() < 0.2);
-        assert!((move_accuracy(20.0) - 41.0).abs() < 0.2);
-        assert!((move_accuracy(30.0) - 25.8).abs() < 0.2);
-    }
-
-    #[test]
-    fn flat_game_is_one_hundred_for_both_colors() {
-        let moves = [(50.0, 50.0); 5];
-        let [white, black] = game_accuracy(&moves, Color::White);
-        assert!((white.unwrap() - 100.0).abs() < 1e-9);
-        assert!((black.unwrap() - 100.0).abs() < 1e-9);
-    }
-
-    #[test]
-    fn blunder_lowers_only_the_mover() {
-        // Белые теряют 30 пунктов Win% на своём втором ходу.
-        let moves = [(50.0, 50.0), (50.0, 50.0), (50.0, 20.0), (20.0, 20.0), (20.0, 20.0)];
-        let [white, black] = game_accuracy(&moves, Color::White);
-        assert!(white.unwrap() < 90.0);
-        assert!((black.unwrap() - 100.0).abs() < 1e-9);
-    }
-
-    #[test]
-    fn black_first_color_flips_the_alignment() {
-        let moves = [(50.0, 50.0), (50.0, 50.0), (50.0, 20.0), (20.0, 20.0), (20.0, 20.0)];
-        let [white, black] = game_accuracy(&moves, Color::Black);
-        assert!((white.unwrap() - 100.0).abs() < 1e-9);
-        assert!(black.unwrap() < 90.0);
-    }
-
-    #[test]
-    fn harmonic_mean_punishes_single_bad_move() {
-        let moves = [(90.0, 90.0), (90.0, 90.0), (90.0, 20.0), (20.0, 90.0), (90.0, 90.0)];
-        let [white, _] = game_accuracy(&moves, Color::White);
-        let accuracy = white.unwrap();
-        assert!(accuracy < 80.0);
-        assert!(accuracy > 0.0);
-    }
-
-    #[test]
-    fn empty_game_is_none() {
-        assert_eq!(game_accuracy(&[], Color::White), [None, None]);
-    }
-
-    #[test]
-    fn window_size_follows_lichess_rule() {
-        assert_eq!(window_size(0), 2);
-        assert_eq!(window_size(10), 2);
-        assert_eq!(window_size(40), 4);
-        assert_eq!(window_size(100), 8);
-    }
-
-    #[test]
-    fn acpl_caps_single_move() {
-        let value = average_cp_loss([0.0, 100.0, 1000.0]).unwrap();
-        assert!((value - 133.333333).abs() < 0.001);
-    }
-
-    #[test]
-    fn empty_accuracy_is_none() {
-        assert_eq!(average_cp_loss(Vec::new()), None);
-    }
-
-    #[test]
-    fn perf_elo_formula() {
-        let value = performance_elo(Some(1500), Some(75.0), Some(35.0)).unwrap();
-        assert_eq!(value, 1500);
-        let high = performance_elo(Some(1500), Some(100.0), Some(0.0)).unwrap();
-        assert!(high > 2000);
-        assert_eq!(
-            performance_elo(Some(3200), Some(100.0), Some(0.0)).unwrap(),
-            3200
-        );
-        assert_eq!(performance_elo(None, None, None), None);
-    }
-}
+#[path = "accuracy_tests.rs"]
+mod tests;

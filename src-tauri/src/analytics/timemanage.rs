@@ -10,7 +10,7 @@ pub struct TimeContext {
     pub category: MoveCategory,
 }
 
-/// Флаги тайм-менеджмента. Приоритет: impulsive_error > time_trouble > overthink.
+/// Time-management flags. Priority: impulsive_error > time_trouble > overthink.
 pub fn time_flag(ctx: TimeContext) -> TimeFlag {
     let remaining = ctx.remaining_sec.unwrap_or(f64::INFINITY);
     let spent = ctx.spent_sec.unwrap_or(0.0);
@@ -34,7 +34,7 @@ pub fn time_flag(ctx: TimeContext) -> TimeFlag {
     TimeFlag::Normal
 }
 
-/// Время, потраченное на ход, с учётом инкремента.
+/// Time spent on a move, including the increment.
 pub fn spent_time(
     previous_clock: Option<f64>,
     current_clock: Option<f64>,

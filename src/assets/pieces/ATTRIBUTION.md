@@ -2,7 +2,7 @@
 
 Chenal ships six open-source SVG piece sets from the
 [Lichess piece collection](https://github.com/lichess-org/lila/tree/master/public/piece).
-The active set is chosen in **Настройки → Набор фигур**.
+The active set is chosen in **Settings → Piece Set**.
 
 | Set        | Author                       | License    | Source                                                        |
 | ---------- | ---------------------------- | ---------- | ------------------------------------------------------------- |

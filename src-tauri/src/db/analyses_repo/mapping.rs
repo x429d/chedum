@@ -13,7 +13,7 @@ pub(super) fn map_analysis(row: &Row<'_>) -> rusqlite::Result<GameAnalysis> {
     Ok(GameAnalysis {
         game_id: row.get("game_id")?,
         engine_name: row.get("engine_name")?,
-        // Старые записи могли появиться до миграции v4 с пустой версией.
+        // Old rows may predate migration v4 and have an empty version.
         engine_version: row
             .get::<_, Option<String>>("engine_version")?
             .unwrap_or_else(|| DEFAULT_ENGINE_VERSION.to_string()),
@@ -47,6 +47,9 @@ pub(super) fn map_move(row: &Row<'_>) -> rusqlite::Result<MoveEvaluation> {
     let player_color: String = row.get("player_color")?;
     let pv_json: String = row.get("pv_lines_json")?;
     let pv_lines = serde_json::from_str::<Vec<PvLine>>(&pv_json).unwrap_or_default();
+    let explanation_params = row
+        .get::<_, Option<String>>("explanation_params_json")?
+        .and_then(|json| serde_json::from_str(&json).ok());
     Ok(MoveEvaluation {
         game_id: row.get("game_id")?,
         ply: row.get("ply")?,
@@ -73,6 +76,7 @@ pub(super) fn map_move(row: &Row<'_>) -> rusqlite::Result<MoveEvaluation> {
         time_spent_sec: row.get("time_spent_sec")?,
         time_flag: TimeFlag::from_str_opt(&time_flag).unwrap_or(TimeFlag::Normal),
         explanation_tag: row.get("explanation_tag")?,
+        explanation_params,
         explanation_text: row.get("explanation_text")?,
         pv_lines,
         user_comment: row.get("user_comment")?,

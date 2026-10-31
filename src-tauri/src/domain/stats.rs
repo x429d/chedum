@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::domain::analysis::Phase;
+use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{Color, GameSource};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,7 +26,7 @@ pub struct HubKpis {
     pub avg_accuracy: Option<f64>,
     pub avg_acpl: Option<f64>,
     pub avg_perf_elo: Option<f64>,
-    /// Разброс (стандартное отклонение) оценки Performance Elo, если она показана.
+    /// Spread (standard deviation) of the Performance Elo estimate, if shown.
     pub avg_perf_elo_spread: Option<f64>,
     pub white: ColorRecord,
     pub black: ColorRecord,
@@ -34,19 +35,19 @@ pub struct HubKpis {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlatformRating {
-    /// Аккаунт, к которому относятся партии; NULL — ручные PGN без аккаунта.
+    /// Account the games belong to; NULL — manual PGNs without an account.
     pub account_id: Option<i64>,
     pub account_username: Option<String>,
-    /// Площадка аккаунта. Для партий без аккаунта — источник PGN.
+    /// Account platform. For games without an account — the PGN source.
     pub platform: GameSource,
     pub games: u32,
     pub analyzed: u32,
     pub avg_user_elo: Option<f64>,
     pub avg_opponent_elo: Option<f64>,
-    /// Средний Performance Elo только внутри этой площадки/аккаунта.
+    /// Average Performance Elo only within this platform/account.
     pub perf_elo: Option<f64>,
     pub perf_elo_spread: Option<f64>,
-    /// Сколько партий дали значение Performance Elo.
+    /// How many games produced a Performance Elo value.
     pub perf_elo_games: u32,
 }
 
@@ -56,7 +57,7 @@ pub struct OpeningStat {
     pub eco: String,
     pub name: String,
     pub games: u32,
-    /// Сколько партий этого дебюта уже разобрано.
+    /// How many games of this opening have already been analyzed.
     pub analyzed: u32,
     pub wins: u32,
     pub draws: u32,
@@ -65,9 +66,9 @@ pub struct OpeningStat {
     pub accuracy: Option<f64>,
     pub exit_eval: Option<f64>,
     pub exit_win_prob: Option<f64>,
-    /// Цена дебюта: партии × средняя потеря Win% на ходах игрока.
+    /// Opening price: games × average Win% loss on the player's moves.
     pub price: f64,
-    /// Точность можно показывать только при n ≥ 5.
+    /// Accuracy can be shown only when n ≥ 5.
     pub reliable: bool,
 }
 
@@ -77,7 +78,7 @@ pub struct PhaseStat {
     pub phase: Phase,
     pub accuracy: Option<f64>,
     pub moves: u32,
-    /// Число разобранных партий, у которых есть ходы в этой фазе.
+    /// Number of analyzed games that have moves in this phase.
     pub games: u32,
 }
 
@@ -102,7 +103,7 @@ pub struct TimeStats {
     pub pressure_accuracy: Option<f64>,
 }
 
-/// Конфигурация, по которой собраны агрегаты хаба.
+/// Configuration the hub aggregates were built from.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AnalysisConfigView {
@@ -112,14 +113,14 @@ pub struct AnalysisConfigView {
     pub multipv: i32,
     pub classifier_version: String,
     pub accuracy_method_version: String,
-    /// Сколько анализов этой конфигурации вошло в агрегаты.
+    /// How many analyses of this configuration went into the aggregates.
     pub included: u32,
-    /// Сколько анализов всего в базе.
+    /// How many analyses exist in the database in total.
     pub total: u32,
-    /// Партии с анализом другой конфигурации — их можно пересчитать.
+    /// Games analyzed with a different configuration — they can be recalculated.
     pub mismatched_game_ids: Vec<i64>,
-    /// Подмножество `mismatched_game_ids`, которое мельче текущих настроек.
-    /// Только эти партии имеет смысл пересчитывать.
+    /// Subset of `mismatched_game_ids` that is shallower than the current settings.
+    /// Only these games are worth recalculating.
     pub upgrade_game_ids: Vec<i64>,
 }
 
@@ -153,12 +154,14 @@ pub const PIECE_SETS: [&str; 6] = [
     "kiwen-suwi",
 ];
 
+pub const BOARD_THEMES: [&str; 3] = ["midnight", "walnut", "slate"];
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
-    /// Устаревший профиль для ручных PGN без выбранного аккаунта.
+    /// Legacy profile for manual PGNs without a selected account.
     pub player_username: String,
-    /// NULL — «все аккаунты»; иначе выбранный аккаунт.
+    /// NULL — "all accounts"; otherwise the selected account.
     pub active_account_id: Option<i64>,
     pub analysis_depth: u32,
     pub multipv: u32,
@@ -166,11 +169,54 @@ pub struct AppSettings {
     pub piece_set: String,
     pub show_arrows: bool,
     pub auto_analyze: bool,
-    /// 0 — авто (производительные ядра плюс часть энергоэффективных), иначе 1…N процессов.
+    /// 0 — auto (performance cores plus some efficiency cores), otherwise 1…N processes.
     pub analysis_threads: u32,
-    /// Продолжать недоделанную очередь при запуске приложения.
+    /// Resume an unfinished queue when the app starts.
     pub auto_resume_analysis: bool,
     pub language: String,
+}
+
+impl AppSettings {
+    /// Validates all settings at once. `set_many` must not bypass the checks
+    /// that `set_setting` applies to individual keys.
+    pub fn validate(&self) -> AppResult<()> {
+        if !(6..=24).contains(&self.analysis_depth) {
+            return Err(AppError::Validation(
+                "Analysis depth must be between 6 and 24".to_string(),
+            ));
+        }
+        if !(1..=3).contains(&self.multipv) {
+            return Err(AppError::Validation(
+                "MultiPV must be between 1 and 3".to_string(),
+            ));
+        }
+        if self.analysis_threads > 64 {
+            return Err(AppError::Validation(
+                "Analysis workers must be 0 (auto) or between 1 and 64".to_string(),
+            ));
+        }
+        if !PIECE_SETS.contains(&self.piece_set.as_str()) {
+            return Err(AppError::Validation(format!(
+                "Unknown piece set «{}»",
+                self.piece_set
+            )));
+        }
+        if !BOARD_THEMES.contains(&self.board_theme.as_str()) {
+            return Err(AppError::Validation(format!(
+                "Unknown board theme «{}»",
+                self.board_theme
+            )));
+        }
+        if !(2..=5).contains(&self.language.len())
+            || !self.language.chars().all(|c| c.is_ascii_lowercase())
+        {
+            return Err(AppError::Validation(format!(
+                "Invalid language code «{}»",
+                self.language
+            )));
+        }
+        Ok(())
+    }
 }
 
 impl Default for AppSettings {
@@ -206,4 +252,6 @@ pub struct AppInfo {
     pub version: String,
     pub eco_openings: usize,
     pub max_analysis_workers: u32,
+    pub db_path: String,
+    pub log_path: String,
 }

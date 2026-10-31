@@ -7,8 +7,8 @@ use crate::pgn::{identify_opening, parse_single};
 
 const OPENINGS_VERSION_KEY: &str = "openings_version";
 
-/// Пересчитывает дебюты всех партий по позициям. Движок не нужен, операция
-/// идемпотентна: повторный запуск на той же базе ничего не делает.
+/// Recalculates openings for all games from their positions. No engine is needed;
+/// the operation is idempotent: a second run on the same database does nothing.
 pub fn backfill_openings(db: &Db) -> AppResult<u32> {
     let version = dataset_version();
     db.with_tx(|tx| {
@@ -34,7 +34,7 @@ pub fn backfill_openings(db: &Db) -> AppResult<u32> {
                 Ok(parsed) => parsed,
                 Err(err) => {
                     failed += 1;
-                    eprintln!("Chenal: дебют партии #{id} не пересчитан: {err}");
+                    tracing::warn!("Opening for game #{id} was not recalculated: {err}");
                     continue;
                 }
             };
@@ -48,13 +48,7 @@ pub fn backfill_openings(db: &Db) -> AppResult<u32> {
                     OR opening_ply IS NOT ?4
                     OR COALESCE(opening_source, '') <> COALESCE(?5, '')
                  )",
-                params![
-                    id,
-                    opening.eco,
-                    opening.name,
-                    opening.ply,
-                    opening.source
-                ],
+                params![id, opening.eco, opening.name, opening.ply, opening.source],
             )?;
             updated += changed as u32;
         }
@@ -63,13 +57,14 @@ pub fn backfill_openings(db: &Db) -> AppResult<u32> {
             params![OPENINGS_VERSION_KEY, version],
         )?;
         if failed > 0 {
-            eprintln!("Chenal: дебюты не пересчитаны у {failed} партий");
+            tracing::warn!("Openings were not recalculated for {failed} games");
         }
         Ok(updated)
     })
 }
 
-/// Определяет дебют одной партии без записи в базу. Нужен пересчёту и тестам.
+/// Identifies the opening of a single game without writing to the database.
+/// Used by the backfill and tests.
 pub fn identify_game_pgn(pgn: &str) -> AppResult<Option<(String, String, i32)>> {
     let parsed = parse_single(pgn)?;
     let found = EcoBook::global().identify_with_ply(&parsed.fens_after());
@@ -88,7 +83,14 @@ mod tests {
 
     fn draft_from(pgn: &str) -> GameDraft {
         let parsed = parse_single(pgn).unwrap();
-        build_draft(&parsed, GameSource::Manual, "x".to_string(), "alice", None, None)
+        build_draft(
+            &parsed,
+            GameSource::Manual,
+            "x".to_string(),
+            "alice",
+            None,
+            None,
+        )
     }
 
     #[test]
@@ -126,10 +128,9 @@ mod tests {
 
     #[test]
     fn header_fallback_is_used_only_without_positions() {
-        let parsed = parse_single(
-            "[Result \"*\"]\n[ECO \"Z99\"]\n[Opening \"  Vienna   Game. \"]\n\n*",
-        )
-        .unwrap();
+        let parsed =
+            parse_single("[Result \"*\"]\n[ECO \"Z99\"]\n[Opening \"  Vienna   Game. \"]\n\n*")
+                .unwrap();
         let opening = identify_opening(&parsed);
         assert_eq!(opening.eco.as_deref(), Some("Z99"));
         assert_eq!(opening.name.as_deref(), Some("Vienna Game"));

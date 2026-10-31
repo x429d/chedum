@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::sync::atomic::AtomicBool;
 
 use super::*;
 use crate::chesscom::client::RemoteGame;
@@ -93,9 +94,16 @@ async fn sync_imports_then_dedupes() {
     let account_id = account(&db);
     let api = mock();
     let mut events = 0u32;
-    let first = sync_user(&db, &api, account_id, "chenal_player", false, |_| {
-        events += 1
-    })
+    let cancel = AtomicBool::new(false);
+    let first = sync_user(
+        &db,
+        &api,
+        account_id,
+        "chenal_player",
+        false,
+        &cancel,
+        |_| events += 1,
+    )
     .await
     .unwrap();
     assert_eq!(first.games_imported, 1);
@@ -104,19 +112,87 @@ async fn sync_imports_then_dedupes() {
     assert_eq!(count_games(&db).unwrap(), 1);
     assert!(events > 0);
 
-    let second = sync_user(&db, &api, account_id, "chenal_player", false, |_| {})
-        .await
-        .unwrap();
+    let second = sync_user(
+        &db,
+        &api,
+        account_id,
+        "chenal_player",
+        false,
+        &cancel,
+        |_| {},
+    )
+    .await
+    .unwrap();
     assert_eq!(second.archives_processed, 0);
     assert_eq!(second.games_imported, 0);
 
-    let forced = sync_user(&db, &api, account_id, "chenal_player", true, |_| {})
-        .await
-        .unwrap();
+    let forced = sync_user(
+        &db,
+        &api,
+        account_id,
+        "chenal_player",
+        true,
+        &cancel,
+        |_| {},
+    )
+    .await
+    .unwrap();
     assert_eq!(forced.archives_processed, 1);
     assert_eq!(forced.games_imported, 0);
-    assert_eq!(forced.games_skipped, 1);
+    assert_eq!(forced.duplicates, 1);
     assert_eq!(count_games(&db).unwrap(), 1);
+}
+
+#[tokio::test]
+async fn sync_separates_filtered_games_from_parse_errors() {
+    let db = Db::in_memory().unwrap();
+    let account_id = account(&db);
+    let mut api = mock();
+    api.games.push(RemoteGame {
+        url: "https://www.chess.com/game/live/43".to_string(),
+        pgn: "not a pgn".to_string(),
+        rules: "chess".to_string(),
+        ..RemoteGame::default()
+    });
+    api.games.push(RemoteGame {
+        url: "https://www.chess.com/game/live/44".to_string(),
+        pgn: LEGAL.to_string(),
+        rules: "chess960".to_string(),
+        ..RemoteGame::default()
+    });
+    let result = sync_user(
+        &db,
+        &api,
+        account_id,
+        "chenal_player",
+        false,
+        &AtomicBool::new(false),
+        |_| {},
+    )
+    .await
+    .unwrap();
+    assert_eq!(result.games_imported, 1);
+    assert_eq!(result.filtered, 1);
+    assert_eq!(result.errors.len(), 1);
+}
+
+#[tokio::test]
+async fn cancelled_sync_stops_before_network() {
+    let db = Db::in_memory().unwrap();
+    let account_id = account(&db);
+    let api = mock();
+    let error = sync_user(
+        &db,
+        &api,
+        account_id,
+        "chenal_player",
+        false,
+        &AtomicBool::new(true),
+        |_| {},
+    )
+    .await
+    .unwrap_err();
+    assert!(matches!(error, AppError::Cancelled(_)));
 }
 
 #[tokio::test]
@@ -124,8 +200,16 @@ async fn sync_rejects_empty_username() {
     let db = Db::in_memory().unwrap();
     let account_id = account(&db);
     let api = mock();
-    let error = sync_user(&db, &api, account_id, "  ", false, |_| {})
-        .await
-        .unwrap_err();
+    let error = sync_user(
+        &db,
+        &api,
+        account_id,
+        "  ",
+        false,
+        &AtomicBool::new(false),
+        |_| {},
+    )
+    .await
+    .unwrap_err();
     assert!(matches!(error, AppError::Validation(_)));
 }

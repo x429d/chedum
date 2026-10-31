@@ -1,5 +1,6 @@
 import { For, Show } from "solid-js";
 
+import { t } from "../../i18n";
 import { ui } from "../../stores/uiStore";
 import { Icon } from "../ui/Icon";
 
@@ -9,7 +10,13 @@ export function Toasts() {
       <div class="toast-stack">
         <For each={ui.toasts()}>
           {(toast) => (
-            <div class="toast" classList={{ [toast.kind]: true }} onClick={() => ui.dismiss(toast.id)}>
+            <div
+              class="toast"
+              classList={{ [toast.kind]: true }}
+              role={toast.kind === "error" ? "alert" : "status"}
+              aria-live={toast.kind === "error" ? "assertive" : "polite"}
+              onClick={() => ui.dismiss(toast.id)}
+            >
               <Icon
                 name={toast.kind === "error" ? "alert" : toast.kind === "success" ? "check" : "info"}
                 size={15}
@@ -19,6 +26,7 @@ export function Toasts() {
                 type="button"
                 class="btn btn-ghost icon-btn"
                 style={{ width: "20px", height: "20px", "margin-left": "auto" }}
+                aria-label={t("app.dismiss")}
                 onClick={(event) => {
                   event.stopPropagation();
                   ui.dismiss(toast.id);

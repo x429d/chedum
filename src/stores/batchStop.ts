@@ -3,7 +3,7 @@ import { api } from "../services/api";
 import { toErrorMessage } from "../utils/format";
 import { ui } from "./uiStore";
 
-/** Ждёт, пока воркеры завершат текущие партии и очередь отпустит движок. */
+/** Waits until workers finish their current games and the queue releases the engine. */
 function waitForIdle(running: () => boolean, timeoutMs = 30_000): Promise<boolean> {
   if (!running()) return Promise.resolve(true);
   return new Promise((resolve) => {
@@ -24,8 +24,8 @@ function waitForIdle(running: () => boolean, timeoutMs = 30_000): Promise<boolea
 }
 
 /**
- * Останавливает пакетный анализ только после явного согласия пользователя
- * и дожидается, пока воркеры отпустят движок.
+ * Stops batch analysis only after explicit user confirmation
+ * and waits for the workers to release the engine.
  */
 export async function stopBatchWithConfirm(
   running: () => boolean,

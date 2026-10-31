@@ -20,12 +20,12 @@ export interface BoardPointerOptions {
   orientation: () => Color;
   interactive: () => boolean;
   onMove: (from: string, to: string, animate: boolean) => void;
-  /** Свои стрелки снаружи: если заданы, состояние живёт в сторе (нужно для undo). */
+  /** User arrows supplied externally: when set, state lives in the store (needed for undo). */
   arrows?: () => ArrowSpec[];
   onArrowsChange?: (next: ArrowSpec[]) => void;
 }
 
-/** Правая кнопка рисует жёлтую стрелку; цвета как на Chess.com. */
+/** Right button draws a yellow arrow; colors match Chess.com. */
 const ARROW_COLOR = "#FACC15";
 const ARROW_COLOR_SHIFT = "#22C55E";
 const ARROW_COLOR_ALT = "#3B82F6";
@@ -42,9 +42,9 @@ function arrowColor(event: PointerEvent): string {
 const suppressContextMenu = (event: Event): void => event.preventDefault();
 
 /**
- * WKWebView на macOS показывает по правому клику своё меню («Reload page»),
- * даже если стрелка уже рисуется. Пока кнопка зажата, гасим меню на уровне
- * всего окна: отпустить её можно и за пределами доски.
+ * The macOS WKWebView shows its own context menu on right-click ("Reload page")
+ * even while an arrow is being drawn. While the button is held, suppress the menu
+ * at the window level: the button may be released outside the board.
  */
 function blockNativeMenu(): () => void {
   window.addEventListener("contextmenu", suppressContextMenu, true);
@@ -61,7 +61,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
   const [hover, setHover] = createSignal<string | null>(null);
   const [localArrows, setLocalArrows] = createSignal<ArrowSpec[]>([]);
   const [drawingArrow, setDrawingArrow] = createSignal<ArrowSpec | null>(null);
-  /** Контролируемый режим: стрелки хранит вызывающая сторона (стор) — так работает undo. */
+  /** Controlled mode: the caller (store) owns the arrows, which is what makes undo work. */
   const controlled = options.onArrowsChange !== undefined;
   const userArrows = (): ArrowSpec[] => options.arrows?.() ?? localArrows();
   const setUserArrows = (next: ArrowSpec[]): void => {
@@ -89,7 +89,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     try {
       options.board()?.setPointerCapture(event.pointerId);
     } catch {
-      // pointer capture может быть недоступен в некоторых WebView
+      // pointer capture may be unavailable in some WebViews
     }
   };
 
@@ -100,7 +100,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
         board.releasePointerCapture(event.pointerId);
       }
     } catch {
-      // pointer capture уже мог быть освобождён
+      // pointer capture may already have been released
     }
   };
 
@@ -198,7 +198,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
   const finishArrow = (arrow: ArrowSpec, target: string | null): void => {
     const items = userArrows();
     if (!target || target === arrow.from) {
-      // Правый клик без перетаскивания очищает все стрелки.
+      // Right-click without dragging clears all arrows.
       if (items.length > 0) setUserArrows([]);
       return;
     }
@@ -214,7 +214,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
   const handleUp = (event: PointerEvent): void => {
     const arrow = drawingArrow();
     if (arrow) {
-      // Если кнопку отпустили за доской, оставляем последнюю подсвеченную клетку.
+      // If the button is released outside the board, keep the last highlighted square.
       finishArrow(arrow, squareOf(event) ?? arrow.to);
       setDrawingArrow(null);
       stopBlockingMenu();
@@ -259,5 +259,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     },
     clearHover: () => setHover(null),
     reset,
+    select: (square: string | null) => setSelected(square),
+    playMove: (from: string, to: string) => attemptMove(from, to),
   };
 }

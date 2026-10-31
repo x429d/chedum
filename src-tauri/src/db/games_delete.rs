@@ -7,7 +7,7 @@ pub fn delete_game(db: &Db, id: i64) -> AppResult<()> {
     delete_games(db, &[id]).map(|_| ())
 }
 
-/// Удаляет партии пакетно; связанные анализы и ходы удаляются каскадно.
+/// Deletes games in bulk; related analyses and moves are removed by cascade.
 pub fn delete_games(db: &Db, ids: &[i64]) -> AppResult<u32> {
     if ids.is_empty() {
         return Ok(0);

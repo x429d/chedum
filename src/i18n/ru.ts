@@ -107,6 +107,11 @@ export const ru: TranslationSchema = {
     gamesAlreadyDeleted: "Партии уже удалены",
     gameDeleted: "Партия удалена",
     gamesDeletedCount: "Удалено партий: {count}",
+    analysisFailedTimes: "Анализ не удался {count} раз",
+    analysisFailedHint: "Неудачных попыток: {count}. Ошибка: {error}",
+    selectAll: "Выбрать все партии",
+    selectGame: "Выбрать партию",
+    openGame: "Открыть партию",
   },
   studio: {
     backToLibrary: "Назад в библиотеку",
@@ -177,6 +182,8 @@ export const ru: TranslationSchema = {
     scopeUser: "Только свои ходы",
     scopeOpponent: "Ходы соперника",
     scopeAll: "Все ходы (вместе)",
+    chartLabel: "График оценки и времени на ход",
+    chartHint: "Стрелки влево и вправо переключают ходы партии.",
   },
   board: {
     first: "Начало",
@@ -189,6 +196,8 @@ export const ru: TranslationSchema = {
     live: "Live-анализ Stockfish",
     fullscreen: "Полноэкранный режим",
     exitFullscreen: "Выйти из полноэкранного режима",
+    label: "Шахматная доска",
+    focusHint: "Стрелки перемещают курсор, Enter выбирает или делает ход, Escape сбрасывает выбор.",
   },
   hub: {
     title: "Аналитика игрока",
@@ -264,6 +273,11 @@ export const ru: TranslationSchema = {
     appearanceTitle: "Оформление",
     showArrows: "Стрелки лучших линий",
     pieceSet: "Набор фигур",
+    diagnosticsTitle: "Диагностика",
+    copyDiagnostics: "Скопировать диагностику",
+    diagnosticsCopied: "Диагностика скопирована",
+    dbPath: "База данных",
+    logPath: "Журналы",
   },
   accounts: {
     title: "Аккаунты",
@@ -291,7 +305,7 @@ export const ru: TranslationSchema = {
     syncAllBusy: "Синхронизация всех…",
     syncDone: "{account}: +{imported} партий, пропущено {skipped}",
     syncEmpty: "{account}: новых партий нет",
-    syncAllDone: "Все аккаунты: +{imported} партий, пропущено {skipped}",
+    syncAllDone: "Все аккаунты: +{imported} новых, {duplicates} уже было, {filtered} отфильтровано, ошибок: {errors}",
     syncAllEmpty: "Все аккаунты уже синхронизированы",
     syncSomeFailed: "Синхронизация завершилась с ошибками: {count}",
     scope: "Аккаунт",
@@ -302,6 +316,13 @@ export const ru: TranslationSchema = {
     remove: "Отключить",
     confirmRemove: "Отключить {account}? Партии останутся в библиотеке.",
     syncProgress: "Ход синхронизации",
+    cancelSync: "Отменить синхронизацию",
+    syncCancelled: "Синхронизация отменена",
+    syncResult: "{account}: +{imported} новых, {duplicates} уже было, {filtered} отфильтровано, ошибок: {errors}",
+    syncReset: "Сбросить историю синхронизации",
+    syncResetConfirm: "Сбросить историю синхронизации для {account}? Следующая синхронизация заново скачает всю историю.",
+    syncResetDone: "История синхронизации сброшена для {account}",
+    syncForceHint: "Принудительная загрузка игнорирует сохранённые курсоры синхронизации.",
     howTitle: "Как это работает",
     howStep1: "Подключите любое число аккаунтов chess.com и lichess.",
     howStep2: "Синхронизация загружает только новые партии, всё хранится локально.",
@@ -339,5 +360,78 @@ export const ru: TranslationSchema = {
   sides: {
     white: "белые",
     black: "чёрные",
+  },
+  sync: {
+    progressArchives: "Получение списка архивов…",
+    progressArchive: "Архив {done} из {total} · импортировано {imported} партий",
+    progressDownload: "Загрузка партий…",
+    progressParse: "Разбор PGN…",
+    progressImport: "Импорт партий…",
+    progressDone: "Синхронизация завершена: +{imported} партий",
+    progressEmpty: "Новых партий нет",
+  },
+  coach: {
+    brilliant_sacrifice:
+      "Бриллиантовая жертва: {playedSan} отдаёт материал, но сохраняет сильную оценку. Главная линия: {line}.",
+    strong_continuation:
+      "Сильнейшее продолжение {playedSan} сохраняет перевес. Ключевая линия: {line}.",
+    allowed_mate:
+      "Позволяет форсированный мат в {distance}. Вместо {playedSan} точнее было {bestSan}.",
+    missed_mate:
+      "Упущен форсированный мат в {distance}. Вместо {playedSan} выигрывало {bestSan}.",
+    hung_piece:
+      "Потеря материала: после {playedSan} фигура остаётся без защиты; главная линия соперника даёт не менее {pawns} пешки. Точнее было {bestSan}.",
+    missed_tactic:
+      "Упущен тактический удар: {bestSan} давал выигрыш материала около {pawns} пешки.",
+    king_safety:
+      "Ослабление прикрытия короля: {playedSan} создаёт прямые угрозы, соперник отвечает шахом. Надёжнее было {bestSan}.",
+    positional_concession:
+      "Позиционная уступка: потеря {pawns} оценки и контроля над ключевыми полями. Точнее было {bestSan}.",
+  },
+  progress: {
+    prepare: "Разбор PGN и подготовка позиций…",
+    engine: "Stockfish: позиция {done} из {total}",
+    aggregate: "Классификация ходов и расчёт метрик…",
+    save: "Сохранение анализа в локальную базу…",
+    done: "Анализ завершён",
+  },
+  summary: {
+    opening: "Дебют: {eco} «{name}».",
+    openingEco: "Дебют: {eco}.",
+    openingName: "Дебют: {name}.",
+    wonAsWhite: "Вы играли белыми и победили соперника {opponent}.",
+    lostAsWhite: "Вы играли белыми и уступили сопернику {opponent}.",
+    wonAsBlack: "Вы играли чёрными и победили соперника {opponent}.",
+    lostAsBlack: "Вы играли чёрными и уступили сопернику {opponent}.",
+    draw: "Партия {white} — {black} завершилась вничью.",
+    result: "Партия {white} — {black} завершилась со счётом {result}.",
+    accuracy: "Точность ваших ходов — {accuracy}% (ACPL {acpl}).",
+    accuracyNoAcpl: "Точность ваших ходов — {accuracy}%.",
+    clean: "Грубых ошибок не обнаружено — партия проведена чисто.",
+    weakness: "Слабое место — {errors}.",
+    weakestPhase: "Наименьшая точность в фазе «{phase}» — {accuracy}%.",
+    keyMoments:
+      "Ключевых моментов: {count}. В цейтноте пройдено ходов: {timeTrouble}, поспешных ошибок: {impulsive}.",
+    noKeyMoments: "Ключевых переломных моментов не зафиксировано.",
+  },
+  errors: {
+    database: "Ошибка базы данных",
+    io: "Ошибка доступа к файлу",
+    network: "Сетевая ошибка",
+    engine: "Ошибка движка",
+    parse: "Не удалось разобрать данные",
+    not_found: "Не найдено",
+    validation: "Некорректные данные",
+    rate_limited: "Превышен лимит запросов. Попробуйте позже.",
+    busy: "Движок занят",
+    cancelled: "Отменено",
+    internal: "Внутренняя ошибка",
+    unknown: "Неизвестная ошибка",
+  },
+  app: {
+    unexpectedError: "При отображении экрана произошла ошибка.",
+    reloadView: "Перезагрузить экран",
+    errorDetails: "Подробности",
+    dismiss: "Закрыть",
   },
 };

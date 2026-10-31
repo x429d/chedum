@@ -1,11 +1,14 @@
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 
+use serde::{Deserialize, Serialize};
+
 use crate::domain::analysis::PvLine;
 use crate::domain::error::{AppError, AppResult};
 use crate::engine::{EngineManager, EnginePool, EngineUpdate};
+use crate::service::checkpoint::Checkpoint;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PositionEval {
     pub fen: String,
     pub lines: Vec<PvLine>,
@@ -13,12 +16,14 @@ pub struct PositionEval {
     pub depth: u32,
 }
 
-/// Последовательно оценивает позиции, сохраняя MultiPV-линии.
+/// Evaluates positions sequentially, reusing a checkpoint for already
+/// completed positions.
 pub async fn evaluate_positions<F>(
     engine: &EngineManager,
     fens: &[String],
     depth: u32,
     multipv: u32,
+    checkpoint: Option<&Checkpoint>,
     mut on_progress: F,
 ) -> AppResult<Vec<PositionEval>>
 where
@@ -27,18 +32,32 @@ where
     let total = fens.len();
     let mut evaluations = Vec::with_capacity(total);
     for (index, fen) in fens.iter().enumerate() {
+        if let Some(checkpoint) = checkpoint {
+            if let Some(cached) = checkpoint.load_block(index)? {
+                if let Some(evaluation) = cached.into_iter().next() {
+                    evaluations.push(evaluation);
+                    on_progress(index + 1, total);
+                    continue;
+                }
+            }
+        }
         let update = evaluate_position(engine, fen, depth, multipv).await?;
-        evaluations.push(position_eval(fen, update));
+        let evaluation = position_eval(fen, update);
+        if let Some(checkpoint) = checkpoint {
+            if let Err(err) = checkpoint.store_block(index, std::slice::from_ref(&evaluation)) {
+                tracing::warn!("Could not store analysis checkpoint at position {index}: {err}");
+            }
+        }
+        evaluations.push(evaluation);
         on_progress(index + 1, total);
     }
     Ok(evaluations)
 }
 
-/// Размер блока при параллельной оценке. Блок фиксирован и не зависит от
-/// размера пула, поэтому и разбиение, и результат каждой позиции
-/// воспроизводимы при любом числе процессов. На малой глубине поиск дешёвый
-/// и блоки крупнее (меньше холодных стартов), на большой — мельче, чтобы
-/// медленные позиции не растягивали хвост.
+/// Fixed block size, independent of the pool size, so both the split and each
+/// position's result are reproducible for any number of processes. Search is
+/// cheap at low depth, so blocks are larger (fewer cold starts); at high depth
+/// they are smaller so slow positions do not stretch the tail.
 fn block_size(depth: u32) -> usize {
     if depth >= 18 {
         4
@@ -47,16 +66,17 @@ fn block_size(depth: u32) -> usize {
     }
 }
 
-/// Оценивает позиции блоками, распределяя блоки по пулу процессов.
-/// Внутри блока transposition table переходит от позиции к позиции — так же,
-/// как при последовательном разборе, — но каждый блок начинается с чистого
-/// листа. Иначе оценка зависела бы от того, какие позиции успел посчитать
-/// конкретный процесс, а значит и от числа воркеров.
+/// Evaluates positions in blocks distributed across the process pool.
+/// Inside a block the transposition table carries over between positions, just
+/// like the sequential path, but every block starts with a clean table. That
+/// makes the result independent of the worker count and scheduler. Completed
+/// blocks are checkpointed and reused after a crash or cancellation.
 pub async fn evaluate_positions_pooled(
     pool: &Arc<EnginePool>,
     fens: &[String],
     depth: u32,
     multipv: u32,
+    checkpoint: Option<Checkpoint>,
     on_position_done: Arc<dyn Fn(usize) + Send + Sync>,
 ) -> AppResult<Vec<PositionEval>> {
     pool.clear_stop();
@@ -75,6 +95,7 @@ pub async fn evaluate_positions_pooled(
         let aborted = Arc::clone(&aborted);
         let fens = Arc::clone(&fens);
         let on_done = Arc::clone(&on_position_done);
+        let checkpoint = checkpoint.clone();
         tasks.push(tokio::spawn(async move {
             let mut results: Vec<(usize, PositionEval)> = Vec::new();
             loop {
@@ -85,27 +106,50 @@ pub async fn evaluate_positions_pooled(
                 if block >= blocks {
                     return Ok(results);
                 }
+                let start = block * size;
+                let end = (start + size).min(fens.len());
+                if let Some(checkpoint) = checkpoint.as_ref() {
+                    if let Some(cached) = checkpoint.load_block(block)? {
+                        if cached.len() == end - start {
+                            for (offset, evaluation) in cached.into_iter().enumerate() {
+                                results.push((start + offset, evaluation));
+                                let finished = done.fetch_add(1, Ordering::SeqCst) + 1;
+                                on_done(finished);
+                            }
+                            continue;
+                        }
+                    }
+                }
                 if pool.is_stopped() {
                     return Err(crate::engine::cancelled_error());
                 }
                 let lease = pool.acquire().await;
                 let engine = lease.manager();
-                // Задача на весь движок: параллельный блок не должен
-                // дождаться отмены, которая уже пришла в пул.
                 if pool.is_stopped() {
                     return Err(crate::engine::cancelled_error());
                 }
                 let _job = engine.begin_job().await?;
-                // Чистая таблица на блок: только от неё зависит результат.
                 engine.prepare_game().await?;
-                let start = block * size;
-                let end = (start + size).min(fens.len());
+                let mut block_results = Vec::with_capacity(end - start);
                 for index in start..end {
                     let update = evaluate_position(engine, &fens[index], depth, multipv).await?;
-                    results.push((index, position_eval(&fens[index], update)));
+                    block_results.push(position_eval(&fens[index], update));
                     let finished = done.fetch_add(1, Ordering::SeqCst) + 1;
                     on_done(finished);
                 }
+                if let Some(checkpoint) = checkpoint.as_ref() {
+                    if let Err(err) = checkpoint.store_block(block, &block_results) {
+                        tracing::warn!(
+                            "Could not store analysis checkpoint for block {block}: {err}"
+                        );
+                    }
+                }
+                results.extend(
+                    block_results
+                        .into_iter()
+                        .enumerate()
+                        .map(|(offset, evaluation)| (start + offset, evaluation)),
+                );
             }
         }));
     }
@@ -120,7 +164,7 @@ pub async fn evaluate_positions_pooled(
                 }
             }
             Ok(Err(err)) => {
-                // Один сломанный блок отменяет остальные: ждать их бессмысленно.
+                // One broken block cancels the rest: waiting for them is pointless.
                 aborted.store(true, Ordering::SeqCst);
                 if failure.is_none() {
                     failure = Some(err);
@@ -130,7 +174,7 @@ pub async fn evaluate_positions_pooled(
                 aborted.store(true, Ordering::SeqCst);
                 if failure.is_none() {
                     failure = Some(AppError::Internal(format!(
-                        "Задача анализа прервана: {err}"
+                        "Analysis task was interrupted: {err}"
                     )));
                 }
             }
@@ -143,7 +187,7 @@ pub async fn evaluate_positions_pooled(
         .enumerate()
         .map(|(index, evaluation)| {
             evaluation.ok_or_else(|| {
-                AppError::Internal(format!("Позиция {} осталась без оценки", index + 1))
+                AppError::Internal(format!("Position {} has no evaluation", index + 1))
             })
         })
         .collect()
@@ -170,8 +214,8 @@ fn position_eval(fen: &str, update: EngineUpdate) -> PositionEval {
     }
 }
 
-/// Одна позиция с одним повтором: менеджер уже перезапустил движок,
-/// поэтому повтор после сбоя обычно проходит и партия не теряется.
+/// One position with one retry: the manager has already restarted the engine,
+/// so a retry after a failure usually succeeds and the game is not lost.
 async fn evaluate_position(
     engine: &EngineManager,
     fen: &str,
@@ -181,7 +225,7 @@ async fn evaluate_position(
     match engine.analyze(fen, depth, multipv, |_| {}).await {
         Ok(update) => Ok(update),
         Err(first) if !engine.is_cancelled() => {
-            eprintln!("Chenal: повтор оценки позиции после сбоя движка: {first}");
+            tracing::warn!("Retrying position evaluation after an engine failure: {first}");
             engine.analyze(fen, depth, multipv, |_| {}).await
         }
         Err(err) => Err(err),
@@ -190,80 +234,5 @@ async fn evaluate_position(
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
-mod tests {
-    use std::path::Path;
-
-    use super::*;
-
-    fn bundled_engine() -> Option<std::path::PathBuf> {
-        let path =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
-        path.is_file().then_some(path)
-    }
-
-    /// Одинаковые позиции на пулах разного размера: блоки стартуют с чистой
-    /// таблицей, поэтому число процессов не должно менять ни порядок, ни оценки.
-    #[tokio::test]
-    async fn pooled_evaluation_is_order_and_pool_size_independent() {
-        let Some(path) = bundled_engine() else {
-            return;
-        };
-        let fens = [
-            "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-            "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
-            "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2",
-            "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2",
-            "r1bqkbnr/pp1ppppp/2n5/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
-            "r1bqkbnr/pp1ppppp/2n5/2p5/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
-            "r1bqkbnr/pp2pppp/2n5/2pp4/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4",
-            "r1bqkbnr/pp2pppp/2n5/3p4/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4",
-            "r1bqkbnr/pp2pppp/2n5/3P4/2B5/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 4",
-            "r1bqkbnr/pp3ppp/2n5/3p4/2B5/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
-        ]
-        .map(String::from);
-        let small = EnginePool::spawn(&path, 2, 16).await.unwrap();
-        let large = EnginePool::spawn(&path, 3, 16).await.unwrap();
-        let first = evaluate_positions_pooled(&small, &fens, 6, 1, Arc::new(|_| {}))
-            .await
-            .unwrap();
-        let second = evaluate_positions_pooled(&large, &fens, 6, 1, Arc::new(|_| {}))
-            .await
-            .unwrap();
-        small.shutdown().await;
-        large.shutdown().await;
-
-        assert_eq!(first.len(), fens.len());
-        for (index, evaluation) in first.iter().enumerate() {
-            assert_eq!(evaluation.fen, fens[index], "порядок позиций");
-            let other = &second[index];
-            assert_eq!(evaluation.best_move, other.best_move, "позиция {index}");
-            assert_eq!(
-                evaluation.lines.first().map(|line| line.score_cp),
-                other.lines.first().map(|line| line.score_cp),
-                "позиция {index}"
-            );
-        }
-    }
-
-    #[tokio::test]
-    async fn stop_cancels_parallel_blocks() {
-        let Some(path) = bundled_engine() else {
-            return;
-        };
-        let fens: Vec<String> = (0..16)
-            .map(|_| "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1".to_string())
-            .collect();
-        let pool = EnginePool::spawn(&path, 2, 16).await.unwrap();
-        let stopper = {
-            let pool = Arc::clone(&pool);
-            tokio::spawn(async move {
-                tokio::time::sleep(std::time::Duration::from_millis(60)).await;
-                pool.request_stop();
-            })
-        };
-        let result = evaluate_positions_pooled(&pool, &fens, 18, 1, Arc::new(|_| {})).await;
-        stopper.await.unwrap();
-        pool.shutdown().await;
-        assert!(result.is_err(), "остановка должна прерывать блоки");
-    }
-}
+#[path = "evaluation_tests.rs"]
+mod tests;

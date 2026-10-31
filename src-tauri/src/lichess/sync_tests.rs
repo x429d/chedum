@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use chrono::DateTime;
+use std::sync::atomic::AtomicBool;
 
 use super::*;
 use crate::db::accounts_repo;
@@ -77,7 +78,9 @@ fn parses_since_with_overlap() {
 fn skips_games_against_lichess_ai() {
     let pgn = "[Event \"casual rapid game\"]\n[Site \"https://lichess.org/game/aiTest01\"]\n[White \"lichess AI level 4\"]\n[Black \"chenal_player\"]\n[Result \"0-1\"]\n[Variant \"Standard\"]\n\n1. e4 e5 0-1";
     let parsed = parse_single(pgn).unwrap();
-    assert!(draft_for_game(&parsed, "chenal_player", 1).is_none());
+    assert!(draft_for_game(&parsed, "chenal_player", 1)
+        .unwrap()
+        .is_none());
 }
 
 #[tokio::test]
@@ -87,11 +90,20 @@ async fn sync_imports_standard_games_and_skips_variants() {
     let api = MockApi {
         pgn: PGN.to_string(),
     };
-    let result = sync_user(&db, &api, account_id, "chenal_player", None, false, |_| {})
-        .await
-        .unwrap();
+    let result = sync_user(
+        &db,
+        &api,
+        account_id,
+        "chenal_player",
+        None,
+        false,
+        &AtomicBool::new(false),
+        |_| {},
+    )
+    .await
+    .unwrap();
     assert_eq!(result.games_imported, 1);
-    assert_eq!(result.games_skipped, 1);
+    assert_eq!(result.filtered, 1);
     assert_eq!(result.platform, AccountPlatform::Lichess);
 
     let page = list_games(&db, &GameFilter::default()).unwrap();
@@ -109,10 +121,12 @@ async fn sync_imports_standard_games_and_skips_variants() {
         "chenal_player",
         Some("2026-10-22T18:00:00+00:00"),
         false,
+        &AtomicBool::new(false),
         |_| {},
     )
     .await
     .unwrap();
     assert_eq!(again.games_imported, 0);
-    assert_eq!(again.games_skipped, 2);
+    assert_eq!(again.duplicates, 1);
+    assert_eq!(again.filtered, 1);
 }

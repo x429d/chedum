@@ -11,6 +11,7 @@ import { Icon } from "../components/ui/Icon";
 import { pluralGames, t, tSide } from "../i18n";
 import { api } from "../services/api";
 import { accountsStore } from "../stores/accountsStore";
+import { dataVersion } from "../stores/dataVersion";
 import { libraryStore } from "../stores/libraryStore";
 import { settingsStore } from "../stores/settingsStore";
 import { ui } from "../stores/uiStore";
@@ -39,7 +40,7 @@ export function HubView() {
 
   createEffect(
     on(
-      () => [accountsStore.activeAccountId(), libraryStore.total()] as const,
+      () => [accountsStore.activeAccountId(), libraryStore.total(), libraryStore.analyzed(), dataVersion()] as const,
       () => {
         if (ui.view() === "hub") void load();
       },
@@ -140,7 +141,7 @@ export function HubView() {
                         const ids = config().upgradeGameIds;
                         setReanalyzing(true);
                         void libraryStore
-                          .analyzeIds(ids, "Recalculate")
+                          .analyzeIds(ids, t("library.batchAnalysisLabel"))
                           .then(() => load())
                           .finally(() => setReanalyzing(false));
                       }}

@@ -14,7 +14,7 @@ import {
 import { Icon } from "../ui/Icon";
 import { Pagination } from "./Pagination";
 
-/// Плавная шкала: 0 % — красный, 50 % — янтарный, 100 % — зелёный.
+/// Smooth scale: 0% red, 50% amber, 100% green.
 function accuracyColor(value: number | null): string | undefined {
   if (value === null) return undefined;
   const clamped = Math.max(0, Math.min(100, value));
@@ -38,11 +38,23 @@ function Row(props: { game: GameListItem }) {
   const selected = () => libraryStore.selected().includes(props.game.id);
   const platform = () => sourceLabel(props.game);
   return (
-    <tr onClick={() => libraryStore.openGame(props.game.id)}>
+    <tr
+      tabIndex={0}
+      aria-label={`${props.game.whiteUsername} — ${props.game.blackUsername}`}
+      onClick={() => libraryStore.openGame(props.game.id)}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          libraryStore.openGame(props.game.id);
+        }
+      }}
+    >
       <td style={{ width: "28px" }} onClick={(event) => event.stopPropagation()}>
         <input
           type="checkbox"
           checked={selected()}
+          aria-label={t("library.selectGame")}
           onChange={() => libraryStore.toggleSelect(props.game.id)}
         />
       </td>
@@ -63,8 +75,13 @@ function Row(props: { game: GameListItem }) {
           <Show when={props.game.analysisAttempts >= 3}>
             <span
               style={{ color: "var(--danger)", "margin-left": "5px" }}
-              title={`Analysis failed ${props.game.analysisAttempts} times: ${props.game.lastAnalysisError ?? ""}`}
-              aria-label="Analysis failed 3 times"
+              title={t("library.analysisFailedHint", {
+                count: props.game.analysisAttempts,
+                error: props.game.lastAnalysisError ?? "",
+              })}
+              aria-label={t("library.analysisFailedTimes", {
+                count: props.game.analysisAttempts,
+              })}
             >
               ⚠
             </span>
@@ -208,6 +225,7 @@ export function GameTable() {
                 <input
                   type="checkbox"
                   checked={allSelected()}
+                  aria-label={t("library.selectAll")}
                   onChange={() =>
                     allSelected() ? libraryStore.clearSelection() : libraryStore.selectAll()
                   }

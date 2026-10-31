@@ -27,6 +27,8 @@ export interface AppInfo {
   version: string;
   ecoOpenings: number;
   maxAnalysisWorkers: number;
+  dbPath: string;
+  logPath: string;
 }
 
 export interface OpeningEntry {

@@ -11,10 +11,10 @@ use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-use serde::Deserialize;
 use crate::domain::position::book_key;
 use crate::domain::stats::OpeningEntry;
 use crate::eco::line::line_positions;
+use serde::Deserialize;
 
 static RAW_ECO: &str = include_str!("../../resources/eco.json");
 
@@ -25,8 +25,8 @@ struct RawEntry {
     pgn: String,
 }
 
-/// Самое раннее точное описание позиции: минимальный остаток строки,
-/// затем максимальная глубина, затем устойчивый лексикографический порядок.
+/// The earliest exact description of a position: smallest line remainder,
+/// then greatest depth, then a stable lexicographic order.
 #[derive(Debug, Clone)]
 struct Candidate {
     eco: String,
@@ -38,25 +38,20 @@ struct Candidate {
 impl Candidate {
     fn better_than(&self, other: &Candidate) -> bool {
         (self.remaining, Reverse(self.ply), &self.eco, &self.name)
-            < (
-                other.remaining,
-                Reverse(other.ply),
-                &other.eco,
-                &other.name,
-            )
+            < (other.remaining, Reverse(other.ply), &other.eco, &other.name)
     }
 }
 
-/// Совпадение позиции с базой дебютов.
+/// A position match against the opening database.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpeningMatch {
     pub eco: String,
     pub name: String,
-    /// Полуход, на котором сделан последний ход найденной линии.
+    /// Half-move on which the last move of the matched line was played.
     pub ply: usize,
 }
 
-/// Встроенный дебютный словарь ECO. Строится лениво один раз за процесс.
+/// Built-in ECO opening dictionary, built lazily once per process.
 pub struct EcoBook {
     by_fen: HashMap<String, Candidate>,
     entries: Vec<OpeningEntry>,
@@ -112,13 +107,13 @@ impl EcoBook {
             .map(|candidate| (candidate.eco.as_str(), candidate.name.as_str()))
     }
 
-    /// Самое глубокое совпадение по последовательности позиций партии.
+    /// Deepest match across the game's sequence of positions.
     pub fn identify(&self, fens: &[String]) -> Option<(String, String)> {
         self.identify_with_ply(fens)
             .map(|found| (found.eco, found.name))
     }
 
-    /// То же, что `identify`, но с полуходом найденной линии.
+    /// Same as `identify`, but also reports the ply of the matched line.
     pub fn identify_with_ply(&self, fens: &[String]) -> Option<OpeningMatch> {
         let mut found: Option<OpeningMatch> = None;
         for (index, fen) in fens.iter().enumerate() {
@@ -166,7 +161,6 @@ pub fn dataset_version() -> String {
         .clone()
 }
 
-/// Удобный фасад для проверки дебютной теории.
 pub fn is_book_position(fen: &str) -> bool {
     EcoBook::global().lookup(fen).is_some()
 }

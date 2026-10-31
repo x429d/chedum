@@ -1,28 +1,14 @@
-import { createEffect, createMemo, For, on, Show } from "solid-js";
-import type { Piece } from "chessops/types";
-import { makeSquare, squareFile, squareRank } from "chessops/util";
+import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js";
+import { t } from "../../i18n";
 import type { ArrowSpec, BoardBadge, BoardTheme, Color, PieceSet } from "../../types/models";
-import { FILES } from "../../utils/boardGeometry";
 import { positionFromFen } from "../../utils/chess";
 import { pieceImage } from "../../utils/pieceSets";
 import { Arrows } from "./Arrows";
+import { createBoardKeyboard } from "./boardKeyboard";
+import { buildCells, buildPieces, coordinateFiles, coordinateRanks, type Cell } from "./boardModel";
 import { CategoryBadge } from "./CategoryBadge";
 import { createBoardPointer } from "./interaction";
 import { createPieceMotion } from "./pieceMotion";
-
-interface Cell {
-  name: string;
-  col: number;
-  row: number;
-  light: boolean;
-}
-
-interface BoardPiece {
-  name: string;
-  piece: Piece;
-  col: number;
-  row: number;
-}
 
 export interface BoardProps {
   fen: string;
@@ -35,7 +21,7 @@ export interface BoardProps {
   checkSquare?: string | null;
   interactive?: boolean;
   embedded?: boolean;
-  /** Свои стрелки, если их состояние живёт снаружи (в сторе). */
+  /** User arrows when their state lives outside the board (in the store). */
   userArrows?: ArrowSpec[];
   onUserArrowsChange?: (arrows: ArrowSpec[]) => void;
   onMove?: (from: string, to: string) => void;
@@ -49,7 +35,7 @@ export function Board(props: BoardProps) {
     orientation: () => props.orientation,
     position,
   });
-  /** Свои стрелки в сторе (analysis) или локально в доске (тренажёр). */
+  /** User arrows live in the store (analysis) or locally in the board (trainer). */
   const arrowsControlled = props.onUserArrowsChange !== undefined;
   const pointer = createBoardPointer({
     board: () => boardRef,
@@ -66,6 +52,12 @@ export function Board(props: BoardProps) {
     },
   });
   const { selected, drag, hover, ownPieces, legal, userArrows, drawingArrow } = pointer;
+  const [focused, setFocused] = createSignal("e4");
+
+  createEffect(() => {
+    const current = selected();
+    if (current) setFocused(current);
+  });
 
   const allArrows = createMemo<ArrowSpec[]>(() => {
     const list = [...(props.arrows ?? []), ...userArrows()];
@@ -74,36 +66,23 @@ export function Board(props: BoardProps) {
     return list;
   });
 
-  const cells = createMemo<Cell[]>(() => {
-    const list: Cell[] = [];
-    for (let row = 0; row < 8; row += 1) {
-      for (let col = 0; col < 8; col += 1) {
-        const file = props.orientation === "white" ? col : 7 - col;
-        const rank = props.orientation === "white" ? 7 - row : row;
-        list.push({
-          name: `${FILES[file]}${rank + 1}`,
-          col,
-          row,
-          light: (file + rank) % 2 === 1,
-        });
-      }
-    }
-    return list;
+  const cells = createMemo(() => buildCells(props.orientation));
+
+  const focusedCell = createMemo(() => cells().find((cell) => cell.name === focused()));
+
+  const handleKeyDown = createBoardKeyboard({
+    interactive: () => Boolean(props.interactive),
+    cells,
+    focused,
+    setFocused,
+    selected,
+    legal,
+    ownPieces,
+    select: pointer.select,
+    playMove: pointer.playMove,
   });
 
-  const pieces = createMemo<BoardPiece[]>(() => {
-    const pos = position();
-    if (!pos) return [];
-    const list: BoardPiece[] = [];
-    for (const [square, piece] of pos.board) {
-      const file = squareFile(square);
-      const rank = squareRank(square);
-      const col = props.orientation === "white" ? file : 7 - file;
-      const row = props.orientation === "white" ? 7 - rank : rank;
-      list.push({ name: makeSquare(square), piece, col, row });
-    }
-    return list;
-  });
+  const pieces = createMemo(() => buildPieces(position(), props.orientation));
 
   const occupied = createMemo(() => new Set(pieces().map((item) => item.name)));
 
@@ -168,18 +147,8 @@ export function Board(props: BoardProps) {
     return "default";
   };
 
-  const coordFiles = createMemo(() =>
-    Array.from({ length: 8 }, (_, col) => ({
-      col,
-      label: props.orientation === "white" ? FILES[col] : FILES[7 - col],
-    })),
-  );
-  const coordRanks = createMemo(() =>
-    Array.from({ length: 8 }, (_, row) => ({
-      row,
-      label: String(props.orientation === "white" ? 8 - row : row + 1),
-    })),
-  );
+  const coordFiles = createMemo(() => coordinateFiles(props.orientation));
+  const coordRanks = createMemo(() => coordinateRanks(props.orientation));
 
   return (
     <div
@@ -187,7 +156,7 @@ export function Board(props: BoardProps) {
       classList={{ "board-embed": props.embedded }}
       style={props.embedded ? { width: "100%", "max-width": "none" } : undefined}
       onContextMenu={(event) => {
-        // У WebView на macOS правый клик открывает своё меню («Reload page»).
+        // The macOS WebView opens its own context menu on right-click ("Reload page").
         event.preventDefault();
         event.stopPropagation();
       }}
@@ -196,13 +165,22 @@ export function Board(props: BoardProps) {
         ref={boardRef}
         class="board-svg"
         viewBox="-0.25 -0.25 8.5 8.5"
+        role="grid"
+        aria-label={t("board.label")}
+        tabIndex={props.interactive ? 0 : undefined}
         style={{ cursor: boardCursor() }}
+        onKeyDown={handleKeyDown}
+        onFocus={() => {
+          const current = selected();
+          if (current) setFocused(current);
+        }}
         onPointerDown={pointer.handleDown}
         onPointerMove={pointer.handleMove}
         onPointerUp={pointer.handleUp}
         onPointerCancel={pointer.handleCancel}
         onPointerLeave={pointer.clearHover}
       >
+        <title>{t("board.focusHint")}</title>
         <rect x="-0.25" y="-0.25" width="8.5" height="8.5" fill="var(--board-frame, #10150e)" />
         <rect x="0" y="0" width="8" height="8" class="board-sq-dark" />
         <For each={cells()}>
@@ -218,6 +196,19 @@ export function Board(props: BoardProps) {
             <rect x={item.cell.col} y={item.cell.row} width="1" height="1" class={item.classes} />
           )}
         </For>
+
+        <Show when={props.interactive ? focusedCell() : null}>
+          {(cell) => (
+            <rect
+              x={cell().col}
+              y={cell().row}
+              width="1"
+              height="1"
+              class="board-sq-focus"
+              aria-hidden="true"
+            />
+          )}
+        </Show>
 
         <For each={cells()}>
           {(cell) => (

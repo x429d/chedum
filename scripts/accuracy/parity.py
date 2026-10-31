@@ -1,6 +1,17 @@
-import json, sqlite3, urllib.request, collections, statistics
+import collections
+import datetime
+import json
+import os
+import sqlite3
+import statistics
+import urllib.request
+from pathlib import Path
 
-DB = "/Users/suze/Library/Application Support/com.chenal.studio/chenal.db"
+ROOT = Path(__file__).resolve().parents[2]
+DB = os.environ.get(
+    "CHENAL_DB",
+    str(Path.home() / "Library/Application Support/com.chenal.studio/chenal.db"),
+)
 UA = {"User-Agent": "Chenal/0.1.0 (macOS; research)"}
 
 
@@ -19,10 +30,9 @@ games = con.execute(
     " from games g join game_analyses a on a.game_id=g.id order by g.played_at"
 ).fetchall()
 
-# group needed archives
+# Collect the chess.com archives needed for the matched games.
 months = collections.defaultdict(set)
 for g in games:
-    import datetime
     d = datetime.datetime.utcfromtimestamp(g["played_at"])
     months[(g["white_username"].lower(), d.year, d.month)].add(g["id"])
     months[(g["black_username"].lower(), d.year, d.month)].add(g["id"])
@@ -63,7 +73,7 @@ for r in rows:
 all_d = dw + db
 print(f"\nbias (ours - chess.com): mean {statistics.mean(all_d):+.1f}  median {statistics.median(all_d):+.1f}  sd {statistics.pstdev(all_d):.1f}  min {min(all_d):+.1f} max {max(all_d):+.1f}")
 
-# correlation of ours vs cc
+# Correlation between our accuracies and chess.com's.
 def corr(xs, ys):
     mx, my = statistics.mean(xs), statistics.mean(ys)
     num = sum((x-mx)*(y-my) for x, y in zip(xs, ys))
@@ -74,15 +84,15 @@ xs = [r["ours_w"] for r in rows] + [r["ours_b"] for r in rows]
 ys = [r["cc_w"] for r in rows] + [r["cc_b"] for r in rows]
 print(f"pearson r = {corr(xs, ys):.3f}")
 
-# ACPL vs cc accuracy: does ACPL explain cc accuracy better?
+# Does ACPL track chess.com accuracy on its own?
 ac = [x for r in rows for x in ([r["acpl_w"]] if r["acpl_w"] is not None else [])]
 print("acpl vs cc acc r =", round(corr(ac, [r["cc_w"] for r in rows if r["acpl_w"] is not None]), 3))
 
-# simple linear fit cc ~ a*ours + b
+# Linear fit: chess.com ~ a * ours + b.
 n = len(xs)
 mx, my = statistics.mean(xs), statistics.mean(ys)
 a = sum((x-mx)*(y-my) for x, y in zip(xs, ys)) / sum((x-mx)**2 for x in xs)
 b = my - a*mx
 resid = [y - (a*x+b) for x, y in zip(xs, ys)]
 print(f"fit cc = {a:.3f}*ours + {b:+.2f}   resid sd {statistics.pstdev(resid):.2f}")
-json.dump(dict(rows=rows, a=a, b=b), open("/Users/suze/Projects/Programming/rust/chenal/tmp/parity.json", "w"), indent=1)
+json.dump(dict(rows=rows, a=a, b=b), open(ROOT / "tmp" / "parity.json", "w"), indent=1)

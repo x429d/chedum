@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use chrono::DateTime;
 
 use crate::db::connection::Db;
@@ -9,9 +11,10 @@ use crate::lichess::client::LichessApi;
 use crate::pgn::{build_draft, is_bot_game, parse_pgn, ParsedGame};
 use crate::service::hashing::sha256_hex;
 
-/// Небольшой перехлёст, чтобы не потерять партию, завершившуюся в ту же
-/// секунду, когда прошлая синхронизация уже записала время.
+/// Small overlap so a game that finished at the same second as the previous
+/// sync is not lost.
 const OVERLAP_MS: i64 = 5 * 60 * 1000;
+const MAX_ERROR_SAMPLES: usize = 20;
 
 pub fn since_ms(last_synced_at: Option<&str>) -> Option<i64> {
     let raw = last_synced_at?;
@@ -19,6 +22,16 @@ pub fn since_ms(last_synced_at: Option<&str>) -> Option<i64> {
     Some(parsed.timestamp_millis() - OVERLAP_MS)
 }
 
+fn check_cancelled(cancel: &AtomicBool) -> AppResult<()> {
+    if cancel.load(Ordering::SeqCst) {
+        return Err(AppError::Cancelled(
+            "Lichess synchronization cancelled".to_string(),
+        ));
+    }
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
 pub async fn sync_user<A, F>(
     db: &Db,
     api: &A,
@@ -26,6 +39,7 @@ pub async fn sync_user<A, F>(
     username: &str,
     last_synced_at: Option<&str>,
     force: bool,
+    cancel: &AtomicBool,
     mut on_progress: F,
 ) -> AppResult<SyncResult>
 where
@@ -34,15 +48,18 @@ where
 {
     let username = username.trim();
     if username.is_empty() {
-        return Err(AppError::Validation("Укажите ник Lichess".to_string()));
+        return Err(AppError::Validation("Enter a Lichess username".to_string()));
     }
+    check_cancelled(cancel)?;
     let mut result = SyncResult {
         account_id,
         platform: AccountPlatform::Lichess,
         username: username.to_string(),
         archives_processed: 0,
         games_imported: 0,
-        games_skipped: 0,
+        duplicates: 0,
+        filtered: 0,
+        errors: Vec::new(),
     };
     let since = if force {
         None
@@ -53,9 +70,9 @@ where
         &mut on_progress,
         "download",
         if since.is_some() {
-            "Загрузка новых партий Lichess"
+            "Downloading new Lichess games"
         } else {
-            "Загрузка всех партий Lichess (первый раз может занять несколько минут)"
+            "Downloading all Lichess games (the first run may take a few minutes)"
         },
         0,
         0,
@@ -63,38 +80,47 @@ where
         5.0,
     );
     let pgn = api.user_games_pgn(username, since).await?;
+    check_cancelled(cancel)?;
     if pgn.trim().is_empty() {
-        emit(&mut on_progress, "done", "Новых партий нет", 0, 0, 0, 100.0);
+        emit(&mut on_progress, "done", "No new games", 0, 0, 0, 100.0);
         return Ok(result);
     }
     emit(
         &mut on_progress,
         "parse",
-        "Разбор загруженного PGN Lichess",
+        "Parsing the downloaded Lichess PGN",
         0,
         0,
         0,
         35.0,
     );
     let report = parse_pgn(&pgn);
-    result.games_skipped += report.errors.len() as u32;
+    for error in report.errors.iter().take(MAX_ERROR_SAMPLES) {
+        result.errors.push(format!("Lichess PGN: {error}"));
+    }
     let mut drafts: Vec<GameDraft> = Vec::new();
     for parsed in report.games {
         match draft_for_game(&parsed, username, account_id) {
-            Some(draft) => drafts.push(draft),
-            None => result.games_skipped += 1,
+            Ok(Some(draft)) => drafts.push(draft),
+            Ok(None) => result.filtered += 1,
+            Err(err) => {
+                if result.errors.len() < MAX_ERROR_SAMPLES {
+                    result.errors.push(err);
+                }
+            }
         }
     }
     let total = drafts.len() as u32;
     emit(
         &mut on_progress,
         "import",
-        &format!("Разбор партий Lichess: {total}"),
+        &format!("Importing Lichess games: {total}"),
         0,
         total,
         0,
         55.0,
     );
+    check_cancelled(cancel)?;
     let inserted = db.with_tx(|tx| {
         let mut count = 0u32;
         for draft in &drafts {
@@ -105,11 +131,11 @@ where
         Ok(count)
     })?;
     result.games_imported = inserted;
-    result.games_skipped += total - inserted;
+    result.duplicates = total - inserted;
     emit(
         &mut on_progress,
         "done",
-        &format!("Импортировано {} партий", result.games_imported),
+        &format!("Imported {} games", result.games_imported),
         total,
         total,
         result.games_imported,
@@ -118,13 +144,19 @@ where
     Ok(result)
 }
 
-fn draft_for_game(parsed: &ParsedGame, username: &str, account_id: i64) -> Option<GameDraft> {
+/// `Ok(None)` means an intentionally filtered game; `Err` means the game PGN
+/// could not be parsed and should be reported.
+fn draft_for_game(
+    parsed: &ParsedGame,
+    username: &str,
+    account_id: i64,
+) -> Result<Option<GameDraft>, String> {
     if is_bot_game(parsed) {
-        return None;
+        return Ok(None);
     }
     let variant = parsed.tag("Variant").unwrap_or("Standard");
     if !matches!(variant, "Standard" | "From Position") || parsed.moves.is_empty() {
-        return None;
+        return Ok(None);
     }
     let pgn = parsed.to_pgn();
     let external_id = parsed
@@ -138,12 +170,13 @@ fn draft_for_game(parsed: &ParsedGame, username: &str, account_id: i64) -> Optio
         external_id,
         username,
         None,
-        Some(&pgn),
+        None,
     );
     draft.account_id = Some(account_id);
-    Some(draft)
+    Ok(Some(draft))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn emit<F>(
     on_progress: &mut F,
     phase: &str,

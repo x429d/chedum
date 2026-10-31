@@ -51,8 +51,8 @@ function moveDuration(distance: number): number {
 }
 
 /**
- * Держит стабильные идентификаторы фигур: при смене поля у фигуры остаётся
- * тот же DOM-узел, поэтому CSS анимирует transform между клетками.
+ * Keeps stable piece identities: when a piece changes squares it keeps the
+ * same DOM node, so CSS animates the transform between cells.
  */
 export function createPieceMotion(options: PieceMotionOptions): {
   pieces: () => TrackedPiece[];
@@ -148,7 +148,7 @@ export function createPieceMotion(options: PieceMotionOptions): {
     const matches: Candidate[] = [];
     const matchedSquares = new Set<string>();
 
-    // Сначала сопоставляем фигуры, сохранившие роль, затем превращения (тот же цвет).
+    // Match pieces that kept their role first, then promotions (same color).
     for (const promotion of [false, true]) {
       const candidates: Candidate[] = [];
       for (const [square, piece] of targetEntries) {

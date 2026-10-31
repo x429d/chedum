@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::domain::error::{AppError, AppResult};
 
-/// Площадка, с которой приходят партии.
+/// Platform the games come from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum AccountPlatform {
@@ -35,22 +35,24 @@ pub struct Account {
     pub username: String,
     pub created_at: String,
     pub last_synced_at: Option<String>,
-    /// Сколько партий привязано к аккаунту.
+    /// Number of games linked to this account.
     pub games: u32,
-    /// Сколько из них уже разобрано.
+    /// How many of them have already been analyzed.
     pub analyzed: u32,
 }
 
-/// Приводит ник к безопасному виду и проверяет, что он вообще может
-/// существовать на выбранной площадке.
+/// Normalizes the username to a safe form and checks that it could exist on the
+/// selected platform.
 pub fn normalize_username(platform: AccountPlatform, value: &str) -> AppResult<String> {
     let username = value.trim();
     if username.is_empty() {
-        return Err(AppError::Validation("Укажите ник аккаунта".to_string()));
+        return Err(AppError::Validation(
+            "Enter an account username".to_string(),
+        ));
     }
     if username.chars().count() > 50 {
         return Err(AppError::Validation(
-            "Ник не должен быть длиннее 50 символов".to_string(),
+            "Username must be at most 50 characters".to_string(),
         ));
     }
     let valid = username
@@ -58,12 +60,12 @@ pub fn normalize_username(platform: AccountPlatform, value: &str) -> AppResult<S
         .all(|ch| ch.is_ascii_alphanumeric() || ch == '_' || ch == '-');
     if !valid {
         return Err(AppError::Validation(
-            "Ник может содержать только латинские буквы, цифры, «_» и «-»".to_string(),
+            "Username may contain only Latin letters, digits, «_» and «-»".to_string(),
         ));
     }
     if platform == AccountPlatform::Lichess && username.chars().count() < 2 {
         return Err(AppError::Validation(
-            "Ник Lichess должен быть не короче 2 символов".to_string(),
+            "Lichess username must be at least 2 characters".to_string(),
         ));
     }
     Ok(username.to_string())

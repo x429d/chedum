@@ -42,7 +42,6 @@ fn stores_analysis_and_move_comments() {
     assert_eq!(get_moves(&db, id).unwrap()[0].user_comment, "Хороший ход");
 }
 
-
 #[test]
 fn backfills_accuracy_with_lichess_method() {
     let db = Db::in_memory().unwrap();
@@ -59,20 +58,26 @@ fn backfills_accuracy_with_lichess_method() {
     let mut first = move_eval(id, 1, Phase::Opening, MoveCategory::Best, TimeFlag::Normal);
     first.best_eval_cp = Some(50);
     first.win_prob_white = 55.0;
-    let mut second = move_eval(id, 2, Phase::Opening, MoveCategory::Blunder, TimeFlag::Normal);
+    let mut second = move_eval(
+        id,
+        2,
+        Phase::Opening,
+        MoveCategory::Blunder,
+        TimeFlag::Normal,
+    );
     second.best_eval_cp = Some(-200);
     second.win_prob_white = 40.0;
     insert_analysis_draft(&db, &analysis(id, 90.0, 80.0, vec![first, second])).unwrap();
 
     assert_eq!(backfill_lichess_accuracy(&db, false).unwrap(), 1);
     let stored = get_analysis(&db, id).unwrap().unwrap();
-    // Белые не потеряли Win% ни на одном ходу — по методу Lichess это ровно 100.
+    // White lost no Win% on any move — by the Lichess method that is exactly 100.
     assert_eq!(stored.white_accuracy, Some(100.0));
     assert_eq!(stored.white_opening_acc, Some(100.0));
     let black = stored.black_accuracy.unwrap();
     assert!(black > 0.0 && black < 100.0);
     assert_ne!(stored.black_accuracy, Some(80.0));
-    // Повторный запуск идемпотентен.
+    // Rerunning is idempotent.
     assert_eq!(backfill_lichess_accuracy(&db, false).unwrap(), 0);
 }
 
@@ -120,7 +125,7 @@ fn backfill_selects_key_moments_and_updates_summary() {
     }
     let stored = get_analysis(&db, id).unwrap().unwrap();
     assert_eq!(stored.key_moments_count, 8);
-    assert!(stored.summary_text.contains("Ключевых моментов: 8"));
+    assert!(stored.summary_text.contains("Key moments: 8"));
     assert_eq!(backfill_key_moments(&db).unwrap(), 0);
 }
 
@@ -154,7 +159,10 @@ fn backfill_keeps_zero_key_moments_for_a_clean_game() {
     assert_eq!(backfill_key_moments(&db).unwrap(), 1);
     let stored = get_analysis(&db, id).unwrap().unwrap();
     assert_eq!(stored.key_moments_count, 0);
-    assert!(!get_moves(&db, id).unwrap().iter().any(|mv| mv.is_key_moment));
+    assert!(!get_moves(&db, id)
+        .unwrap()
+        .iter()
+        .any(|mv| mv.is_key_moment));
 }
 
 #[test]
@@ -231,7 +239,7 @@ fn summary_text_always_matches_accuracy_fields() {
         100,
     );
     let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
-    // Старая запись хранит резюме, посчитанное до смены алгоритма.
+    // The old row stores a summary computed before the algorithm change.
     let mut stale = analysis(
         id,
         63.4,
@@ -244,14 +252,25 @@ fn summary_text_always_matches_accuracy_fields() {
             TimeFlag::TimeTrouble,
         )],
     );
-    stale.analysis.summary_text =
-        "Точность ваших ходов — 74.6%, ACPL 101.6.".to_string();
+    stale.analysis.summary_text = "Точность ваших ходов — 74.6%, ACPL 101.6.".to_string();
     insert_analysis_draft(&db, &stale).unwrap();
 
     let stored = get_analysis(&db, id).unwrap().unwrap();
-    assert!(stored.summary_text.contains("63.4%"), "{}", stored.summary_text);
-    assert!(!stored.summary_text.contains("74.6"), "{}", stored.summary_text);
-    assert!(stored.summary_text.contains("ACPL 20.0"), "{}", stored.summary_text);
+    assert!(
+        stored.summary_text.contains("63.4%"),
+        "{}",
+        stored.summary_text
+    );
+    assert!(
+        !stored.summary_text.contains("74.6"),
+        "{}",
+        stored.summary_text
+    );
+    assert!(
+        stored.summary_text.contains("ACPL 20.0"),
+        "{}",
+        stored.summary_text
+    );
 
     assert_eq!(backfill_summaries(&db).unwrap(), 1);
     let raw: String = db

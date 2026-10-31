@@ -2,12 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [master, stage-13-14]
+    branches: [master]
   pull_request:
 
 jobs:
   gates:
-    name: Tests, clippy, types, build
+    name: Tests, clippy, fmt, types, build
     runs-on: macos-14
     steps:
       - name: Checkout
@@ -22,7 +22,7 @@ jobs:
       - name: Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
+          components: clippy, rustfmt
 
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
@@ -32,14 +32,32 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Cache Stockfish
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/binaries
+          key: stockfish-sf_19
+
+      - name: Fetch Stockfish
+        run: npm run fetch:stockfish
+
+      - name: Rust formatting
+        run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+
       - name: Rust tests
         run: cargo test --manifest-path src-tauri/Cargo.toml
 
       - name: Clippy
         run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
 
+      - name: Frontend tests
+        run: npm test
+
       - name: TypeScript
         run: npx tsc --noEmit
 
       - name: Frontend build
         run: npm run build
+
+      - name: Dependency audit
+        run: npm audit --omit=dev

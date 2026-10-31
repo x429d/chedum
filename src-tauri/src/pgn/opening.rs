@@ -1,7 +1,8 @@
 use crate::eco::{name_from_eco_url, normalize_opening_name, EcoBook};
 use crate::pgn::parser::ParsedGame;
 
-/// заголовки PGN (ECO/Opening/ECOUrl), нормализованные.
+/// Opening identified for a game; `source` records whether it came from the
+/// position or from PGN headers.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OpeningIdentification {
     pub eco: Option<String>,
@@ -20,8 +21,8 @@ pub fn identify_opening(parsed: &ParsedGame) -> OpeningIdentification {
             source: Some("position".to_string()),
         },
         None => {
-            // Запасной вариант — только заголовки PGN, причём ECO и имя
-            // берутся из одного источника, чтобы не склеить разные дебюты.
+            // Fallback: PGN headers only. ECO and the name come from the same
+            // source so different openings are not glued together.
             let name = parsed
                 .tag("Opening")
                 .and_then(normalize_opening_name)

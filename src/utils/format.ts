@@ -1,6 +1,7 @@
 import {
   formatDateLocale,
   formatDurationLocale,
+  tErrorCode,
   tOutcome,
   tSide,
   tTimeClass,
@@ -97,15 +98,28 @@ export function pluralRu(count: number, one: string, few: string, many: string):
 }
 
 export function toErrorMessage(error: unknown): string {
-  if (typeof error === "string") return error;
-  if (error && typeof error === "object" && "message" in error) {
-    const message = (error as { message?: unknown }).message;
-    if (typeof message === "string" && message.length > 0) return message;
+  const code = toErrorCode(error);
+  const detail =
+    error && typeof error === "object" && "message" in error
+      ? (error as { message?: unknown }).message
+      : undefined;
+  if (code !== null) {
+    const generic = tErrorCode(code);
+    if (
+      typeof detail === "string" &&
+      detail.length > 0 &&
+      ["validation", "parse", "not_found", "rate_limited"].includes(code)
+    ) {
+      return `${generic}: ${detail}`;
+    }
+    return generic;
   }
-  return "Unknown error";
+  if (typeof error === "string") return error;
+  if (typeof detail === "string" && detail.length > 0) return detail;
+  return tErrorCode(null);
 }
 
-/** Машинный код ошибки из `AppError` (`{ code, message }`). */
+/** Machine-readable error code from `AppError` (`{ code, message }`). */
 export function toErrorCode(error: unknown): string | null {
   if (error && typeof error === "object" && "code" in error) {
     const code = (error as { code?: unknown }).code;

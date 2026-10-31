@@ -1,5 +1,5 @@
-use rusqlite::{params, params_from_iter};
 use rusqlite::types::Value;
+use rusqlite::{params, params_from_iter};
 
 use crate::db::connection::Db;
 use crate::db::games_repo::list::filter_clause;
@@ -17,9 +17,10 @@ pub fn pending_analysis(
         let mut filter = filter.clone();
         filter.analyzed_only = false;
         let (where_sql, values) = filter_clause(&filter);
-        // Партия разобрана, если есть точная целевая конфигурация, запись
-        // старой сборки без config_key или анализ не мельче текущих настроек.
-        // Последнее не даёт очереди понижать уже более глубокий разбор.
+        // A game counts as analyzed if it has the exact target configuration, a
+        // record from an old build without config_key, or an analysis at least
+        // as deep as the current settings. The last case keeps the queue from
+        // downgrading an existing deeper analysis.
         let base = "FROM games g LEFT JOIN game_analyses a
                  ON a.game_id = g.id
                 AND (a.config_key = ?1 OR a.config_key IS NULL OR a.config_key = ''
@@ -50,9 +51,8 @@ pub fn pending_analysis(
             ids.push(id);
             positions += u64::from(plies.max(0) as u32) + 1;
         }
-        let excluded_sql = format!(
-            "SELECT COUNT(*) {base} {condition} AND g.analysis_attempts >= 3"
-        );
+        let excluded_sql =
+            format!("SELECT COUNT(*) {base} {condition} AND g.analysis_attempts >= 3");
         let excluded: i64 =
             conn.query_row(&excluded_sql, params_from_iter(params_vec.iter()), |row| {
                 row.get(0)
@@ -65,7 +65,7 @@ pub fn pending_analysis(
     })
 }
 
-/// Фиксирует неудачную попытку анализа; после третьей партия выходит из очереди.
+/// Records a failed analysis attempt; after the third, the game leaves the queue.
 pub fn record_analysis_failure(db: &Db, id: i64, message: &str) -> AppResult<()> {
     db.with(|conn| {
         conn.execute(
@@ -77,8 +77,8 @@ pub fn record_analysis_failure(db: &Db, id: i64, message: &str) -> AppResult<()>
     })
 }
 
-/// Успешный анализ снимает прошлые ошибки и возвращает партию в очередь
-/// при следующей смене конфигурации.
+/// A successful analysis clears past errors and returns the game to the queue
+/// on the next configuration change.
 pub fn reset_analysis_attempts(db: &Db, id: i64) -> AppResult<()> {
     db.with(|conn| {
         conn.execute(

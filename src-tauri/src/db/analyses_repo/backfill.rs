@@ -17,10 +17,10 @@ const KEY_MOMENTS_VERSION: &str = "errors-gap3-v2";
 const FEN_ACCURACY_KEY: &str = "fen_accuracy_version";
 const FEN_ACCURACY_VERSION: &str = "player-color-v1";
 
-/// Чинит записи, оставшиеся от старых сборок: если строку записал бинарник,
-/// не знавший о колонках версии и ключа конфигурации, `engine_version` и
-/// `config_key` остаются пустыми. Миграция такие строки уже не догоняет —
-/// она выполняется один раз, поэтому чиним при каждом запуске.
+/// Repairs rows left behind by older builds: when the binary that wrote a row
+/// knew nothing about the version and config-key columns, `engine_version` and
+/// `config_key` stay empty. The migration does not catch those rows — it runs
+/// only once — so we repair them on every startup.
 pub fn backfill_config_keys(db: &Db) -> AppResult<usize> {
     db.with(|conn| {
         let updated = conn.execute(
@@ -44,8 +44,8 @@ pub fn backfill_config_keys(db: &Db) -> AppResult<usize> {
     })
 }
 
-/// Пересчитывает ключевые моменты по сохранённым оценкам. Движок не нужен:
-/// после смены алгоритма отбора достаточно пересмотреть ходы.
+/// Recomputes key moments from stored evaluations. No engine needed: after the
+/// selection algorithm changes, re-examining the moves is enough.
 pub fn backfill_key_moments(db: &Db) -> AppResult<usize> {
     db.with_tx(|tx| {
         let current: Option<String> = tx
@@ -118,13 +118,14 @@ fn load_moves_conn(conn: &Connection, game_id: i64) -> AppResult<Vec<MoveEvaluat
     Ok(moves)
 }
 
-/// Сохранённый ход для пересчёта: Win% белых после, оценка до хода, фаза, игрок.
+/// Stored move used for recomputation: White's win% after it, evaluation before
+/// it, phase, and player.
 type StoredMoveRow = (f64, Option<i32>, Option<i32>, Phase, Color);
 
-/// Пересчитывает точность по методу Lichess из уже сохранённых оценок.
-/// Нужен один раз после смены алгоритма: движок и повторный анализ не требуются.
-/// `force` — пересчитать даже если версия алгоритма уже отмечена (например, после
-/// повторной загрузки демо-партий).
+/// Recomputes accuracy with the Lichess method from already stored evaluations.
+/// Needed once after an algorithm change: no engine or re-analysis required.
+/// `force` recomputes even if the algorithm version is already recorded (for
+/// example, after demo games are re-imported).
 pub fn backfill_lichess_accuracy(db: &Db, force: bool) -> AppResult<usize> {
     db.with_tx(|tx| {
         let current: Option<String> = tx
@@ -150,15 +151,18 @@ pub fn backfill_lichess_accuracy(db: &Db, force: bool) -> AppResult<usize> {
         }
         tx.execute(
             "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?1, ?2)",
-            params![ACCURACY_ALGO_KEY, crate::domain::analysis::ACCURACY_METHOD_VERSION],
+            params![
+                ACCURACY_ALGO_KEY,
+                crate::domain::analysis::ACCURACY_METHOD_VERSION
+            ],
         )?;
         Ok(updated)
     })
 }
 
-/// Пересчитывает точность партий с нестандартной начальной позицией: до
-/// появления `player_color` пересчёт определял игрока по чётности полухода
-/// и мог поменять стороны местами. Движок не нужен.
+/// Recomputes accuracy for games with a non-standard starting position: before
+/// `player_color` existed, recomputation inferred the player from ply parity
+/// and could swap the sides. No engine needed.
 pub fn backfill_fen_accuracy(db: &Db) -> AppResult<usize> {
     db.with_tx(|tx| {
         let current: Option<String> = tx
@@ -280,7 +284,7 @@ fn recompute_accuracy(conn: &Connection, game_id: i64) -> AppResult<bool> {
             performance_elo(black_elo, black_accuracy, black_acpl),
         ],
     )?;
-    // Резюме хранится рядом с точностью и должно пересчитываться вместе с ней.
+    // The summary lives alongside accuracy and must be recomputed with it.
     let analysis = conn.query_row(
         "SELECT * FROM game_analyses WHERE game_id = ?1",
         params![game_id],

@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "{external_id}: {} позиций, анализ depth={depth}",
             fens.len()
         );
-        let evaluations = evaluate_positions(&engine, &fens, depth, 2, |done, total| {
+        let evaluations = evaluate_positions(&engine, &fens, depth, 2, None, |done, total| {
             if done == total || done % 10 == 0 {
                 eprintln!("  {done}/{total}");
             }

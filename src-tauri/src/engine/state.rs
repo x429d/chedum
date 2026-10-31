@@ -44,8 +44,8 @@ impl EngineState {
         }
     }
 
-    /// Пул под текущую настройку. При смене размера создаётся новый пул;
-    /// старый доживает уже запущенные партии и освобождает процессы сам.
+    /// Pool for the current setting. When the size changes, a new pool is created;
+    /// the old one finishes already running games and releases its processes on its own.
     pub async fn pool_for(&self, setting: u32) -> AppResult<Arc<EnginePool>> {
         let workers = workers_from_setting(setting);
         let mut guard = self.pool.lock().await;
@@ -56,7 +56,7 @@ impl EngineState {
         }
         let path = self.path.as_deref().ok_or_else(|| {
             AppError::Engine(
-                "Stockfish не найден. Установите его через brew install stockfish.".to_string(),
+                "Stockfish not found. Install it with brew install stockfish.".to_string(),
             )
         })?;
         let pool = match EnginePool::spawn(path, workers, hash_mb_for(workers)).await {
@@ -73,14 +73,14 @@ impl EngineState {
         Ok(pool)
     }
 
-    /// Арендует один процесс движка на время анализа партии или позиции.
+    /// Leases one engine process for the duration of a game or position analysis.
     pub async fn acquire(&self, setting: u32) -> AppResult<PooledEngine> {
         let pool = self.pool_for(setting).await?;
         Ok(pool.acquire().await)
     }
 
-    /// Короткая проверка движка для панели диагностики: один процесс с
-    /// малым хешем, без создания всего пула.
+    /// Quick engine check for the diagnostics panel: a single process with a
+    /// small hash, without creating the whole pool.
     pub async fn probe(&self) {
         let known = self.name.lock().ok().and_then(|guard| guard.clone());
         if known.is_some() {

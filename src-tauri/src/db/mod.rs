@@ -5,6 +5,7 @@ pub mod connection;
 pub mod games_delete;
 pub mod games_repo;
 pub mod migrations;
+pub mod schema;
 pub mod seed;
 pub mod settings_repo;
 pub mod stats_extra;

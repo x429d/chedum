@@ -86,7 +86,7 @@ fn aggregates_hub_statistics() {
     assert_eq!(stats.trend.len(), 2);
     assert_eq!(stats.time.time_trouble_moves, 1);
     assert_eq!(stats.time.impulsive_errors, 1);
-    // Меньше 20 разобранных партий — оценка силы по точности не показывается.
+    // Fewer than 20 analyzed games — the strength estimate from accuracy is not shown.
     assert!(stats.kpis.avg_perf_elo.is_none());
     assert!(stats.kpis.avg_perf_elo_spread.is_none());
     let config = stats.config.as_ref().unwrap();
@@ -216,7 +216,6 @@ fn performance_estimate_requires_twenty_analyses() {
     assert!(opening.reliable);
     assert!(opening.price > 0.0);
 }
-
 
 #[test]
 fn performance_elo_is_split_by_account_and_platform() {
@@ -373,7 +372,7 @@ fn reanalysis_offered_only_for_shallower_analyses() {
     deep.analysis.depth = 18;
     insert_analysis_draft(&db, &deep).unwrap();
 
-    // Текущие настройки 14: глубокий анализ 18 не предлагается к пересчёту.
+    // Current settings are 14: the deeper analysis at 18 is not offered for re-analysis.
     let shallow_target = hub_stats(&db, None).unwrap();
     assert!(shallow_target
         .config
@@ -422,7 +421,7 @@ fn trend_keeps_last_two_hundred_games_in_chronological_order() {
         )
         .unwrap();
     }
-    // Партия без даты не должна попадать в тренд.
+    // A game without a date must not enter the trend.
     let undated = draft(
         "g-undated",
         "alice",

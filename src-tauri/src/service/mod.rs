@@ -1,6 +1,7 @@
 pub mod analysis;
 pub mod build;
 pub mod build_helpers;
+pub mod checkpoint;
 pub mod evaluation;
 pub mod hashing;
 pub mod import;

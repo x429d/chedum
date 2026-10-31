@@ -4,8 +4,8 @@ use crate::domain::error::AppResult;
 use crate::domain::game::GameSource;
 use crate::domain::stats::PlatformRating;
 
-/// Performance Elo показываем только при достаточной выборке внутри одной
-/// площадки/аккаунта, чтобы не смешивать разные рейтинговые системы.
+/// Performance Elo is shown only with a sufficient sample within a single
+/// platform/account, so different rating systems are not mixed.
 const MIN_PERF_SAMPLE: u32 = 20;
 
 pub(super) fn platform_ratings(

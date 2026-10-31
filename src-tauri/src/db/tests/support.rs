@@ -78,6 +78,7 @@ pub(super) fn move_eval(
         time_spent_sec: Some(5.0),
         time_flag: flag,
         explanation_tag: None,
+        explanation_params: None,
         explanation_text: None,
         pv_lines: vec![PvLine {
             rank: 1,

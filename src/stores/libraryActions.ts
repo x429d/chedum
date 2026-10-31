@@ -22,7 +22,7 @@ export interface LibraryActionsDeps {
   load: () => Promise<void>;
 }
 
-/// Действия над библиотекой, которым нужны только сигналы стора.
+/// Library actions that rely only on the store's signals.
 export function createLibraryActions(deps: LibraryActionsDeps) {
   async function exportSelection(): Promise<void> {
     const ids = deps.selected();
@@ -42,14 +42,14 @@ export function createLibraryActions(deps: LibraryActionsDeps) {
     const favorite = !game.isFavorite;
     try {
       await api.toggleFavorite(game.id, favorite);
-      // Счётчик избранного приходит с бэкендом только при полной загрузке страницы,
-      // поэтому обновляем его локально вместе со строкой таблицы.
+      // The favorites counter comes from the backend only on a full page load,
+      // so update it locally along with the table row.
       deps.setGames((items) =>
         items.map((item) => (item.id === game.id ? { ...item, isFavorite: favorite } : item)),
       );
       deps.setFavorites((count) => Math.max(0, count + (favorite ? 1 : -1)));
-      // В режиме «только избранное» снятая звезда убирает партию из выборки:
-      // перезагружаем страницу, чтобы не оставлять лишнюю строку и не сбить total.
+      // In favorites-only mode, unstarring removes the game from the result set:
+      // reload the page so no stale row remains and the total stays correct.
       if (deps.filter().favoritesOnly) await deps.load();
     } catch (error) {
       ui.notify(toErrorMessage(error), "error");

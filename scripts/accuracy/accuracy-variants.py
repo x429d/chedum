@@ -1,6 +1,13 @@
-import sqlite3, math, statistics
+import math
+import os
+import sqlite3
+import statistics
+from pathlib import Path
 
-DB = "/Users/suze/Library/Application Support/com.chenal.studio/chenal.db"
+DB = os.environ.get(
+    "CHENAL_DB",
+    str(Path.home() / "Library/Application Support/com.chenal.studio/chenal.db"),
+)
 con = sqlite3.connect(DB)
 con.row_factory = sqlite3.Row
 
@@ -19,7 +26,11 @@ def squeeze(v, lo, hi):
 
 
 def lichess_game(evals, start_white=True, already_winpct=False):
-    """evals: white-relative cp per position (or win% if already_winpct)."""
+    """Score a game the way Lichess does.
+
+    evals holds white-relative centipawns per position, or win percentages when
+    already_winpct is set.
+    """
     wp = list(evals) if already_winpct else [winpct(e) for e in evals]
     n = len(wp)
     window = int(squeeze((n - 1) / 10, 2, 8))
@@ -29,10 +40,10 @@ def lichess_game(evals, start_white=True, already_winpct=False):
         sd = statistics.pstdev(w) if len(w) > 1 else 0.0
         weights.append(squeeze(sd, 0.5, 12) if sd > 0 else None)
 
-    per_color = {0: [], 1: []}  # 0 white, 1 black: (accuracy, weight)
+    per_color = {0: [], 1: []}  # 0 = white, 1 = black; entries are (accuracy, weight)
     for i in range(n - 1):
         before, after = wp[i], wp[i + 1]
-        color = i % 2  # position i: side to move is white if i even
+        color = i % 2  # even index means white is to move
         b = before if color == 0 else 100 - before
         a = after if color == 0 else 100 - after
         acc = 100.0 if a >= b else move_acc(b - a)
@@ -67,10 +78,10 @@ def variants(game_id):
     )
 
 
-# lichess from stored white-relative win%: cp equivalent not stored per position; approximate
-# via win_prob_white -> invert sigmoid
+# Lichess scoring from the stored white-relative win%: centipawns aren't stored
+# per position, so approximate them by inverting the sigmoid.
 def inv(cp_like):
-    # p in percent -> cp
+    # Win percentage -> centipawns.
     p = (cp_like - 50) / 50
     if abs(p) >= 1:
         p = math.copysign(0.999999, p)
@@ -82,7 +93,7 @@ def lichess_from_db(game_id):
         "select ply, win_prob_white, eval_mate, eval_cp from move_evaluations where game_id=? order by ply",
         (game_id,),
     ).fetchall()
-    # reconstruct position-0 win% from ply1's before: not stored; use ply1 win_prob_white + its loss
+    # Position 0's win% isn't stored; rebuild it from the first move's before-state.
     evals = []
     first = con.execute(
         "select win_prob_white, win_prob_loss from move_evaluations where game_id=? order by ply limit 1", (game_id,)

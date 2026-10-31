@@ -6,7 +6,7 @@
   font-weight: 400;
   font-display: swap;
   src: local("JetBrainsMono Nerd Font"), local("JetBrainsMono NF"),
-    url("../assets/fonts/JetBrainsMonoNerdFont-Regular.ttf") format("truetype");
+    url("../assets/fonts/JetBrainsMonoNerdFont-Regular.woff2") format("woff2");
 }
 
 @font-face {
@@ -15,7 +15,7 @@
   font-weight: 500;
   font-display: swap;
   src: local("JetBrainsMono Nerd Font Medium"), local("JetBrainsMono NF Medium"),
-    url("../assets/fonts/JetBrainsMonoNerdFont-Medium.ttf") format("truetype");
+    url("../assets/fonts/JetBrainsMonoNerdFont-Medium.woff2") format("woff2");
 }
 
 @font-face {
@@ -24,7 +24,7 @@
   font-weight: 600;
   font-display: swap;
   src: local("JetBrainsMono Nerd Font SemiBold"), local("JetBrainsMono NF SemiBold"),
-    url("../assets/fonts/JetBrainsMonoNerdFont-SemiBold.ttf") format("truetype");
+    url("../assets/fonts/JetBrainsMonoNerdFont-SemiBold.woff2") format("woff2");
 }
 
 @font-face {
@@ -33,7 +33,7 @@
   font-weight: 700;
   font-display: swap;
   src: local("JetBrainsMono Nerd Font Bold"), local("JetBrainsMono NF Bold"),
-    url("../assets/fonts/JetBrainsMonoNerdFont-Bold.ttf") format("truetype");
+    url("../assets/fonts/JetBrainsMonoNerdFont-Bold.woff2") format("woff2");
 }
 
 @font-face {
@@ -42,7 +42,7 @@
   font-weight: 400;
   font-display: swap;
   src: local("JetBrainsMono Nerd Font Italic"), local("JetBrainsMono NF Italic"),
-    url("../assets/fonts/JetBrainsMonoNerdFont-Italic.ttf") format("truetype");
+    url("../assets/fonts/JetBrainsMonoNerdFont-Italic.woff2") format("woff2");
 }
 
 :root {
@@ -1417,7 +1417,7 @@ tr:hover .row-actions,
   flex: none;
 }
 
-/* 56px под оценку + 12px зазор: доска не выходит за колонку на высоких окнах. */
+/* 56px for the evaluation bar + 12px gap: the board stays within the column on tall windows. */
 .board-stage .board-wrap {
   width: min(calc(100% - 68px), clamp(360px, 54vh, 650px));
 }
@@ -1449,6 +1449,18 @@ tr:hover .row-actions,
 
 .board-sq-check {
   fill: rgba(239, 68, 68, 0.42);
+}
+
+.board-sq-focus {
+  fill: none;
+  stroke: #e0bf7d;
+  stroke-width: 0.07;
+  pointer-events: none;
+}
+
+.board-svg:focus-visible {
+  outline: 2px solid #e0bf7d;
+  outline-offset: 2px;
 }
 
 /* Hover needs to read on both square shades of any palette, so it washes dark squares with
@@ -1948,7 +1960,7 @@ tr:hover .row-actions,
   text-overflow: ellipsis;
 }
 
-/* В полноэкранном режиме доска и панель занимают экран — графику там не место. */
+/* In fullscreen the board and panel fill the screen; the chart has no place there. */
 .analysis-layout.is-fullscreen .chart-card {
   display: none;
 }

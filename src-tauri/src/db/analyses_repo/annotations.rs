@@ -5,7 +5,7 @@ use rusqlite::params_from_iter;
 use crate::db::connection::Db;
 use crate::domain::error::AppResult;
 
-/// Подписи происхождения анализа для экспорта PGN. Одна строка на партию.
+/// Analysis provenance labels for PGN export, one entry per game.
 pub fn annotations_for_games(db: &Db, ids: &[i64]) -> AppResult<HashMap<i64, String>> {
     if ids.is_empty() {
         return Ok(HashMap::new());

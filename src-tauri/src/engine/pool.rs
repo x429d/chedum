@@ -7,17 +7,17 @@ use tokio::sync::{Mutex, Notify};
 use crate::domain::error::AppResult;
 use crate::engine::manager::EngineManager;
 
-/// Пул процессов Stockfish: один процесс — одна задача анализа.
-/// Аренда (`PooledEngine`) возвращает процесс в пул при освобождении.
+/// Stockfish process pool: one process per analysis job.
+/// A lease (`PooledEngine`) returns the process to the pool when dropped.
 pub struct EnginePool {
     managers: Vec<Arc<EngineManager>>,
     free: Mutex<Vec<usize>>,
     notify: Notify,
     path: PathBuf,
     size: usize,
-    /// Общая отмена: выставляется `request_stop` и проверяется задачами,
-    /// которые ещё не начали свой блок. Без неё блоки, начатые после
-    /// остановки, сбрасывали бы флаг движка и продолжали работу.
+    /// Global cancellation: set by `request_stop` and checked by jobs that have
+    /// not started their block yet. Without it, blocks started after a stop
+    /// would reset the engine flag and keep running.
     stop: AtomicBool,
 }
 
@@ -28,8 +28,8 @@ pub struct PooledEngine {
 }
 
 impl EnginePool {
-    /// Каждый процесс: `Threads = 1`, `Hash = hash_mb`. Размер пула — число
-    /// одновременных партий, а не число потоков внутри движка.
+    /// Each process: `Threads = 1`, `Hash = hash_mb`. Pool size is the number of
+    /// concurrent games, not the number of threads inside the engine.
     pub async fn spawn(path: &Path, size: usize, hash_mb: u32) -> AppResult<Arc<Self>> {
         let size = size.clamp(1, 64);
         let mut managers = Vec::with_capacity(size);
@@ -63,8 +63,8 @@ impl EnginePool {
         &self.path
     }
 
-    /// Ждёт свободный процесс. Очередь честная: освободившийся процесс
-    /// достаётся первому ожидающему.
+    /// Waits for a free process. The queue is fair: a released process goes to
+    /// the first waiter.
     pub async fn acquire(self: &Arc<Self>) -> PooledEngine {
         loop {
             let index = self.free.lock().await.pop();
@@ -86,7 +86,7 @@ impl EnginePool {
         }
     }
 
-    /// Новая задача анализа: старая отмена больше не действует.
+    /// New analysis job: the previous cancellation no longer applies.
     pub fn clear_stop(&self) {
         self.stop.store(false, Ordering::SeqCst);
     }
@@ -131,12 +131,12 @@ impl Drop for PooledEngine {
     }
 }
 
-/// Число процессов анализа. Один поток Stockfish на процесс выгоднее, чем
-/// несколько потоков внутри процесса: на depth 14 второй поток даёт вдвое
-/// больше узлов, но общее время растёт, поэтому параллелизм берётся числом
-/// процессов. Замер throughput на 4P+6E (M5): 3 процесса — 1.8x, 6 — 2.7x,
-/// 8 — 2.8x, 10 — 2.5x; отсюда «все производительные плюс две трети
-/// энергоэффективных ядер».
+/// Number of analysis processes. One Stockfish thread per process is better than
+/// several threads inside one process: at depth 14 a second thread yields twice
+/// as many nodes, but total time grows, so parallelism comes from the number of
+/// processes. Measured throughput on a 4P+6E (M5): 3 processes — 1.8x, 6 — 2.7x,
+/// 8 — 2.8x, 10 — 2.5x; hence "all performance cores plus two thirds of the
+/// efficiency cores".
 pub fn default_workers() -> usize {
     let performance = sysctl_usize("hw.perflevel0.logicalcpu");
     let efficiency = sysctl_usize("hw.perflevel1.logicalcpu").unwrap_or(0);
@@ -159,8 +159,7 @@ fn sysctl_usize(key: &str) -> Option<usize> {
         .filter(|value| *value > 0)
 }
 
-
-/// Размер хеша на процесс: не больше 128 МБ и не меньше 16 МБ.
+/// Hash size per process: at most 128 MB and at least 16 MB.
 pub fn hash_mb_for(workers: usize) -> u32 {
     let per_worker = 1024 / u32::try_from(workers.max(1)).unwrap_or(8);
     per_worker.clamp(16, 128)
@@ -171,7 +170,9 @@ pub fn workers_from_setting(setting: u32) -> usize {
     if setting == 0 {
         maximum
     } else {
-        usize::try_from(setting).unwrap_or(maximum).clamp(1, maximum)
+        usize::try_from(setting)
+            .unwrap_or(maximum)
+            .clamp(1, maximum)
     }
 }
 
@@ -206,8 +207,8 @@ mod tests {
 
     #[tokio::test]
     async fn pool_returns_engine_back_on_drop() {
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("binaries/stockfish-aarch64-apple-darwin");
         if !path.is_file() {
             return;
         }
@@ -224,14 +225,15 @@ mod tests {
 
     #[tokio::test]
     async fn second_acquire_waits_for_the_first() {
-        let path =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("binaries/stockfish-aarch64-apple-darwin");
         if !path.is_file() {
             return;
         }
         let pool = EnginePool::spawn(&path, 1, 16).await.unwrap();
         let first = pool.acquire().await;
-        let pending = tokio::time::timeout(std::time::Duration::from_millis(200), pool.acquire()).await;
+        let pending =
+            tokio::time::timeout(std::time::Duration::from_millis(200), pool.acquire()).await;
         assert!(pending.is_err(), "second lease must wait");
         drop(first);
         let second = tokio::time::timeout(std::time::Duration::from_secs(2), pool.acquire())

@@ -47,8 +47,8 @@ pub fn insert_game(conn: &Connection, draft: &GameDraft) -> AppResult<Option<i64
         ],
     )?;
     if changed == 0 {
-        // Партия уже была в базе (например, импортирована вручную): при
-        // синхронизации привязываем её к аккаунту, не перезаписывая чужую.
+        // The game was already in the database (e.g. imported manually): on
+        // sync, link it to the account without overwriting another link.
         if let Some(account_id) = draft.account_id {
             conn.execute(
                 "UPDATE games SET
@@ -79,7 +79,7 @@ pub fn get_game(db: &Db, id: i64) -> AppResult<Game> {
             map_game,
         )
         .optional()?
-        .ok_or_else(|| AppError::NotFound(format!("Партия #{id} не найдена")))
+        .ok_or_else(|| AppError::NotFound(format!("Game #{id} not found")))
     })
 }
 

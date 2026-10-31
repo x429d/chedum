@@ -3,10 +3,16 @@ import { createSignal, For, Show } from "solid-js";
 import { t } from "../../i18n";
 import { accountsStore } from "../../stores/accountsStore";
 import { ui } from "../../stores/uiStore";
+import { syncProgressLabel } from "../../utils/progress";
 import { Icon } from "../ui/Icon";
 
 export function SyncPanel() {
   const [force, setForce] = createSignal(false);
+  const progressAccount = () => {
+    const id = accountsStore.syncingAccountId();
+    const account = accountsStore.accounts().find((value) => value.id === id);
+    return account ? accountsStore.accountName(account) : null;
+  };
 
   return (
     <div class="card">
@@ -71,7 +77,7 @@ export function SyncPanel() {
               )}
             </For>
           </div>
-          <label class="chip" style={{ cursor: "pointer", "justify-content": "center" }}>
+          <label class="chip" style={{ cursor: "pointer", "justify-content": "center" }} title={t("accounts.syncForceHint")}>
             <input
               type="checkbox"
               checked={force()}
@@ -95,6 +101,15 @@ export function SyncPanel() {
               </Show>
               {accountsStore.syncingAll() ? t("accounts.syncAllBusy") : t("accounts.syncAll")}
             </button>
+            <Show when={accountsStore.busy()}>
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                onClick={() => void accountsStore.cancel()}
+              >
+                {t("accounts.cancelSync")}
+              </button>
+            </Show>
             <button
               type="button"
               class="btn btn-ghost btn-sm"
@@ -111,7 +126,12 @@ export function SyncPanel() {
                 <div class="progress-track">
                   <div class="progress-fill" style={{ width: `${progress().percent}%` }} />
                 </div>
-                <div class="sync-log">{progress().message}</div>
+                <div class="sync-log">
+                  <Show when={progressAccount()}>
+                    {(account) => <span>{account()}: </span>}
+                  </Show>
+                  {syncProgressLabel(progress())}
+                </div>
               </div>
             )}
           </Show>

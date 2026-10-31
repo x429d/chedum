@@ -100,7 +100,9 @@ export interface SyncResult {
   username: string;
   archivesProcessed: number;
   gamesImported: number;
-  gamesSkipped: number;
+  duplicates: number;
+  filtered: number;
+  errors: string[];
 }
 
 export interface ImportSummary {
@@ -117,19 +119,19 @@ export interface PendingAnalysis {
 
 export interface BatchState {
   running: boolean;
-  /** Индекс партии, которая обрабатывается сейчас (с нуля). */
+  /** Index of the game currently being processed (zero-based). */
   current: number;
   total: number;
   percent: number;
   label: string;
-  /** Позиция внутри текущей партии и их общее число. */
+  /** Position within the current game and its total count. */
   ply: number;
   plyTotal: number;
-  /** Успешно разобранные и упавшие партии текущего запуска. */
+  /** Successfully analyzed and failed games in the current run. */
   done: number;
   failed: number;
   elapsedSec: number;
-  /** Оценка остатка в секундах; null, пока нет ни одной готовой партии. */
+  /** Estimated remaining time in seconds; null until at least one game is done. */
   etaSec: number | null;
 }
 

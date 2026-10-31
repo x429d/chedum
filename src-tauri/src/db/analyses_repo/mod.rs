@@ -6,6 +6,7 @@ use crate::domain::error::AppResult;
 
 mod annotations;
 mod backfill;
+pub mod checkpoints;
 mod insert;
 mod mapping;
 mod summary;
@@ -31,8 +32,8 @@ pub fn get_analysis(db: &Db, game_id: i64) -> AppResult<Option<GameAnalysis>> {
             .optional()?;
         match analysis {
             Some(mut analysis) => {
-                // Текст резюме всегда собирается из тех же полей, что и карточки,
-                // поэтому старые записи не могут показать другое число точности.
+                // The summary text is always assembled from the same fields as
+                // the cards, so old rows cannot show a different accuracy number.
                 analysis.summary_text = summary_for_conn(conn, game_id, &analysis)?;
                 Ok(Some(analysis))
             }

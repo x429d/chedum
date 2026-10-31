@@ -1,5 +1,5 @@
-//! Служебная консоль для операций над локальной базой Chenal.
-//! Не входит в бандл приложения; используется для аудита и пакетного разбора.
+//! Internal console for operations on the local Chenal database.
+//! Not shipped in the app bundle; used for audits and batch analysis.
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -13,8 +13,7 @@ use chenal_lib::service::openings;
 
 fn default_db() -> PathBuf {
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home)
-        .join("Library/Application Support/com.chenal.studio/chenal.db")
+    PathBuf::from(home).join("Library/Application Support/com.chenal.studio/chenal.db")
 }
 
 fn main() -> ExitCode {
@@ -41,7 +40,7 @@ fn run() -> AppResult<()> {
         "audit" => audit(&db),
         "openings" => {
             let updated = openings::backfill_openings(&db)?;
-            println!("openings: обновлено партий — {updated}");
+            println!("openings: updated games — {updated}");
             audit(&db)
         }
         "backfill" => {
@@ -57,9 +56,7 @@ fn run() -> AppResult<()> {
         "hub" => hub(&db),
         "analyze" => block_on(analyze(&db, &args)),
         other => {
-            eprintln!(
-                "Неизвестная команда «{other}»: audit | openings | backfill | hub | analyze"
-            );
+            eprintln!("Unknown command «{other}»: audit | openings | backfill | hub | analyze");
             Ok(())
         }
     }
@@ -87,8 +84,7 @@ fn engine_path() -> PathBuf {
     if let Ok(path) = std::env::var("CHENAL_STOCKFISH") {
         return PathBuf::from(path);
     }
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("binaries/stockfish-aarch64-apple-darwin")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin")
 }
 
 async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
@@ -137,22 +133,22 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
             )?;
             plan.ids.truncate(limit);
             if plan.excluded > 0 {
-                println!("исключено после 3 ошибок: {}", plan.excluded);
+                println!("excluded after 3 errors: {}", plan.excluded);
             }
             plan.ids
         }
     };
     if ids.is_empty() {
-        println!("Нет партий для анализа");
+        println!("No games to analyze");
         return Ok(());
     }
     let path = engine_path();
     if !path.is_file() {
-        eprintln!("Stockfish не найден: {}", path.display());
+        eprintln!("Stockfish not found: {}", path.display());
         return Ok(());
     }
     println!(
-        "analyze: {} партий, depth {depth}, MultiPV {multipv}, workers {workers}, hash {} MB",
+        "analyze: {} games, depth {depth}, MultiPV {multipv}, workers {workers}, hash {} MB",
         ids.len(),
         hash_mb_for(workers)
     );
@@ -176,15 +172,10 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
                 let lease = pool.acquire().await;
                 let game_started = Instant::now();
                 let outcome = if parallel {
-                    // Позиции одной партии раскладываются по всему пулу:
-                    // осмысленно при небольшом числе партий.
+                    // One game's positions are spread across the whole pool:
+                    // only worthwhile with a small number of games.
                     chenal_lib::service::analysis::analyze_game_parallel(
-                        &db,
-                        &pool,
-                        id,
-                        depth,
-                        multipv,
-                        None,
+                        &db, &pool, id, depth, multipv, None,
                     )
                     .await
                 } else {
@@ -220,10 +211,10 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
                             analysis.white_acpl,
                             analysis.black_acpl
                         ),
-                        Ok(None) => println!("  #{id}: {:.1}s (без анализа)", elapsed),
+                        Ok(None) => println!("  #{id}: {:.1}s (no analysis)", elapsed),
                         Err(err) => {
                             failures += 1;
-                            println!("  #{id}: {:.1}s ошибка: {err}", elapsed);
+                            println!("  #{id}: {:.1}s error: {err}", elapsed);
                         }
                     }
                 }
@@ -236,7 +227,7 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
     }
     pool.shutdown().await;
     println!(
-        "done: {games} обработано, {failures} ошибок, {:.1}s всего",
+        "done: {games} processed, {failures} errors, {:.1}s total",
         started.elapsed().as_secs_f64()
     );
     Ok(())

@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "identifier": "com.chenal.studio",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "npm run fetch:stockfish && npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run build && npm run fetch:stockfish",
     "frontendDist": "../dist"
   },
   "app": {
@@ -51,7 +51,7 @@
       "binaries/stockfish-aarch64-apple-darwin",
       "resources/STOCKFISH-COPYING.txt",
       "resources/CHESS-PIECE-LICENSES.txt",
-      "resources/SPECTRAL-OFL.txt"
+      "resources/JETBRAINS-MONO-OFL.txt"
     ],
     "macOS": {
       "minimumSystemVersion": "12.0"

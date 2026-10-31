@@ -19,7 +19,7 @@ async function stop(): Promise<void> {
     try {
       await stopper();
     } catch {
-      // остановка движка идемпотентна
+      // stopping the engine is idempotent
     }
   }
   setLiveLoading(false);

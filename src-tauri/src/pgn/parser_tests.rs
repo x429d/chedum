@@ -102,7 +102,7 @@ fn detects_bot_title_but_not_bot_in_site_id() {
     let titled = "[Event \"game\"]\n[Site \"https://lichess.org/game/human01\"]\n[White \"SomeBot\"]\n[WhiteTitle \"BOT\"]\n[Black \"human\"]\n[Result \"1-0\"]\n\n1. e4 e5 1-0";
     assert!(is_bot_game(&parse_single(titled).unwrap()));
 
-    // "BOT" встречается в идентификаторе партии, но игроки — люди.
+    // "BOT" appears in the game ID, but both players are human.
     let human = "[Event \"game\"]\n[Site \"https://lichess.org/game/boTygf3H\"]\n[White \"human\"]\n[Black \"other\"]\n[Result \"1-0\"]\n\n1. e4 e5 1-0";
     assert!(!is_bot_game(&parse_single(human).unwrap()));
 }

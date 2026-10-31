@@ -27,11 +27,11 @@ pub struct BuildInput<'a> {
 pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
     let total = input.parsed.moves.len();
     if total == 0 {
-        return Err(AppError::Validation("В партии нет ходов".to_string()));
+        return Err(AppError::Validation("The game has no moves".to_string()));
     }
     if input.evaluations.len() < total + 1 {
         return Err(AppError::Validation(
-            "Недостаточно оценок движка для партии".to_string(),
+            "Not enough engine evaluations for the game".to_string(),
         ));
     }
     let (base_secs, increment) = input
@@ -82,7 +82,7 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
         let player = side_to_move(&before_pos);
         let best_line = before.lines.first().ok_or_else(|| {
             AppError::Engine(format!(
-                "Движок не вернул оценку для позиции {}",
+                "The engine returned no evaluation for position {}",
                 mv.fen_before
             ))
         })?;
@@ -246,7 +246,8 @@ pub fn build_analysis(input: &BuildInput<'_>) -> AppResult<AnalysisDraft> {
             time_spent_sec: spent,
             time_flag: flag,
             explanation_tag: explanation.as_ref().map(|value| value.tag.clone()),
-            explanation_text: explanation.map(|value| value.text),
+            explanation_params: explanation.as_ref().map(|value| value.params.clone()),
+            explanation_text: None,
             pv_lines: before.lines.clone(),
             user_comment: String::new(),
         });

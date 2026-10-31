@@ -1,12 +1,12 @@
 use tauri::menu::{Menu, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Wry};
 
-/// Меню приложения без нативных Undo/Redo.
+/// Application menu without the native Undo/Redo items.
 ///
-/// Акселераторы Cmd+Z и Cmd+Shift+Z у стандартных пунктов меню macOS
-/// перехватывают нажатие до WebView, поэтому горячие клавиши доски
-/// (отмена и возврат хода) до неё не доходили. Пункты Cut/Copy/Paste
-/// остаются — они нужны полям ввода.
+/// The Cmd+Z and Cmd+Shift+Z accelerators on the standard macOS menu items
+/// intercept the keystroke before it reaches the WebView, so the board's
+/// shortcuts (undo and redo a move) never arrived. Cut/Copy/Paste are kept
+/// because text inputs need them.
 pub fn build(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
     let name = app.package_info().name.clone();
     let app_menu = Submenu::with_items(

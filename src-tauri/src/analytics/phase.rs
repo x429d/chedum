@@ -3,11 +3,11 @@ use crate::domain::position::{
     developed_count, heavy_material_total, parse_fen, piece_count_nonpawn,
 };
 
-/// Определяет фазу партии по номеру полухода и позиции.
+/// Determines the game phase from the ply number and position.
 ///
-/// - эндшпиль: суммарная ценность фигур без пешек и королей ≤ 26;
-/// - дебют: полуход ≤ 24 или развито менее 6 фигур, при этом фигур больше 10;
-/// - иначе миттельшпиль.
+/// - endgame: total value of non-pawn, non-king pieces ≤ 26;
+/// - opening: ply ≤ 24 or fewer than 6 pieces developed, provided more than 10 pieces remain;
+/// - otherwise middlegame.
 pub fn phase_for(ply: u32, fen: &str) -> Phase {
     let pos = match parse_fen(fen) {
         Ok(pos) => pos,

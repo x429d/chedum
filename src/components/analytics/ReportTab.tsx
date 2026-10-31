@@ -4,6 +4,7 @@ import { t } from "../../i18n";
 import { gameStore } from "../../stores/gameStore";
 import type { Game, GameAnalysis, MoveEvaluation } from "../../types/models";
 import { formatNumber } from "../../utils/format";
+import { buildGameSummary } from "../../utils/summary";
 import { AccuracyRing } from "./AccuracyRing";
 import { CategoryTable } from "./CategoryTable";
 import { PhaseBars } from "./PhaseBars";
@@ -51,7 +52,7 @@ export function ReportTab(props: {
         <div class="card-title" style={{ "margin-bottom": "6px" }}>
           {t("studio.summaryTitle")}
         </div>
-        <div class="summary-text">{props.analysis.summaryText}</div>
+        <div class="summary-text">{buildGameSummary(props.analysis, props.game, props.moves)}</div>
         <div style={{ display: "flex", gap: "6px", "flex-wrap": "wrap", "margin-top": "9px" }}>
           <Show when={props.game.eco}>
             <span class="chip accent">{props.game.eco}</span>

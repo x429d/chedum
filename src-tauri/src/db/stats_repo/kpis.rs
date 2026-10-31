@@ -49,7 +49,7 @@ pub(super) fn kpis(
         },
         avg_accuracy: row.5,
         avg_acpl: row.6,
-        // Заполняется в `hub_stats` из разбивки по аккаунтам/площадкам.
+        // Filled in `hub_stats` from the per-account/platform breakdown.
         avg_perf_elo: None,
         avg_perf_elo_spread: None,
         white: color_record(conn, "white", key, account)?,

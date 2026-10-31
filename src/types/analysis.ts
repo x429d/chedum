@@ -36,6 +36,7 @@ export interface MoveEvaluation {
   timeSpentSec: number | null;
   timeFlag: TimeFlag;
   explanationTag: string | null;
+  explanationParams: Record<string, string> | null;
   explanationText: string | null;
   pvLines: PvLine[];
   userComment: string;
@@ -49,6 +50,9 @@ export interface CategoryCounts {
 export interface GameAnalysis {
   gameId: number;
   engineName: string;
+  engineVersion: string;
+  classifierVersion: string;
+  accuracyMethodVersion: string;
   depth: number;
   multipv: number;
   analyzedAt: string;

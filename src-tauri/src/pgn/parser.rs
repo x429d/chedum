@@ -105,7 +105,7 @@ impl Visitor for GameVisitor {
             Ok(mv) => mv,
             Err(err) => {
                 return ControlFlow::Break(Err(AppError::Parse(format!(
-                    "Нелегальный ход «{}»: {err}",
+                    "Illegal move «{}»: {err}",
                     san_plus.san
                 ))))
             }
@@ -161,7 +161,7 @@ pub struct ParseReport {
     pub errors: Vec<String>,
 }
 
-/// Потоково разбирает все партии из PGN, не останавливаясь на отдельных ошибках.
+/// Streams every game in a PGN, continuing past individual errors.
 pub fn parse_pgn(text: &str) -> ParseReport {
     let mut reader = Reader::new(Cursor::new(text.as_bytes()));
     let mut visitor = GameVisitor;
@@ -172,7 +172,7 @@ pub fn parse_pgn(text: &str) -> ParseReport {
             Ok(Some(Err(err))) => report.errors.push(err.to_string()),
             Ok(None) => break,
             Err(err) => {
-                report.errors.push(format!("Ошибка чтения PGN: {err}"));
+                report.errors.push(format!("Could not read PGN: {err}"));
                 break;
             }
         }
@@ -190,7 +190,7 @@ pub fn parse_single(text: &str) -> AppResult<ParsedGame> {
             .errors
             .into_iter()
             .next()
-            .unwrap_or_else(|| "В PGN не найдено ни одной партии".to_string()),
+            .unwrap_or_else(|| "No games found in the PGN".to_string()),
     ))
 }
 
@@ -221,7 +221,7 @@ fn normalized_result(value: Option<&str>) -> String {
     }
 }
 
-/// Партия против компьютерного соперника не нужна в личной аналитике.
+/// Games against a computer opponent are noise for personal analytics.
 pub fn is_bot_game(game: &ParsedGame) -> bool {
     let ai_name = |name: &str| {
         name.trim()
@@ -243,7 +243,7 @@ pub fn is_bot_game(game: &ParsedGame) -> bool {
         || computer_name(black)
 }
 
-/// Собирает доменную модель партии из разобранного PGN.
+/// Builds the domain game model from a parsed PGN.
 pub fn build_draft(
     parsed: &ParsedGame,
     source: GameSource,

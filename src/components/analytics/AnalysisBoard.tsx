@@ -23,7 +23,7 @@ export function AnalysisBoard(props: {
 }) {
   const [chartScope, setChartScope] = createSignal<ChartScope>("user");
 
-  /** Оценка live-движка в перспективе белых; UCI отдаёт cp/mate от ходящего. */
+  /** Live engine evaluation from White's perspective; UCI reports cp/mate from the side to move. */
   const liveEval = createMemo(() => {
     if (!analysisStore.liveEnabled()) return null;
     const update = analysisStore.liveUpdate();

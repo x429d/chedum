@@ -11,7 +11,7 @@ use super::mapping::map_analysis;
 const SUMMARY_VERSION_KEY: &str = "summary_text_version";
 const SUMMARY_VERSION: &str = "single-source-v2";
 
-/// Поля партии и счётчики тайм-флагов, нужные для резюме.
+/// Builds the summary text for a game, loading its fields and time-flag counts.
 pub(super) fn summary_for_conn(
     conn: &Connection,
     game_id: i64,
@@ -71,8 +71,8 @@ fn user_time_flags(conn: &Connection, game_id: i64, user_color: &str) -> AppResu
     .map_err(AppError::from)
 }
 
-/// Пересобирает сохранённый текст резюме из сохранённых метрик анализа.
-/// Нужен один раз после перехода на единый источник чисел; движок не требуется.
+/// Rebuilds the stored summary text from the stored analysis metrics.
+/// Needed once after switching to a single source of numbers; no engine required.
 pub fn backfill_summaries(db: &Db) -> AppResult<usize> {
     db.with_tx(|tx| {
         let current: Option<String> = tx

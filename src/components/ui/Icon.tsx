@@ -11,6 +11,7 @@ import ChevronsLeft from "lucide-solid/icons/chevrons-left";
 import ChevronsRight from "lucide-solid/icons/chevrons-right";
 import Clock from "lucide-solid/icons/clock";
 import CloudDownload from "lucide-solid/icons/cloud-download";
+import Copy from "lucide-solid/icons/copy";
 import Cpu from "lucide-solid/icons/cpu";
 import Download from "lucide-solid/icons/download";
 import Eye from "lucide-solid/icons/eye";
@@ -76,6 +77,7 @@ export type IconName =
   | "upload"
   | "sync"
   | "cpu"
+  | "copy"
   | "user"
   | "board"
   | "info"
@@ -123,6 +125,7 @@ const GLYPHS: Record<IconName, Component<GlyphProps>> = {
   search: Search as Component<GlyphProps>,
   filter: Funnel as Component<GlyphProps>,
   download: Download as Component<GlyphProps>,
+  copy: Copy as Component<GlyphProps>,
   upload: Upload as Component<GlyphProps>,
   sync: CloudDownload as Component<GlyphProps>,
   cpu: Cpu as Component<GlyphProps>,

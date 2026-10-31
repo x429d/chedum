@@ -105,6 +105,11 @@ export type TranslationSchema = {
     gamesAlreadyDeleted: string;
     gameDeleted: string;
     gamesDeletedCount: string;
+    analysisFailedTimes: string;
+    analysisFailedHint: string;
+    selectAll: string;
+    selectGame: string;
+    openGame: string;
   };
   studio: {
     backToLibrary: string;
@@ -175,6 +180,8 @@ export type TranslationSchema = {
     scopeUser: string;
     scopeOpponent: string;
     scopeAll: string;
+    chartLabel: string;
+    chartHint: string;
   };
   board: {
     first: string;
@@ -187,6 +194,8 @@ export type TranslationSchema = {
     live: string;
     fullscreen: string;
     exitFullscreen: string;
+    label: string;
+    focusHint: string;
   };
   hub: {
     title: string;
@@ -262,6 +271,11 @@ export type TranslationSchema = {
     appearanceTitle: string;
     showArrows: string;
     pieceSet: string;
+    diagnosticsTitle: string;
+    copyDiagnostics: string;
+    diagnosticsCopied: string;
+    dbPath: string;
+    logPath: string;
   };
   accounts: {
     title: string;
@@ -300,6 +314,13 @@ export type TranslationSchema = {
     remove: string;
     confirmRemove: string;
     syncProgress: string;
+    cancelSync: string;
+    syncCancelled: string;
+    syncResult: string;
+    syncReset: string;
+    syncResetConfirm: string;
+    syncResetDone: string;
+    syncForceHint: string;
     howTitle: string;
     howStep1: string;
     howStep2: string;
@@ -310,4 +331,68 @@ export type TranslationSchema = {
   outcomes: Record<string, string>;
   timeClasses: Record<string, string>;
   sides: Record<string, string>;
+  sync: {
+    progressArchives: string;
+    progressArchive: string;
+    progressDownload: string;
+    progressParse: string;
+    progressImport: string;
+    progressDone: string;
+    progressEmpty: string;
+  };
+  coach: {
+    brilliant_sacrifice: string;
+    strong_continuation: string;
+    allowed_mate: string;
+    missed_mate: string;
+    hung_piece: string;
+    missed_tactic: string;
+    king_safety: string;
+    positional_concession: string;
+  };
+  progress: {
+    prepare: string;
+    engine: string;
+    aggregate: string;
+    save: string;
+    done: string;
+  };
+  summary: {
+    opening: string;
+    openingEco: string;
+    openingName: string;
+    wonAsWhite: string;
+    lostAsWhite: string;
+    wonAsBlack: string;
+    lostAsBlack: string;
+    draw: string;
+    result: string;
+    accuracy: string;
+    accuracyNoAcpl: string;
+    clean: string;
+    weakness: string;
+    weakestPhase: string;
+    keyMoments: string;
+    noKeyMoments: string;
+  };
+  errors: {
+    database: string;
+    io: string;
+    network: string;
+    engine: string;
+    parse: string;
+    not_found: string;
+    validation: string;
+    rate_limited: string;
+    busy: string;
+    cancelled: string;
+    internal: string;
+    unknown: string;
+  };
+  app: {
+    unexpectedError: string;
+    reloadView: string;
+    errorDetails: string;
+    dismiss: string;
+  };
 };

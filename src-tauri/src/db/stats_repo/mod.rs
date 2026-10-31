@@ -22,21 +22,16 @@ struct ConfigSelection {
     view: AnalysisConfigView,
 }
 
-/// Партии принадлежат аккаунту напрямую через `games.account_id`.
-/// `?param = NULL` означает «все аккаунты и ручные PGN».
+/// Games belong to an account directly via `games.account_id`.
+/// `?param = NULL` means "all accounts and manual PGNs".
 pub(crate) fn account_clause(alias: &str, param: usize) -> String {
     format!("(?{param} IS NULL OR {alias}.account_id = ?{param})")
 }
 
-/// Агрегаты хаба для выбранного аккаунта или для всех аккаунтов.
+/// Hub aggregates for the selected account or for all accounts.
 pub fn hub_stats(db: &Db, account: Option<i64>) -> AppResult<HubStats> {
     let settings = settings_repo::get_settings(db)?;
-    hub_stats_for(
-        db,
-        account,
-        settings.analysis_depth,
-        settings.multipv,
-    )
+    hub_stats_for(db, account, settings.analysis_depth, settings.multipv)
 }
 
 fn hub_stats_for(
@@ -50,9 +45,9 @@ fn hub_stats_for(
         let key = config.as_ref().map(|value| value.config_key.as_str());
         let mut kpis = kpis(conn, key, account)?;
         let ratings = platform_ratings(conn, key, account)?;
-        // Единый Performance Elo показываем только когда в выборке ровно одна
-        // рейтинговая группа. Иначе UI берёт значения из `ratings`, чтобы
-        // Chess.com и Lichess не смешивались.
+        // Show a single Performance Elo only when the selection has exactly one
+        // rating group. Otherwise the UI takes values from `ratings`, so
+        // Chess.com and Lichess are not mixed.
         let with_perf: Vec<_> = ratings
             .iter()
             .filter(|rating| rating.perf_elo.is_some())
@@ -73,8 +68,8 @@ fn hub_stats_for(
     })
 }
 
-/// Самая частая конфигурация среди разобранных партий аккаунта. Остальные
-/// анализы не удаляются, но в агрегаты хаба не попадают.
+/// The most common configuration among the account's analyzed games. Other
+/// analyses are not deleted but do not enter the hub aggregates.
 fn select_config(
     conn: &Connection,
     account: Option<i64>,
@@ -126,7 +121,7 @@ fn select_config(
     for row in rows {
         mismatched.push(row?);
     }
-    // Пересчёт имеет смысл только для анализов мельче текущих настроек.
+    // Re-analysis makes sense only for analyses shallower than current settings.
     let upgrade_sql = format!(
         "SELECT a.game_id FROM game_analyses a JOIN games g ON g.id = a.game_id
          WHERE (a.depth < ?2 OR (a.depth = ?2 AND a.multipv < ?3)) AND {account_filter}
@@ -134,11 +129,7 @@ fn select_config(
     );
     let mut stmt = conn.prepare(&upgrade_sql)?;
     let rows = stmt.query_map(
-        params![
-            account,
-            i64::from(target_depth),
-            i64::from(target_multipv)
-        ],
+        params![account, i64::from(target_depth), i64::from(target_multipv)],
         |row| row.get::<_, i64>(0),
     )?;
     let mut upgrade = Vec::new();

@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use crate::domain::analysis::MoveCategory;
 
 pub struct CoachInput<'a> {
@@ -14,20 +16,19 @@ pub struct CoachInput<'a> {
     pub pv_san: &'a [String],
 }
 
+/// Structured explanation. The UI renders it from the tag and parameters in
+/// the selected language; no localized prose is stored in the database.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Explanation {
     pub tag: String,
-    pub text: String,
+    pub params: BTreeMap<String, String>,
 }
 
-fn best(input: &CoachInput<'_>) -> String {
-    input
-        .best_san
-        .map(str::to_string)
-        .unwrap_or_else(|| "сильнейшее продолжение".to_string())
+fn param(key: &str, value: impl Into<String>) -> (String, String) {
+    (key.to_string(), value.into())
 }
 
-fn pv(input: &CoachInput<'_>) -> String {
+fn line(input: &CoachInput<'_>) -> String {
     let line = input
         .pv_san
         .iter()
@@ -42,7 +43,15 @@ fn pv(input: &CoachInput<'_>) -> String {
     }
 }
 
-/// Генерирует понятное объяснение хода на русском языке.
+fn base_params(input: &CoachInput<'_>) -> BTreeMap<String, String> {
+    BTreeMap::from([
+        param("playedSan", input.played_san),
+        param("bestSan", input.best_san.unwrap_or("—")),
+        param("line", line(input)),
+    ])
+}
+
+/// Builds a structured explanation for moves that need coaching.
 pub fn explain(input: &CoachInput<'_>) -> Option<Explanation> {
     if !input.category.needs_coach() {
         return None;
@@ -51,20 +60,6 @@ pub fn explain(input: &CoachInput<'_>) -> Option<Explanation> {
         input.category,
         MoveCategory::Brilliant | MoveCategory::Great
     ) {
-        let text = if input.sacrifice {
-            format!(
-                "Бриллиантовая жертва: {} отдаёт материал, но сохраняет сильную оценку. Главная линия: {}.",
-                input.played_san,
-                pv(input)
-            )
-        } else {
-            format!(
-                "Сильнейшее продолжение {}. {} сохраняет перевес; ключевая линия: {}.",
-                input.played_san,
-                best(input),
-                pv(input)
-            )
-        };
         let tag = if input.sacrifice {
             "brilliant_sacrifice"
         } else {
@@ -72,67 +67,61 @@ pub fn explain(input: &CoachInput<'_>) -> Option<Explanation> {
         };
         return Some(Explanation {
             tag: tag.to_string(),
-            text,
+            params: base_params(input),
         });
     }
     if let Some(distance) = input.allowed_mate_in {
+        let mut params = base_params(input);
+        params.insert("distance".to_string(), distance.to_string());
         return Some(Explanation {
             tag: "allowed_mate".to_string(),
-            text: format!(
-                "Позволяет сопернику объявить форсированный мат в {distance} ходов. Вместо {} точнее было {}.",
-                input.played_san,
-                best(input)
-            ),
+            params,
         });
     }
     if let Some(distance) = input.missed_mate_in {
+        let mut params = base_params(input);
+        params.insert("distance".to_string(), distance.to_string());
         return Some(Explanation {
             tag: "missed_mate".to_string(),
-            text: format!(
-                "Упущен форсированный мат в {distance} ходов. Вместо {} выигрывало {}.",
-                input.played_san,
-                best(input)
-            ),
+            params,
         });
     }
     if input.material_loss_cp >= 300 {
-        let pawns = f64::from(input.material_loss_cp) / 100.0;
+        let mut params = base_params(input);
+        params.insert(
+            "pawns".to_string(),
+            format!("{:.1}", f64::from(input.material_loss_cp) / 100.0),
+        );
         return Some(Explanation {
             tag: "hung_piece".to_string(),
-            text: format!(
-                "Потеря материала: после {} фигура остаётся без защиты, главная линия соперника даёт не менее {pawns:.1} пешки перевеса. Точнее было {}.",
-                input.played_san,
-                best(input)
-            ),
+            params,
         });
     }
     if input.best_material_gain_cp >= 200 {
-        let pawns = f64::from(input.best_material_gain_cp) / 100.0;
+        let mut params = base_params(input);
+        params.insert(
+            "pawns".to_string(),
+            format!("{:.1}", f64::from(input.best_material_gain_cp) / 100.0),
+        );
         return Some(Explanation {
             tag: "missed_tactic".to_string(),
-            text: format!(
-                "Упущен тактический удар: линия {} давала выигрыш материала около {pawns:.1} пешки.",
-                best(input)
-            ),
+            params,
         });
     }
     if input.king_safety_loss {
         return Some(Explanation {
             tag: "king_safety".to_string(),
-            text: format!(
-                "Ослабление прикрытия короля: {} создаёт прямые угрозы, соперник отвечает шахом. Надёжнее было {}.",
-                input.played_san,
-                best(input)
-            ),
+            params: base_params(input),
         });
     }
+    let mut params = base_params(input);
+    params.insert(
+        "pawns".to_string(),
+        format!("{:.1}", input.eval_loss_pawns.max(0.0)),
+    );
     Some(Explanation {
         tag: "positional_concession".to_string(),
-        text: format!(
-            "Позиционная уступка: потеря {:.1} оценки и контроля над ключевыми полями. Точнее было {}.",
-            input.eval_loss_pawns.max(0.0),
-            best(input)
-        ),
+        params,
     })
 }
 
@@ -164,7 +153,7 @@ mod tests {
         ctx.allowed_mate_in = Some(3);
         let explanation = explain(&ctx).unwrap();
         assert_eq!(explanation.tag, "allowed_mate");
-        assert!(explanation.text.contains("мат в 3 ходов"));
+        assert_eq!(explanation.params.get("distance"), Some(&"3".to_string()));
     }
 
     #[test]
@@ -180,7 +169,9 @@ mod tests {
         let line = vec!["Qh5".to_string()];
         let mut ctx = input(MoveCategory::Mistake, &line);
         ctx.material_loss_cp = 400;
-        assert_eq!(explain(&ctx).unwrap().tag, "hung_piece");
+        let explanation = explain(&ctx).unwrap();
+        assert_eq!(explanation.tag, "hung_piece");
+        assert_eq!(explanation.params.get("pawns"), Some(&"4.0".to_string()));
         ctx.material_loss_cp = 0;
         ctx.best_material_gain_cp = 300;
         assert_eq!(explain(&ctx).unwrap().tag, "missed_tactic");
