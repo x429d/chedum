@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Chedum now builds and runs on macOS (Apple Silicon and Intel), Windows and
+  Linux. Stockfish is fetched as a per-platform Tauri sidecar, the database
+  path and engine lookup are platform-aware, and CI/release workflows cover
+  all three operating systems.
+- The project is prepared for open source: MIT license, contributing guide,
+  security policy, issue and pull-request templates.
 - Coach explanations, game summaries, sync progress, and error messages are now localized in
   the UI; the backend stores structured tags and parameters instead of prose.
 - Sync results separate new games, duplicates, filtered games, and parse errors. Long syncs can

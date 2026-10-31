@@ -15,6 +15,11 @@ import { HubView } from "./views/HubView";
 import { LibraryView } from "./views/LibraryView";
 import { SettingsView } from "./views/SettingsView";
 
+// macOS uses an overlay title bar with the traffic lights over the content.
+// Windows and Linux keep the native title bar, so the extra drag strip would
+// only waste vertical space.
+const hasOverlayTitleBar = /Macintosh|Mac OS X/.test(navigator.userAgent);
+
 export default function App() {
   onMount(() => {
     void (async () => {
@@ -43,11 +48,21 @@ export default function App() {
   });
 
   return (
-    <div class="app-shell" classList={{ "nav-collapsed": ui.navSidebarCollapsed() }}>
-      <div class="window-drag-bar" data-tauri-drag-region aria-hidden="true" />
+    <div
+      class="app-shell"
+      classList={{
+        "nav-collapsed": ui.navSidebarCollapsed(),
+        "native-titlebar": !hasOverlayTitleBar,
+      }}
+    >
+      <Show when={hasOverlayTitleBar}>
+        <div class="window-drag-bar" data-tauri-drag-region aria-hidden="true" />
+      </Show>
       <Sidebar />
       <main class="main">
-        <div class="drag-strip" />
+        <Show when={hasOverlayTitleBar}>
+          <div class="drag-strip" />
+        </Show>
         <ErrorBoundary fallback={(error, reset) => <ViewError error={error} reset={reset} />}>
           <Show when={ui.view() === "library"}>
             <LibraryView />

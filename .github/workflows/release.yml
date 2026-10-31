@@ -10,8 +10,28 @@ permissions:
 
 jobs:
   build:
-    name: Build macOS app
-    runs-on: macos-14
+    name: Build (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: macOS Apple Silicon
+            os: macos-14
+            target: aarch64-apple-darwin
+            args: --target aarch64-apple-darwin --bundles app,dmg
+          - label: macOS Intel
+            os: macos-15-intel
+            target: x86_64-apple-darwin
+            args: --target x86_64-apple-darwin --bundles app,dmg
+          - label: Linux x86_64
+            os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            args: --bundles deb,appimage
+          - label: Windows x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            args: --bundles nsis,msi
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,12 +45,19 @@ jobs:
       - name: Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin
+          targets: ${{ matrix.target }}
+
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+          key: ${{ matrix.target }}
 
       - name: Install frontend dependencies
         run: npm ci
@@ -39,12 +66,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src-tauri/binaries
-          key: stockfish-sf_19
+          key: stockfish-sf_19-${{ runner.os }}-${{ runner.arch }}
 
       - name: Fetch Stockfish
         run: npm run fetch:stockfish
 
-      - name: Build and draft release
+      - name: Build and attach to draft release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,4 +87,10 @@ jobs:
           releaseName: "Chedum ${{ github.ref_name }}"
           releaseDraft: true
           prerelease: false
-          args: --target aarch64-apple-darwin
+          releaseBody: |
+            Chedum ${{ github.ref_name }}.
+
+            Bundled Stockfish 19 is GPL-3.0; the corresponding source is
+            https://github.com/official-stockfish/Stockfish/tree/sf_19
+            Third-party notices: https://github.com/x429d/chedum/blob/master/docs/THIRD-PARTY.md
+          args: ${{ matrix.args }}

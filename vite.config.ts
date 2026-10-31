@@ -23,7 +23,8 @@ export default defineConfig({
     },
   },
   build: {
-    target: "safari15",
+    // WebView2 on Windows tracks Chromium; WebKit on macOS and Linux is older.
+    target: process.env.TAURI_ENV_PLATFORM === "windows" ? "chrome105" : "safari15",
     minify: "esbuild",
     sourcemap: false,
     // Keep SVG piece sets as standalone files so their licenses stay separable

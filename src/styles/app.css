@@ -226,6 +226,10 @@ button {
   padding: 40px 8px 16px;
 }
 
+.app-shell.native-titlebar .sidebar {
+  padding-top: 20px;
+}
+
 .app-shell.nav-collapsed .brand {
   justify-content: center;
   width: 100%;

@@ -1,18 +1,14 @@
 import collections
 import datetime
 import json
-import os
 import sqlite3
 import statistics
 import urllib.request
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-DB = os.environ.get(
-    "CHEDUM_DB",
-    str(Path.home() / "Library/Application Support/com.chedum.studio/chedum.db"),
-)
-UA = {"User-Agent": "Chedum/0.1.0 (macOS; research)"}
+from common import ROOT, default_db
+
+DB = default_db()
+UA = {"User-Agent": "Chedum/0.1.0 (+https://github.com/x429d/chedum)"}
 
 
 def fetch(url):

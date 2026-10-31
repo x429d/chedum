@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "npm run fetch:stockfish && npm run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build && npm run fetch:stockfish",
+    "beforeBuildCommand": "npm run fetch:stockfish && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -33,10 +33,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "app",
-      "dmg"
-    ],
+    "targets": "all",
     "category": "Productivity",
     "shortDescription": "Native chess analytics studio",
     "longDescription": "Local-first chess analytics studio powered by Stockfish, with deep move classification, coaching and player statistics.",
@@ -47,8 +44,10 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "externalBin": [
+      "binaries/chedum-stockfish"
+    ],
     "resources": [
-      "binaries/stockfish-aarch64-apple-darwin",
       "resources/STOCKFISH-COPYING.txt",
       "resources/CHESS-PIECE-LICENSES.txt",
       "resources/JETBRAINS-MONO-OFL.txt"

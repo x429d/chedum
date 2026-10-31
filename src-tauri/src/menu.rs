@@ -7,7 +7,14 @@ use tauri::{AppHandle, Wry};
 /// intercept the keystroke before it reaches the WebView, so the board's
 /// shortcuts (undo and redo a move) never arrived. Cut/Copy/Paste are kept
 /// because text inputs need them.
-pub fn build(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
+///
+/// Only macOS gets a native menu: on Windows and Linux the WebView already
+/// handles the standard editing shortcuts, and the macOS-only items
+/// (Services, Hide, Quit) are unsupported there.
+pub fn build(app: &AppHandle<Wry>) -> tauri::Result<Option<Menu<Wry>>> {
+    if !cfg!(target_os = "macos") {
+        return Ok(None);
+    }
     let name = app.package_info().name.clone();
     let app_menu = Submenu::with_items(
         app,
@@ -50,5 +57,8 @@ pub fn build(app: &AppHandle<Wry>) -> tauri::Result<Menu<Wry>> {
             &PredefinedMenuItem::close_window(app, None)?,
         ],
     )?;
-    Menu::with_items(app, &[&app_menu, &edit_menu, &view_menu, &window_menu])
+    Ok(Some(Menu::with_items(
+        app,
+        &[&app_menu, &edit_menu, &view_menu, &window_menu],
+    )?))
 }

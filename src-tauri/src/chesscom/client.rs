@@ -9,7 +9,11 @@ use tokio::time::{sleep, Instant};
 
 use crate::domain::error::{AppError, AppResult};
 
-const USER_AGENT: &str = "Chedum/0.1.0 (macOS; native chess analytics studio)";
+const USER_AGENT: &str = concat!(
+    "Chedum/",
+    env!("CARGO_PKG_VERSION"),
+    " (+https://github.com/x429d/chedum)"
+);
 const MIN_INTERVAL: Duration = Duration::from_secs(1);
 
 #[derive(Debug, Clone, Deserialize)]
@@ -156,10 +160,8 @@ mod tests {
     fn client_has_required_user_agent() {
         let client = ChessComClient::new().unwrap();
         assert_eq!(client.base, "https://api.chess.com/pub");
-        assert_eq!(
-            USER_AGENT,
-            "Chedum/0.1.0 (macOS; native chess analytics studio)"
-        );
+        assert!(USER_AGENT.starts_with("Chedum/"));
+        assert!(USER_AGENT.contains("github.com/x429d/chedum"));
     }
 
     #[test]

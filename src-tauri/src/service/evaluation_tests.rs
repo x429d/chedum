@@ -1,11 +1,7 @@
-use std::path::Path;
-
 use super::*;
 
 fn bundled_engine() -> Option<std::path::PathBuf> {
-    let path =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
-    path.is_file().then_some(path)
+    crate::engine::bundled_engine()
 }
 
 /// Same positions on pools of different sizes: blocks start with a clean

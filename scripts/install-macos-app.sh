@@ -6,7 +6,7 @@ SOURCE="$ROOT/src-tauri/target/release/bundle/macos/Chedum.app"
 DESTINATION="/Applications/Chedum.app"
 
 if [[ ! -d "$SOURCE" ]]; then
-  echo "Chedum.app не собран. Сначала: npm run tauri build -- --bundles app" >&2
+  echo "Chedum.app is not built yet. Run: npm run tauri build -- --bundles app" >&2
   exit 1
 fi
 
@@ -22,4 +22,4 @@ ditto "$SOURCE" "$DESTINATION"
 # Keep Spotlight from indexing the build copy, so search only surfaces /Applications.
 touch "$ROOT/src-tauri/target/.metadata_never_index"
 
-echo "Установлено: $DESTINATION"
+echo "Installed: $DESTINATION"

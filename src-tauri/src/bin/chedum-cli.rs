@@ -1,7 +1,8 @@
-//! Internal console for operations on the local Chedum database.
-//! Not shipped in the app bundle; used for audits and batch analysis.
+//! Console for operations on the local Chedum database: audits, backfills and
+//! batch analysis. It is built alongside the desktop app and is not the main
+//! entry point.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::ExitCode;
 use std::sync::Arc;
 use std::time::Instant;
@@ -12,8 +13,7 @@ use chedum_lib::engine::pool::{hash_mb_for, workers_from_setting, EnginePool};
 use chedum_lib::service::openings;
 
 fn default_db() -> PathBuf {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    PathBuf::from(home).join("Library/Application Support/com.chedum.studio/chedum.db")
+    chedum_lib::paths::database_path()
 }
 
 fn main() -> ExitCode {
@@ -81,10 +81,10 @@ fn arg_value(args: &[String], name: &str) -> Option<String> {
 }
 
 fn engine_path() -> PathBuf {
-    if let Ok(path) = std::env::var("CHEDUM_STOCKFISH") {
+    if let Some(path) = std::env::var_os("CHEDUM_STOCKFISH") {
         return PathBuf::from(path);
     }
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin")
+    chedum_lib::engine::bundled_path()
 }
 
 async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {

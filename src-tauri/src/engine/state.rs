@@ -1,15 +1,13 @@
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use tauri::Manager;
 use tokio::sync::Mutex as AsyncMutex;
 
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::stats::EngineStatus;
+use crate::engine::binary;
 use crate::engine::manager::EngineManager;
 use crate::engine::pool::{hash_mb_for, workers_from_setting, EnginePool, PooledEngine};
-
-const BINARY_NAME: &str = "stockfish-aarch64-apple-darwin";
 
 pub struct EngineState {
     path: Option<PathBuf>,
@@ -20,22 +18,7 @@ pub struct EngineState {
 
 impl EngineState {
     pub fn discover(app: &tauri::AppHandle) -> Self {
-        let mut candidates: Vec<PathBuf> = Vec::new();
-        if let Ok(resource_dir) = app.path().resource_dir() {
-            candidates.push(resource_dir.join("binaries").join(BINARY_NAME));
-        }
-        candidates.push(
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("binaries")
-                .join(BINARY_NAME),
-        );
-        if let Ok(cwd) = std::env::current_dir() {
-            candidates.push(cwd.join("binaries").join(BINARY_NAME));
-            candidates.push(cwd.join("src-tauri").join("binaries").join(BINARY_NAME));
-        }
-        candidates.push(PathBuf::from("/opt/homebrew/bin/stockfish"));
-        candidates.push(PathBuf::from("/usr/local/bin/stockfish"));
-        let path = candidates.into_iter().find(|candidate| candidate.is_file());
+        let path = binary::discover(app);
         EngineState {
             path,
             pool: AsyncMutex::new(None),
@@ -56,7 +39,9 @@ impl EngineState {
         }
         let path = self.path.as_deref().ok_or_else(|| {
             AppError::Engine(
-                "Stockfish not found. Install it with brew install stockfish.".to_string(),
+                "Stockfish not found. Run `npm run fetch:stockfish`, install Stockfish and add it \
+                 to PATH, or set CHEDUM_STOCKFISH."
+                    .to_string(),
             )
         })?;
         let pool = match EnginePool::spawn(path, workers, hash_mb_for(workers)).await {

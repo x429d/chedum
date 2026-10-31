@@ -3,9 +3,15 @@ name = "chedum"
 version = "0.1.0"
 default-run = "chedum"
 description = "Chedum — native chess analytics studio"
-authors = ["Chedum Studio"]
+authors = ["Chedum contributors"]
 edition = "2021"
 rust-version = "1.77"
+license = "MIT"
+repository = "https://github.com/x429d/chedum"
+homepage = "https://github.com/x429d/chedum"
+readme = "../README.md"
+keywords = ["chess", "stockfish", "analytics", "tauri"]
+categories = ["games"]
 
 [lib]
 name = "chedum_lib"

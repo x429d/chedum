@@ -3,7 +3,19 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Chedum — native chess analytics studio for macOS",
+  "description": "Chedum — native chess analytics studio for macOS, Linux and Windows",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/x429d/chedum.git"
+  },
+  "homepage": "https://github.com/x429d/chedum",
+  "bugs": {
+    "url": "https://github.com/x429d/chedum/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -12,7 +24,7 @@
     "check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "fetch:stockfish": "bash scripts/fetch-stockfish.sh",
+    "fetch:stockfish": "node scripts/fetch-stockfish.mjs",
     "install:app": "bash scripts/install-macos-app.sh"
   },
   "dependencies": {

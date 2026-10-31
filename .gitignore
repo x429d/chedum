@@ -2,10 +2,22 @@ node_modules/
 dist/
 .DS_Store
 *.log
+coverage/
+.env
+.env.*
 src-tauri/target/
 src-tauri/gen/
+src-tauri/binaries/chedum-stockfish-*
 src-tauri/binaries/stockfish-*
 tmp/
 
 __pycache__/
 *.pyc
+.pytest_cache/
+
+*.db
+*.db-wal
+*.db-shm
+
+# Local notes and development history that are not part of the public repository
+docs/internal/

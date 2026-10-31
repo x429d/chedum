@@ -1,17 +1,13 @@
 import json
-import os
 import sqlite3
 import subprocess
 import sys
 import time
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-DB = os.environ.get(
-    "CHEDUM_DB",
-    str(Path.home() / "Library/Application Support/com.chedum.studio/chedum.db"),
-)
-SF = str(ROOT / "src-tauri" / "binaries" / "stockfish-aarch64-apple-darwin")
+from common import ROOT, default_db, stockfish
+
+DB = default_db()
+SF = stockfish()
 GAME = int(sys.argv[1]) if len(sys.argv) > 1 else 843
 DEPTHS = [int(x) for x in (sys.argv[2].split(",") if len(sys.argv) > 2 else ["14", "18"])]
 OUT = ROOT / "tmp" / f"depth-{GAME}.json"

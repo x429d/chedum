@@ -13,6 +13,7 @@ pub mod eco;
 pub mod engine;
 pub mod lichess;
 pub mod menu;
+pub mod paths;
 pub mod pgn;
 pub mod service;
 pub mod state;
@@ -64,7 +65,10 @@ pub fn run() {
             let log_dir = init_logging(app.handle());
             // The menu intentionally has no Undo/Redo: otherwise macOS would
             // intercept Cmd+Z and Cmd+Shift+Z before the board gets them.
-            app.handle().set_menu(menu::build(app.handle())?)?;
+            // Windows and Linux use the WebView's own editing shortcuts.
+            if let Some(menu) = menu::build(app.handle())? {
+                app.handle().set_menu(menu)?;
+            }
             let data_dir = app.path().app_data_dir().map_err(|err| {
                 std::io::Error::other(format!("Could not resolve the data directory: {err}"))
             })?;

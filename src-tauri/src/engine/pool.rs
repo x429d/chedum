@@ -138,17 +138,31 @@ impl Drop for PooledEngine {
 /// 8 — 2.8x, 10 — 2.5x; hence "all performance cores plus two thirds of the
 /// efficiency cores".
 pub fn default_workers() -> usize {
-    let performance = sysctl_usize("hw.perflevel0.logicalcpu");
-    let efficiency = sysctl_usize("hw.perflevel1.logicalcpu").unwrap_or(0);
-    let workers = match performance {
-        Some(performance) => performance + (efficiency * 2) / 3,
-        None => std::thread::available_parallelism()
-            .map(|value| value.get())
-            .unwrap_or(1),
-    };
-    workers.clamp(1, 64)
+    platform_workers().clamp(1, 64)
 }
 
+fn available_workers() -> usize {
+    std::thread::available_parallelism()
+        .map(|value| value.get())
+        .unwrap_or(1)
+}
+
+#[cfg(not(target_os = "macos"))]
+fn platform_workers() -> usize {
+    available_workers()
+}
+
+#[cfg(target_os = "macos")]
+fn platform_workers() -> usize {
+    let performance = sysctl_usize("hw.perflevel0.logicalcpu");
+    let efficiency = sysctl_usize("hw.perflevel1.logicalcpu").unwrap_or(0);
+    match performance {
+        Some(performance) => performance + (efficiency * 2) / 3,
+        None => available_workers(),
+    }
+}
+
+#[cfg(target_os = "macos")]
 fn sysctl_usize(key: &str) -> Option<usize> {
     std::process::Command::new("sysctl")
         .args(["-n", key])
@@ -207,11 +221,9 @@ mod tests {
 
     #[tokio::test]
     async fn pool_returns_engine_back_on_drop() {
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("binaries/stockfish-aarch64-apple-darwin");
-        if !path.is_file() {
+        let Some(path) = crate::engine::bundled_engine() else {
             return;
-        }
+        };
         let pool = EnginePool::spawn(&path, 1, 16).await.unwrap();
         let first = pool.acquire().await;
         assert_eq!(first.pool.size(), 1);
@@ -225,11 +237,9 @@ mod tests {
 
     #[tokio::test]
     async fn second_acquire_waits_for_the_first() {
-        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("binaries/stockfish-aarch64-apple-darwin");
-        if !path.is_file() {
+        let Some(path) = crate::engine::bundled_engine() else {
             return;
-        }
+        };
         let pool = EnginePool::spawn(&path, 1, 16).await.unwrap();
         let first = pool.acquire().await;
         let pending =

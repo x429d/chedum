@@ -1,10 +1,12 @@
 # Chedum — native chess analytics studio
 
 [![CI](https://github.com/x429d/chedum/actions/workflows/ci.yml/badge.svg)](https://github.com/x429d/chedum/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Local-first macOS (Apple Silicon) chess analytics studio built with Tauri v2, Rust, SolidJS and
-Stockfish. Games are stored in local SQLite, analyzed offline, and presented in a Linear/Raycast
-inspired dark interface.
+Local-first chess analytics studio for macOS, Windows and Linux, built with
+Tauri v2, Rust, SolidJS and Stockfish. Games are stored in local SQLite,
+analyzed offline, and presented in a Linear/Raycast-inspired dark interface.
+No account, cloud service or telemetry is required.
 
 ## Features
 
@@ -37,6 +39,19 @@ inspired dark interface.
   or all accounts.
 - **Embedded data**: 3,865 ECO opening lines and four pre-analyzed demo games (Stockfish depth 14).
 
+## Platforms
+
+| Platform | Requirements | Bundles |
+| --- | --- | --- |
+| macOS 12+ | Apple Silicon or Intel | `.app`, `.dmg` |
+| Windows 10/11 | x64, WebView2 | `.msi`, NSIS `.exe` |
+| Linux | x64, WebKitGTK 4.1 | `.deb`, `.AppImage` |
+
+Release builds are produced for all three platforms by
+[`.github/workflows/release.yml`](.github/workflows/release.yml). The codebase
+contains no platform-specific application logic beyond window chrome, menu
+setup and engine lookup.
+
 ## Data
 
 - ECO opening lines: [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings).
@@ -56,20 +71,36 @@ inspired dark interface.
 - Tauri v2, Rust 2021
 - `rusqlite` (bundled SQLite, WAL), `shakmaty`, `pgn-reader`, `reqwest` (rustls), `tokio`, `sha2`
 - SolidJS, TypeScript strict, Tailwind CSS v4, `chessops`
-- Stockfish 19 (bundled arm64 binary at `src-tauri/binaries/stockfish-aarch64-apple-darwin`)
+- Stockfish 19, downloaded as a per-platform sidecar by `npm run fetch:stockfish`
 
 ## Run
 
+Prerequisites: Node.js 22+, Rust stable (see `rust-toolchain.toml`) and the
+platform toolchain from [CONTRIBUTING.md](CONTRIBUTING.md). On Linux install
+`libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev` and
+`patchelf` first.
+
 ```bash
 npm install
-npm run fetch:stockfish   # pinned Stockfish 19 binary, not stored in git
+npm run fetch:stockfish   # pinned Stockfish 19 for the current platform
 npm run tauri dev         # development app
-npm run tauri build       # macOS .app / .dmg bundle
-npm run install:app       # keep exactly one Chedum.app in /Applications
+npm run tauri build       # native bundle for the host platform
 ```
 
-If the bundled engine is missing, Chedum also looks for `/opt/homebrew/bin/stockfish` and
-`/usr/local/bin/stockfish`. Stockfish is GPLv3; its license is bundled at
+The fetch script verifies the pinned SHA-256 and writes
+`src-tauri/binaries/chedum-stockfish-<target-triple>` (`.exe` on Windows), which is
+what Tauri's `externalBin` bundles. On macOS, `npm run install:app` copies the
+built `.app` to `/Applications`.
+
+Chedum looks for Stockfish in this order:
+
+1. `CHEDUM_STOCKFISH` environment variable
+2. the sidecar next to the application executable
+3. `src-tauri/binaries/` during development
+4. `stockfish` on `PATH`
+5. `/opt/homebrew/bin/stockfish` and `/usr/local/bin/stockfish` on macOS
+
+Stockfish is GPLv3; its license is bundled at
 `src-tauri/resources/STOCKFISH-COPYING.txt`.
 
 ## Verification
@@ -87,9 +118,19 @@ npm run build
 npm audit --omit=dev
 ```
 
-The local database lives in `~/Library/Application Support/com.chedum.studio/chedum.db`.
-The app is offline-first; the network is used only for the public Chess.com Published Data API and
-the public Lichess game-export API.
+CI runs these gates on macOS, Ubuntu and Windows. Engine tests skip
+automatically when the Stockfish sidecar is absent.
+
+The local database lives in the platform application-data directory:
+
+- macOS: `~/Library/Application Support/com.chedum.studio/chedum.db`
+- Linux: `${XDG_DATA_HOME:-~/.local/share}/com.chedum.studio/chedum.db`
+- Windows: `%APPDATA%\com.chedum.studio\chedum.db`
+
+The exact paths for the database and log file are shown in
+**Settings → Diagnostics**. The app is offline-first; the network is used only
+for the public Chess.com Published Data API and the public Lichess
+game-export API.
 
 ## Architecture
 
@@ -116,3 +157,15 @@ src/
 
 All new source files should stay under 300 lines. Business logic is not placed in `lib.rs`,
 `main.rs`, command handlers or `App.tsx`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks and code guidelines.
+Security reports go through [SECURITY.md](SECURITY.md).
+
+## License
+
+Chedum's own source code is MIT-licensed, see [LICENSE](LICENSE). Bundled
+third-party works keep their licenses: Stockfish is GPLv3, the font is SIL OFL
+1.1, and the piece sets and opening data are attributed in
+[`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md).

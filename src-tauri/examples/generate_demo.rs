@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use serde::Serialize;
 
 use chedum_lib::domain::analysis::{GameAnalysis, MoveEvaluation};
@@ -19,8 +17,7 @@ struct SeedEntry {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let depth = 14;
-    let engine_path = Path::new("binaries/stockfish-aarch64-apple-darwin");
-    let engine = EngineManager::spawn(engine_path).await?;
+    let engine = EngineManager::spawn(&chedum_lib::engine::bundled_path()).await?;
     let games: [(&str, &str); 4] = [
         ("demo-opera", include_str!("../resources/demo_opera.pgn")),
         (

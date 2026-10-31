@@ -1,13 +1,10 @@
 import math
-import os
 import sqlite3
 import statistics
-from pathlib import Path
 
-DB = os.environ.get(
-    "CHEDUM_DB",
-    str(Path.home() / "Library/Application Support/com.chedum.studio/chedum.db"),
-)
+from common import default_db
+
+DB = default_db()
 con = sqlite3.connect(DB)
 con.row_factory = sqlite3.Row
 

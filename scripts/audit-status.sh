@@ -3,7 +3,12 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DB="${CHEDUM_DB:-$HOME/Library/Application Support/com.chedum.studio/chedum.db}"
+case "$(uname -s)" in
+  Darwin) DEFAULT_DB="$HOME/Library/Application Support/com.chedum.studio/chedum.db" ;;
+  MINGW* | MSYS* | CYGWIN*) DEFAULT_DB="${APPDATA}/com.chedum.studio/chedum.db" ;;
+  *) DEFAULT_DB="${XDG_DATA_HOME:-$HOME/.local/share}/com.chedum.studio/chedum.db" ;;
+esac
+DB="${CHEDUM_DB:-$DEFAULT_DB}"
 
 echo "== Chedum audit =="
 echo "date: $(date '+%Y-%m-%d %H:%M:%S')"

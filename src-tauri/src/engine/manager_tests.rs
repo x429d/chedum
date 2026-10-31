@@ -3,9 +3,7 @@ use super::*;
 const START: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 fn bundled_engine() -> Option<PathBuf> {
-    let path =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
-    path.is_file().then_some(path)
+    crate::engine::bundled_engine()
 }
 
 #[tokio::test]

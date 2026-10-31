@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use serde::Serialize;
 
 use chedum_lib::domain::game::GameSource;
@@ -25,19 +23,15 @@ struct Row {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut args = std::env::args().skip(1);
-    let db_path = args.next().unwrap_or_else(|| {
-        std::env::var("HOME")
-            .map(|home| format!("{home}/Library/Application Support/com.chedum.studio/chedum.db"))
-            .unwrap_or_else(|_| "chedum.db".to_string())
-    });
+    let db_path = args
+        .next()
+        .unwrap_or_else(|| chedum_lib::paths::database_path().display().to_string());
     let depth: u32 = args.next().and_then(|v| v.parse().ok()).unwrap_or(14);
     let ids: Vec<i64> = args.filter_map(|v| v.parse().ok()).collect();
 
     let con =
         rusqlite::Connection::open_with_flags(db_path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
-    let engine_path =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("binaries/stockfish-aarch64-apple-darwin");
-    let engine = EngineManager::spawn(&engine_path).await?;
+    let engine = EngineManager::spawn(&chedum_lib::engine::bundled_path()).await?;
 
     for id in ids {
         let (pgn, white, black, result): (String, String, String, String) = con.query_row(

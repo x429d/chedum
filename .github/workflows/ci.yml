@@ -5,10 +5,18 @@ on:
     branches: [master]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gates:
-    name: Tests, clippy, fmt, types, build
-    runs-on: macos-14
+    name: Gates (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-22.04, windows-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,6 +32,12 @@ jobs:
         with:
           components: clippy, rustfmt
 
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
       - name: Cargo cache
         uses: Swatinem/rust-cache@v2
         with:
@@ -36,7 +50,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: src-tauri/binaries
-          key: stockfish-sf_19
+          key: stockfish-sf_19-${{ runner.os }}-${{ runner.arch }}
 
       - name: Fetch Stockfish
         run: npm run fetch:stockfish
