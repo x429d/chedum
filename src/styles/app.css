@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local("JetBrainsMono Nerd Font"), local("JetBrainsMono NF"),
+    url("../assets/fonts/JetBrainsMonoNerdFont-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local("JetBrainsMono Nerd Font Medium"), local("JetBrainsMono NF Medium"),
+    url("../assets/fonts/JetBrainsMonoNerdFont-Medium.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local("JetBrainsMono Nerd Font SemiBold"), local("JetBrainsMono NF SemiBold"),
+    url("../assets/fonts/JetBrainsMonoNerdFont-SemiBold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local("JetBrainsMono Nerd Font Bold"), local("JetBrainsMono NF Bold"),
+    url("../assets/fonts/JetBrainsMonoNerdFont-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local("JetBrainsMono Nerd Font Italic"), local("JetBrainsMono NF Italic"),
+    url("../assets/fonts/JetBrainsMonoNerdFont-Italic.ttf") format("truetype");
+}
+
 :root {
   color-scheme: dark;
   --bg: #0c110b;
@@ -23,9 +68,9 @@
   --gold: #c6a15b;
   --radius: 12px;
   --radius-sm: 7px;
-  --font-display: "JetBrainsMono Nerd Font", "JetBrainsMono NF", "JetBrainsMono Nerd Font Propo", "JetBrainsMono NFP", "JetBrains Mono", monospace;
-  --font-sans: "JetBrainsMono Nerd Font", "JetBrainsMono NF", "JetBrainsMono Nerd Font Propo", "JetBrainsMono NFP", "JetBrains Mono", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "JetBrainsMono Nerd Font Mono", "JetBrainsMono NFM", "JetBrainsMono Nerd Font", "JetBrainsMono NF", "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "JetBrainsMono Nerd Font", "JetBrainsMono NF", monospace;
+  --font-sans: "JetBrainsMono Nerd Font", "JetBrainsMono NF", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrainsMono Nerd Font Mono", "JetBrainsMono NFM", "JetBrainsMono Nerd Font", "JetBrainsMono NF", monospace;
 }
 
 * {
