@@ -9,6 +9,7 @@ export interface EngineStatus {
 
 export interface AppSettings {
   playerUsername: string;
+  activeAccountId: number | null;
   analysisDepth: number;
   multipv: number;
   boardTheme: BoardTheme;
@@ -115,13 +116,4 @@ export interface HubStats {
   trend: AccuracyPoint[];
   time: TimeStats;
   config: AnalysisConfigView | null;
-}
-
-export interface ArchiveView {
-  username: string;
-  archiveUrl: string;
-  year: number;
-  month: number;
-  isFullySynced: boolean;
-  lastSyncedAt: string;
 }

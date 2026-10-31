@@ -1,5 +1,6 @@
 import { createMemo, onCleanup, onMount, Show } from "solid-js";
 
+import { AccountScope } from "../components/accounts/AccountScope";
 import { AnalysisQueue } from "../components/library/AnalysisQueue";
 import { Filters } from "../components/library/Filters";
 import { GameTable } from "../components/library/GameTable";
@@ -7,6 +8,7 @@ import { ImportExport } from "../components/library/ImportExport";
 import { SyncPanel } from "../components/library/SyncPanel";
 import { Icon } from "../components/ui/Icon";
 import { pluralGames, t } from "../i18n";
+import { accountsStore } from "../stores/accountsStore";
 import { libraryStore } from "../stores/libraryStore";
 import { ui } from "../stores/uiStore";
 import { formatNumber } from "../utils/format";
@@ -44,6 +46,7 @@ export function LibraryView() {
           </div>
         </div>
         <div class="header-actions">
+          <AccountScope />
           <ImportExport />
         </div>
       </header>
@@ -93,12 +96,12 @@ export function LibraryView() {
             <button
               type="button"
               class="rail-btn"
-              title={t("library.syncTitle")}
-              aria-label={t("library.syncTitle")}
+              title={t("accounts.title")}
+              aria-label={t("accounts.title")}
               onClick={() => expandSidebar("sync")}
             >
               <Icon name="sync" size={16} />
-              <Show when={libraryStore.syncing()}>
+              <Show when={accountsStore.busy()}>
                 <span class="rail-badge" />
               </Show>
             </button>

@@ -197,7 +197,7 @@ fn export_pgn_keeps_game_importable_and_adds_annotator() {
     );
 
     let fresh = Db::in_memory().unwrap();
-    let summary = crate::service::import::import_pgn_text(&fresh, &exported, "alice").unwrap();
+    let summary = crate::service::import::import_pgn_text(&fresh, &exported, None).unwrap();
     assert_eq!(summary.imported, 1, "{:?}", summary.errors);
     let page = list_games(&fresh, &GameFilter::default()).unwrap();
     let imported = get_game(&fresh, page.games[0].id).unwrap();

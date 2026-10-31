@@ -1,4 +1,5 @@
 use super::support::{analysis, draft, move_eval};
+use crate::db::accounts_repo;
 use crate::db::analyses_repo::{
     backfill_fen_accuracy, backfill_summaries, get_analysis, insert_analysis_draft,
 };
@@ -9,12 +10,15 @@ use crate::db::settings_repo::set_setting;
 use crate::db::stats_repo::hub_stats;
 use crate::domain::analysis::{MoveCategory, Phase, TimeFlag};
 use crate::domain::game::{Color, TimeClass, UserColor};
+use crate::domain::AccountPlatform;
 
 #[test]
 fn hub_aggregates_only_the_configured_account() {
     let db = Db::in_memory().unwrap();
-    set_setting(&db, "player_username", "alice").unwrap();
-    let games = [
+    let account_id = accounts_repo::create(&db, AccountPlatform::Chesscom, "alice")
+        .unwrap()
+        .id;
+    let mut games = [
         draft(
             "a-white",
             "ALICE",
@@ -44,6 +48,8 @@ fn hub_aggregates_only_the_configured_account() {
             300,
         ),
     ];
+    games[0].account_id = Some(account_id);
+    games[1].account_id = Some(account_id);
     for game in &games {
         let id = db.with_tx(|tx| insert_game(tx, game)).unwrap().unwrap();
         insert_analysis_draft(
@@ -64,7 +70,7 @@ fn hub_aggregates_only_the_configured_account() {
         .unwrap();
     }
 
-    let stats = hub_stats(&db).unwrap();
+    let stats = hub_stats(&db, Some(account_id)).unwrap();
     assert_eq!(stats.kpis.total_games, 2);
     assert_eq!(stats.kpis.white.games, 1);
     assert_eq!(stats.kpis.black.games, 1);
@@ -76,6 +82,47 @@ fn hub_aggregates_only_the_configured_account() {
     // Анализ carol существует, но в выборку аккаунта не входит.
     assert_eq!(config.total, 2);
     assert!(config.mismatched_game_ids.is_empty());
+
+    // Без фильтра видны все три партии, включая чужой профиль.
+    assert_eq!(hub_stats(&db, None).unwrap().kpis.total_games, 3);
+}
+
+#[test]
+fn migration_moves_single_profile_into_accounts() {
+    let db = Db::in_memory().unwrap();
+    let mut game = draft(
+        "legacy-account",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    game.source = crate::domain::game::GameSource::Chesscom;
+    let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
+    set_setting(&db, "player_username", "alice").unwrap();
+    db.with(|conn| {
+        conn.execute("DELETE FROM accounts", [])?;
+        conn.pragma_update(None, "user_version", 6)?;
+        migrations::run(conn)?;
+        Ok(())
+    })
+    .unwrap();
+
+    let (platform, username): (String, String) = db
+        .with(|conn| {
+            Ok(conn.query_row(
+                "SELECT platform, username FROM accounts LIMIT 1",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )?)
+        })
+        .unwrap();
+    assert_eq!(platform, "chesscom");
+    assert_eq!(username, "alice");
+    let stored = crate::db::games_repo::get_game(&db, id).unwrap();
+    assert!(stored.account_id.is_some());
 }
 
 #[test]
@@ -110,7 +157,7 @@ fn fen_game_uses_player_color_not_ply_parity() {
     draft.analysis.key_moments_count = 1;
     insert_analysis_draft(&db, &draft).unwrap();
 
-    let stats = hub_stats(&db).unwrap();
+    let stats = hub_stats(&db, None).unwrap();
     assert_eq!(
         stats.time.time_trouble_moves, 0,
         "флаг соперника не должен попадать в тайм-статистику игрока"
@@ -215,7 +262,7 @@ fn legacy_analysis_without_engine_version_stays_readable() {
         crate::domain::analysis::DEFAULT_ENGINE_VERSION
     );
     // Без config_key анализ не выдаёт себя за проверенную конфигурацию.
-    let stats = hub_stats(&db).unwrap();
+    let stats = hub_stats(&db, None).unwrap();
     assert!(stats.config.is_none());
     assert_eq!(stats.kpis.analyzed_games, 1);
 }

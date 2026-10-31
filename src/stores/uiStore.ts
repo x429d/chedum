@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 
-export type View = "library" | "analysis" | "hub" | "settings";
+export type View = "library" | "analysis" | "hub" | "accounts" | "settings";
 export type ToastKind = "info" | "success" | "error";
 
 export interface Toast {

@@ -9,8 +9,8 @@ use shakmaty::Chess;
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameDraft, GameSource, TimeClass, UserColor};
 use crate::domain::position::{move_uci, parse_fen, position_fen, san_and_play};
-use crate::pgn::opening::identify_opening;
 use crate::pgn::clocks::{parse_clock_comment, time_class_from_control};
+use crate::pgn::opening::identify_opening;
 
 #[derive(Debug, Clone)]
 pub struct ParsedMove {
@@ -279,6 +279,7 @@ pub fn build_draft(
         total_plies: parsed.moves.len() as i32,
         notes: String::new(),
         is_favorite: false,
+        account_id: None,
     }
 }
 

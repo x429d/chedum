@@ -28,6 +28,7 @@ fn draft(external_id: &str, white: &str, black: &str, played_at: i64) -> GameDra
         total_plies: 2,
         notes: String::new(),
         is_favorite: false,
+        account_id: None,
     }
 }
 

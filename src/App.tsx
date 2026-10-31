@@ -2,9 +2,11 @@ import { onMount, Show } from "solid-js";
 
 import { Sidebar } from "./components/layout/Sidebar";
 import { Toasts } from "./components/layout/Toasts";
+import { accountsStore } from "./stores/accountsStore";
 import { libraryStore } from "./stores/libraryStore";
 import { settingsStore } from "./stores/settingsStore";
 import { ui } from "./stores/uiStore";
+import { AccountsView } from "./views/AccountsView";
 import { AnalysisView } from "./views/AnalysisView";
 import { HubView } from "./views/HubView";
 import { LibraryView } from "./views/LibraryView";
@@ -14,6 +16,7 @@ export default function App() {
   onMount(() => {
     void (async () => {
       await settingsStore.load();
+      await accountsStore.load();
       await libraryStore.load();
       await libraryStore.startAutoResume();
     })();
@@ -33,6 +36,9 @@ export default function App() {
         </Show>
         <Show when={ui.view() === "hub"}>
           <HubView />
+        </Show>
+        <Show when={ui.view() === "accounts"}>
+          <AccountsView />
         </Show>
         <Show when={ui.view() === "settings"}>
           <SettingsView />

@@ -1,3 +1,4 @@
+pub mod accounts_repo;
 pub mod analyses_repo;
 pub mod archives_repo;
 pub mod connection;

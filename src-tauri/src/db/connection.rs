@@ -79,11 +79,11 @@ mod tests {
         let db = Db::in_memory().unwrap();
         db.with(|conn| {
             let count: i64 = conn.query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('games','game_analyses','move_evaluations','synced_archives','app_settings')",
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('games','game_analyses','move_evaluations','synced_archives','app_settings','accounts')",
                 [],
                 |row| row.get(0),
             )?;
-            assert_eq!(count, 5);
+            assert_eq!(count, 6);
             let mode: String = conn.query_row("PRAGMA journal_mode", [], |row| row.get(0))?;
             assert!(mode == "memory" || mode == "wal");
             Ok(())

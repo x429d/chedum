@@ -8,9 +8,11 @@ inspired dark interface.
 
 ## Features
 
-- **Library**: import/export PGN, Chess.com PubAPI sync with rate limiting and incremental archive
-  cache, filters by opponent, color, result, time class, ECO, date, analysis, favorites and notes,
-  pagination (25/50/100), batch analysis queue and batch deletion.
+- **Accounts**: connect any number of Chess.com and Lichess profiles, sync incrementally, switch the
+  active account or analyze all accounts together; each game keeps its source and account.
+- **Library**: import/export PGN, Chess.com PubAPI and Lichess export sync with rate limiting and
+  incremental state, filters by account, opponent, color, result, time class, ECO, date, analysis,
+  favorites and notes, pagination (25/50/100), batch analysis queue and batch deletion.
 - **Analysis Studio**: custom SVG board with three themes and six switchable open-source piece sets,
   drag-and-drop and click-to-move, eval bar with live Stockfish score, multi-arrow layer,
   right-drag user arrows (Shift/Alt/Ctrl change colour, knight moves bend «Г»), move-category badges,
@@ -23,7 +25,7 @@ inspired dark interface.
   MultiPV lines and animated main-line playback.
 - **Retry Mistake**: trainer for your own mistakes with instant verification against MultiPV 1.
 - **Player Hub**: KPI cards, opening repertoire matrix, vulnerable phases, accuracy trend, color
-  splits and time-management statistics.
+  splits and time-management statistics for one account or all accounts.
 - **Embedded data**: 3,865 ECO opening lines and four pre-analyzed demo games (Stockfish depth 14).
 
 ## Data
@@ -71,7 +73,8 @@ npm run build
 ```
 
 The local database lives in `~/Library/Application Support/com.chenal.studio/chenal.db`.
-The app is offline-first; the network is used only for the public Chess.com Published Data API.
+The app is offline-first; the network is used only for the public Chess.com Published Data API and
+the public Lichess game-export API.
 
 ## Architecture
 
@@ -80,8 +83,9 @@ src-tauri/src/
   domain/     pure models, AppError, FEN/material helpers
   analytics/  Win%, CAPS, ACPL, Elo, 11-category classifier, phases, clocks, coach, summary
   engine/     Stockfish process, UCI parser, 75 ms throttled channel, lazy EngineState
-  db/         SQLite migrations, repositories, SQL aggregations, demo seed
+  db/         SQLite migrations, accounts and games repositories, SQL aggregations, demo seed
   chesscom/   PubAPI client, 1 req/s limiter, 429 backoff, incremental archive sync
+  lichess/    PGN export client, since-based incremental sync
   pgn/        streaming PGN parser, [%clk] extraction, export writer
   service/    evaluation collection, analysis builder, PGN import/export
   commands/   thin Tauri IPC handlers
@@ -89,9 +93,9 @@ src-tauri/src/
 src/
   types/      strict DTO mirrors and category palette
   services/   single typed Tauri IPC layer (no invoke in UI components)
-  stores/     library, game, analysis, settings and UI state
-  components/ board, analytics, library, hub, layout, ui
-  views/      Library, Analysis Studio, Player Hub, Settings
+  stores/     account, library, game, analysis, settings and UI state
+  components/ accounts, board, analytics, library, hub, layout, ui
+  views/      Library, Analysis Studio, Player Hub, Accounts, Settings
 ```
 
 All source files stay under 300 lines; business logic is not placed in `lib.rs`, `main.rs`,

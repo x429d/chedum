@@ -74,18 +74,21 @@ pub async fn save_user_comment(
 }
 
 #[tauri::command]
-pub async fn import_pgn_text(state: State<'_, AppState>, text: String) -> AppResult<ImportSummary> {
-    let settings = settings_repo::get_settings(&state.db)?;
-    import::import_pgn_text(&state.db, &text, &settings.player_username)
+pub async fn import_pgn_text(
+    state: State<'_, AppState>,
+    text: String,
+    account_id: Option<i64>,
+) -> AppResult<ImportSummary> {
+    import::import_pgn_text(&state.db, &text, account_id)
 }
 
 #[tauri::command]
 pub async fn import_pgn_files(
     state: State<'_, AppState>,
     paths: Vec<String>,
+    account_id: Option<i64>,
 ) -> AppResult<ImportSummary> {
-    let settings = settings_repo::get_settings(&state.db)?;
-    import::import_pgn_files(&state.db, &paths, &settings.player_username)
+    import::import_pgn_files(&state.db, &paths, account_id)
 }
 
 #[tauri::command]

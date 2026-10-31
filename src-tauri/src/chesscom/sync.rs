@@ -63,6 +63,7 @@ pub fn plan_archives(
 pub async fn sync_user<A, F>(
     db: &Db,
     api: &A,
+    account_id: i64,
     username: &str,
     force: bool,
     mut on_progress: F,
@@ -77,6 +78,8 @@ where
     }
     let now = Utc::now();
     let mut result = SyncResult {
+        account_id,
+        platform: crate::domain::AccountPlatform::Chesscom,
         username: username.to_string(),
         archives_processed: 0,
         games_imported: 0,
@@ -122,7 +125,7 @@ where
         let remote_games = api.archive_games(&archive.url).await?;
         let mut drafts = Vec::new();
         for remote in remote_games {
-            match remote_to_draft(&remote, username) {
+            match remote_to_draft(&remote, username, account_id) {
                 Some(draft) => drafts.push(draft),
                 None => result.games_skipped += 1,
             }
@@ -176,7 +179,11 @@ where
     Ok(result)
 }
 
-fn remote_to_draft(remote: &RemoteGame, username: &str) -> Option<crate::domain::game::GameDraft> {
+fn remote_to_draft(
+    remote: &RemoteGame,
+    username: &str,
+    account_id: i64,
+) -> Option<crate::domain::game::GameDraft> {
     if !remote.rules.is_empty() && remote.rules != "chess" {
         return None;
     }
@@ -194,6 +201,7 @@ fn remote_to_draft(remote: &RemoteGame, username: &str) -> Option<crate::domain:
         TimeClass::from_str_opt(&remote.time_class),
         Some(&remote.pgn),
     );
+    draft.account_id = Some(account_id);
     if remote.end_time > 0 {
         draft.played_at = remote.end_time;
     }

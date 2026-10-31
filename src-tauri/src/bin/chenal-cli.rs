@@ -268,7 +268,7 @@ fn audit(db: &Db) -> AppResult<()> {
 }
 
 fn hub(db: &Db) -> AppResult<()> {
-    let stats = chenal_lib::db::stats_repo::hub_stats(db)?;
+    let stats = chenal_lib::db::stats_repo::hub_stats(db, None)?;
     if let Some(config) = &stats.config {
         println!(
             "config: {} {} · depth {} · MultiPV {} · classifier {} · accuracy {} · included {} of {}",

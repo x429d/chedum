@@ -2,11 +2,19 @@ use async_trait::async_trait;
 
 use super::*;
 use crate::chesscom::client::RemoteGame;
+use crate::db::accounts_repo;
 use crate::db::connection::Db;
 use crate::db::games_repo::count_games;
+use crate::domain::AccountPlatform;
 
 const LEGAL: &str = include_str!("../../resources/demo_legal.pgn");
 const ARCHIVE: &str = "https://api.chess.com/pub/player/chenal_player/games/2020/05";
+
+fn account(db: &Db) -> i64 {
+    accounts_repo::create(db, AccountPlatform::Chesscom, "chenal_player")
+        .unwrap()
+        .id
+}
 
 struct MockApi {
     archives: Vec<String>,
@@ -82,23 +90,27 @@ fn incremental_plan_skips_finished_archives() {
 #[tokio::test]
 async fn sync_imports_then_dedupes() {
     let db = Db::in_memory().unwrap();
+    let account_id = account(&db);
     let api = mock();
     let mut events = 0u32;
-    let first = sync_user(&db, &api, "chenal_player", false, |_| events += 1)
-        .await
-        .unwrap();
+    let first = sync_user(&db, &api, account_id, "chenal_player", false, |_| {
+        events += 1
+    })
+    .await
+    .unwrap();
     assert_eq!(first.games_imported, 1);
     assert_eq!(first.archives_processed, 1);
+    assert_eq!(first.account_id, account_id);
     assert_eq!(count_games(&db).unwrap(), 1);
     assert!(events > 0);
 
-    let second = sync_user(&db, &api, "chenal_player", false, |_| {})
+    let second = sync_user(&db, &api, account_id, "chenal_player", false, |_| {})
         .await
         .unwrap();
     assert_eq!(second.archives_processed, 0);
     assert_eq!(second.games_imported, 0);
 
-    let forced = sync_user(&db, &api, "chenal_player", true, |_| {})
+    let forced = sync_user(&db, &api, account_id, "chenal_player", true, |_| {})
         .await
         .unwrap();
     assert_eq!(forced.archives_processed, 1);
@@ -110,7 +122,10 @@ async fn sync_imports_then_dedupes() {
 #[tokio::test]
 async fn sync_rejects_empty_username() {
     let db = Db::in_memory().unwrap();
+    let account_id = account(&db);
     let api = mock();
-    let error = sync_user(&db, &api, "  ", false, |_| {}).await.unwrap_err();
+    let error = sync_user(&db, &api, account_id, "  ", false, |_| {})
+        .await
+        .unwrap_err();
     assert!(matches!(error, AppError::Validation(_)));
 }

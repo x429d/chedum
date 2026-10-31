@@ -1,6 +1,7 @@
 import { For, Show } from "solid-js";
 
 import { t } from "../../i18n";
+import { accountsStore } from "../../stores/accountsStore";
 import { libraryStore } from "../../stores/libraryStore";
 import { settingsStore } from "../../stores/settingsStore";
 import { ui, type View } from "../../stores/uiStore";
@@ -9,7 +10,7 @@ import { BrandMark } from "./BrandMark";
 
 interface NavConfig {
   view: View;
-  labelKey: "nav.library" | "nav.studio" | "nav.analytics" | "nav.settings";
+  labelKey: "nav.library" | "nav.studio" | "nav.analytics" | "nav.accounts" | "nav.settings";
   icon: IconName;
 }
 
@@ -17,6 +18,7 @@ const NAV: NavConfig[] = [
   { view: "library", labelKey: "nav.library", icon: "library" },
   { view: "analysis", labelKey: "nav.studio", icon: "analysis" },
   { view: "hub", labelKey: "nav.analytics", icon: "hub" },
+  { view: "accounts", labelKey: "nav.accounts", icon: "user" },
   { view: "settings", labelKey: "nav.settings", icon: "settings" },
 ];
 
@@ -90,6 +92,9 @@ export function Sidebar() {
                 <span class="nav-label">{label()}</span>
                 <Show when={item.view === "library" && libraryStore.total() > 0}>
                   <span class="nav-badge">{libraryStore.total()}</span>
+                </Show>
+                <Show when={item.view === "accounts" && accountsStore.accounts().length > 0}>
+                  <span class="nav-badge">{accountsStore.accounts().length}</span>
                 </Show>
               </button>
             );

@@ -24,6 +24,7 @@ pub fn get_settings(db: &Db) -> AppResult<AppSettings> {
 pub fn set_setting(db: &Db, key: &str, value: &str) -> AppResult<()> {
     let allowed = [
         "player_username",
+        "active_account_id",
         "analysis_depth",
         "multipv",
         "board_theme",
@@ -45,6 +46,11 @@ pub fn set_setting(db: &Db, key: &str, value: &str) -> AppResult<()> {
         return Err(AppError::Validation(format!(
             "Некорректный код языка «{value}»"
         )));
+    }
+    if key == "active_account_id" && !value.trim().is_empty() {
+        value
+            .parse::<i64>()
+            .map_err(|_| AppError::Validation("Аккаунт должен быть числом".to_string()))?;
     }
     if key == "analysis_depth" {
         let depth: u32 = value
@@ -95,6 +101,13 @@ pub fn set_many(db: &Db, settings: &AppSettings) -> AppResult<()> {
     db.with_tx(|tx| {
         let values = [
             ("player_username", settings.player_username.clone()),
+            (
+                "active_account_id",
+                settings
+                    .active_account_id
+                    .map(|id| id.to_string())
+                    .unwrap_or_default(),
+            ),
             ("analysis_depth", settings.analysis_depth.to_string()),
             ("multipv", settings.multipv.to_string()),
             ("board_theme", settings.board_theme.clone()),
@@ -128,6 +141,9 @@ fn settings_from_map(map: &HashMap<String, String>) -> AppSettings {
     let mut settings = AppSettings::default();
     if let Some(value) = map.get("player_username") {
         settings.player_username = value.clone();
+    }
+    if let Some(value) = map.get("active_account_id") {
+        settings.active_account_id = value.trim().parse::<i64>().ok().filter(|id| *id > 0);
     }
     if let Some(value) = map
         .get("analysis_depth")

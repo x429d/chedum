@@ -7,7 +7,7 @@ use crate::domain::stats::PhaseStat;
 pub(super) fn phases(
     conn: &Connection,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<Vec<PhaseStat>> {
     let account_filter = super::account_clause("g", 1);
     let sql = format!(
@@ -58,7 +58,7 @@ pub(super) fn phases(
 fn phase_move_counts(
     conn: &Connection,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<(u32, u32, u32)> {
     let account_filter = super::account_clause("g", 1);
     let sql = format!(

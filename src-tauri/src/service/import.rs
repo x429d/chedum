@@ -1,15 +1,24 @@
 use std::path::Path;
 
+use crate::db::accounts_repo;
 use crate::db::analyses_repo;
 use crate::db::connection::Db;
 use crate::db::games_repo::{all_games, games_by_ids, insert_game};
+use crate::db::settings_repo;
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameSource, ImportSummary};
 use crate::pgn::export::export_games_with_annotations;
 use crate::pgn::{build_draft, parse_pgn};
 use crate::service::hashing::sha256_hex;
 
-pub fn import_pgn_text(db: &Db, text: &str, player_username: &str) -> AppResult<ImportSummary> {
+pub fn import_pgn_text(db: &Db, text: &str, account_id: Option<i64>) -> AppResult<ImportSummary> {
+    let account = accounts_repo::resolve_import_account(db, account_id)?;
+    let legacy_username = settings_repo::get_settings(db)?.player_username;
+    let player_username = account
+        .as_ref()
+        .map(|value| value.username.as_str())
+        .unwrap_or(legacy_username.as_str());
+    let account_id = account.as_ref().map(|value| value.id);
     let report = parse_pgn(text);
     if report.games.is_empty() && !report.errors.is_empty() {
         return Err(AppError::Parse(
@@ -26,7 +35,7 @@ pub fn import_pgn_text(db: &Db, text: &str, player_username: &str) -> AppResult<
         for parsed in &report.games {
             let pgn = parsed.to_pgn();
             let external_id = format!("manual-{}", sha256_hex(&pgn));
-            let draft = build_draft(
+            let mut draft = build_draft(
                 parsed,
                 GameSource::Manual,
                 external_id,
@@ -34,6 +43,7 @@ pub fn import_pgn_text(db: &Db, text: &str, player_username: &str) -> AppResult<
                 None,
                 None,
             );
+            draft.account_id = account_id;
             if insert_game(tx, &draft)?.is_some() {
                 imported += 1;
             } else {
@@ -52,7 +62,7 @@ pub fn import_pgn_text(db: &Db, text: &str, player_username: &str) -> AppResult<
 pub fn import_pgn_files(
     db: &Db,
     paths: &[String],
-    player_username: &str,
+    account_id: Option<i64>,
 ) -> AppResult<ImportSummary> {
     let mut summary = ImportSummary {
         imported: 0,
@@ -61,7 +71,7 @@ pub fn import_pgn_files(
     };
     for path in paths {
         match std::fs::read_to_string(path) {
-            Ok(text) => match import_pgn_text(db, &text, player_username) {
+            Ok(text) => match import_pgn_text(db, &text, account_id) {
                 Ok(result) => {
                     summary.imported += result.imported;
                     summary.skipped += result.skipped;

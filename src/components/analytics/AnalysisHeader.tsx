@@ -41,6 +41,15 @@ export function AnalysisHeader(props: {
           <span>{formatDate(props.game.playedAt)},</span>
           <span>{timeClassLabel(props.game.timeClass)},</span>
           <span>{props.game.timeControl ?? "—"}</span>
+          <Show when={props.game.source !== "manual"}>
+            <span class={`source-chip source-${props.game.source}`}>
+              {t(
+                props.game.source === "chesscom"
+                  ? "accounts.platformChesscom"
+                  : "accounts.platformLichess",
+              )}
+            </span>
+          </Show>
           <Show when={props.game.eco}>
             <span class="eco-code">{props.game.eco}</span>
             <span class="opening-name" style={{ "max-width": "320px" }}>

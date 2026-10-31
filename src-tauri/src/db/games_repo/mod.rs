@@ -18,8 +18,9 @@ pub fn insert_game(conn: &Connection, draft: &GameDraft) -> AppResult<Option<i64
         "INSERT OR IGNORE INTO games (
             external_id, source, pgn, initial_fen, white_username, black_username, white_elo,
             black_elo, user_color, result, termination, time_control, time_class, eco,
-            opening_name, opening_ply, opening_source, played_at, total_plies, notes, is_favorite
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21)",
+            opening_name, opening_ply, opening_source, played_at, total_plies, notes, is_favorite,
+            account_id
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22)",
         params![
             draft.external_id,
             draft.source.as_str(),
@@ -42,9 +43,21 @@ pub fn insert_game(conn: &Connection, draft: &GameDraft) -> AppResult<Option<i64
             draft.total_plies,
             draft.notes,
             i32::from(draft.is_favorite),
+            draft.account_id,
         ],
     )?;
     if changed == 0 {
+        // Партия уже была в базе (например, импортирована вручную): при
+        // синхронизации привязываем её к аккаунту, не перезаписывая чужую.
+        if let Some(account_id) = draft.account_id {
+            conn.execute(
+                "UPDATE games SET
+                    account_id = COALESCE(account_id, ?1),
+                    user_color = CASE WHEN user_color = 'none' THEN ?2 ELSE user_color END
+                 WHERE external_id = ?3",
+                params![account_id, draft.user_color.as_str(), draft.external_id],
+            )?;
+        }
         Ok(None)
     } else {
         Ok(Some(conn.last_insert_rowid()))
@@ -121,7 +134,6 @@ pub fn all_games(db: &Db) -> AppResult<Vec<Game>> {
         Ok(games)
     })
 }
-
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]

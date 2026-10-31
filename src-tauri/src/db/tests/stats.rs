@@ -67,7 +67,7 @@ fn aggregates_hub_statistics() {
         ),
     )
     .unwrap();
-    let stats = hub_stats(&db).unwrap();
+    let stats = hub_stats(&db, None).unwrap();
     assert_eq!(stats.kpis.total_games, 2);
     assert_eq!(stats.kpis.wins, 1);
     assert_eq!(stats.kpis.losses, 1);
@@ -126,7 +126,7 @@ fn hub_ignores_analyses_from_another_configuration() {
         .unwrap();
         ids.push(id);
     }
-    let before = hub_stats(&db).unwrap();
+    let before = hub_stats(&db, None).unwrap();
     let before_accuracy = before.kpis.avg_accuracy.unwrap();
     assert_eq!(before.kpis.analyzed_games, 2);
 
@@ -158,7 +158,7 @@ fn hub_ignores_analyses_from_another_configuration() {
     deep.analysis.depth = 18;
     insert_analysis_draft(&db, &deep).unwrap();
 
-    let after = hub_stats(&db).unwrap();
+    let after = hub_stats(&db, None).unwrap();
     assert!((after.kpis.avg_accuracy.unwrap() - before_accuracy).abs() < 1e-9);
     assert_eq!(after.kpis.analyzed_games, 2);
     let config = after.config.as_ref().unwrap();
@@ -200,7 +200,7 @@ fn performance_estimate_requires_twenty_analyses() {
         )
         .unwrap();
     }
-    let stats = hub_stats(&db).unwrap();
+    let stats = hub_stats(&db, None).unwrap();
     assert_eq!(stats.kpis.analyzed_games, 20);
     assert!(stats.kpis.avg_perf_elo.is_some());
     assert!(stats.kpis.avg_perf_elo_spread.is_some());
@@ -252,10 +252,7 @@ fn trend_keeps_last_two_hundred_games_in_chronological_order() {
         TimeClass::Rapid,
         0,
     );
-    let undated_id = db
-        .with_tx(|tx| insert_game(tx, &undated))
-        .unwrap()
-        .unwrap();
+    let undated_id = db.with_tx(|tx| insert_game(tx, &undated)).unwrap().unwrap();
     insert_analysis_draft(
         &db,
         &analysis(
@@ -273,7 +270,7 @@ fn trend_keeps_last_two_hundred_games_in_chronological_order() {
     )
     .unwrap();
 
-    let stats = hub_stats(&db).unwrap();
+    let stats = hub_stats(&db, None).unwrap();
     assert_eq!(stats.trend.len(), 200);
     assert_eq!(stats.trend.first().unwrap().played_at, 101);
     assert_eq!(stats.trend.last().unwrap().played_at, 300);
@@ -283,4 +280,3 @@ fn trend_keeps_last_two_hundred_games_in_chronological_order() {
         .all(|pair| pair[0].played_at < pair[1].played_at));
     assert!(!stats.trend.iter().any(|point| point.played_at == 0));
 }
-

@@ -25,6 +25,7 @@ fn draft(external_id: &str, played_at: i64) -> GameDraft {
         total_plies: 2,
         notes: String::new(),
         is_favorite: false,
+        account_id: None,
     }
 }
 

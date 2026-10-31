@@ -1,12 +1,14 @@
+import type { AccountPlatform } from "./account";
 import type { UserColor } from "./chess";
 
-export type GameSource = "chesscom" | "manual";
+export type GameSource = "chesscom" | "lichess" | "manual";
 export type TimeClass = "bullet" | "blitz" | "rapid" | "classical";
 
 export interface Game {
   id: number;
   externalId: string;
   source: GameSource;
+  accountId: number | null;
   pgn: string;
   initialFen: string | null;
   whiteUsername: string;
@@ -28,6 +30,10 @@ export interface Game {
 
 export interface GameListItem {
   id: number;
+  source: GameSource;
+  accountId: number | null;
+  accountUsername: string | null;
+  accountPlatform: AccountPlatform | null;
   whiteUsername: string;
   blackUsername: string;
   whiteElo: number | null;
@@ -55,6 +61,7 @@ export interface GameListItem {
 
 export interface GameFilter {
   search?: string | null;
+  accountId?: number | null;
   color?: UserColor | null;
   result?: string | null;
   timeClass?: TimeClass | null;
@@ -88,6 +95,8 @@ export interface SyncProgress {
 }
 
 export interface SyncResult {
+  accountId: number;
+  platform: AccountPlatform;
   username: string;
   archivesProcessed: number;
   gamesImported: number;

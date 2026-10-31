@@ -11,6 +11,7 @@ pub mod db;
 pub mod domain;
 pub mod eco;
 pub mod engine;
+pub mod lichess;
 pub mod menu;
 pub mod pgn;
 pub mod service;
@@ -112,8 +113,10 @@ pub fn run() {
             commands::analysis::analyze_position,
             commands::analysis::stop_engine,
             commands::analysis::get_engine_status,
-            commands::sync::sync_chesscom,
-            commands::sync::get_sync_status,
+            commands::accounts::list_accounts,
+            commands::accounts::add_account,
+            commands::accounts::remove_account,
+            commands::accounts::sync_account,
             commands::stats::get_hub_stats,
             commands::stats::get_app_info,
         ]);

@@ -29,6 +29,8 @@ pub struct Game {
     pub is_favorite: bool,
     pub analysis_attempts: u32,
     pub last_analysis_error: Option<String>,
+    /// Аккаунт, из которого пришла партия; у ручных PGN может быть NULL.
+    pub account_id: Option<i64>,
 }
 
 /// Партия до вставки в базу (id присваивает SQLite).
@@ -58,6 +60,9 @@ pub struct GameDraft {
     pub total_plies: i32,
     pub notes: String,
     pub is_favorite: bool,
+    /// Аккаунт, к которому привязана партия при импорте.
+    #[serde(default)]
+    pub account_id: Option<i64>,
 }
 
 impl Game {
@@ -108,6 +113,7 @@ impl GameDraft {
             is_favorite: self.is_favorite,
             analysis_attempts: 0,
             last_analysis_error: None,
+            account_id: self.account_id,
         }
     }
 }
@@ -116,6 +122,10 @@ impl GameDraft {
 #[serde(rename_all = "camelCase")]
 pub struct GameListItem {
     pub id: i64,
+    pub source: GameSource,
+    pub account_id: Option<i64>,
+    pub account_username: Option<String>,
+    pub account_platform: Option<crate::domain::account::AccountPlatform>,
     pub white_username: String,
     pub black_username: String,
     pub white_elo: Option<i32>,
@@ -147,6 +157,8 @@ pub struct GameListItem {
 #[serde(rename_all = "camelCase", default)]
 pub struct GameFilter {
     pub search: Option<String>,
+    /// Показывать партии одного аккаунта; NULL — все аккаунты и ручные PGN.
+    pub account_id: Option<i64>,
     pub color: Option<UserColor>,
     pub result: Option<String>,
     pub time_class: Option<TimeClass>,

@@ -1,5 +1,6 @@
 import { createEffect, createSignal, For, on, onMount, Show } from "solid-js";
 
+import { AccountScope } from "../components/accounts/AccountScope";
 import { AccuracyTrend } from "../components/hub/AccuracyTrend";
 import { KpiCards } from "../components/hub/KpiCards";
 import { OpeningMatrix } from "../components/hub/OpeningMatrix";
@@ -8,6 +9,7 @@ import { TimeStatsCard } from "../components/hub/TimeStatsCard";
 import { Icon } from "../components/ui/Icon";
 import { pluralGames, t, tSide } from "../i18n";
 import { api } from "../services/api";
+import { accountsStore } from "../stores/accountsStore";
 import { libraryStore } from "../stores/libraryStore";
 import { settingsStore } from "../stores/settingsStore";
 import { ui } from "../stores/uiStore";
@@ -22,7 +24,7 @@ export function HubView() {
   const load = async (): Promise<void> => {
     setLoading(true);
     try {
-      setStats(await api.getHubStats());
+      setStats(await api.getHubStats(accountsStore.activeAccountId()));
     } catch (error) {
       ui.notify(toErrorMessage(error), "error");
     } finally {
@@ -36,7 +38,7 @@ export function HubView() {
 
   createEffect(
     on(
-      () => libraryStore.total(),
+      () => [accountsStore.activeAccountId(), libraryStore.total()] as const,
       () => {
         if (ui.view() === "hub") void load();
       },
@@ -61,6 +63,7 @@ export function HubView() {
           <h1 class="view-title">{t("hub.title")}</h1>
         </div>
         <div class="header-actions">
+          <AccountScope />
           <button type="button" class="btn" onClick={() => void load()} disabled={loading()}>
             <Show when={loading()} fallback={<Icon name="refresh" size={14} />}>
               <span class="spinner" style={{ width: "13px", height: "13px" }} />
@@ -103,10 +106,10 @@ export function HubView() {
                 <button
                   type="button"
                   class="btn btn-primary btn-sm"
-                  onClick={() => ui.setView("settings")}
+                  onClick={() => ui.setView("accounts")}
                 >
-                  <Icon name="settings" size={13} />
-                  {t("hub.goToSettings")}
+                  <Icon name="user" size={13} />
+                  {t("accounts.manage")}
                 </button>
               </div>
             }

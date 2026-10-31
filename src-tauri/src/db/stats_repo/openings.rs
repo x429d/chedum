@@ -8,7 +8,7 @@ const MIN_RELIABLE_SAMPLE: u32 = 5;
 pub(super) fn openings(
     conn: &Connection,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<Vec<OpeningStat>> {
     let account_filter = super::account_clause("g", 1);
     let sql = format!(
@@ -72,7 +72,7 @@ fn exit_metrics(
     eco: &str,
     name: &str,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<(Option<f64>, Option<f64>, Option<f64>)> {
     let account_filter = super::account_clause("g2", 4);
     let outer_account_filter = super::account_clause("g", 4);

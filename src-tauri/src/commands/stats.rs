@@ -7,8 +7,11 @@ use crate::eco::EcoBook;
 use crate::state::AppState;
 
 #[tauri::command]
-pub async fn get_hub_stats(state: State<'_, AppState>) -> AppResult<HubStats> {
-    stats_repo::hub_stats(&state.db)
+pub async fn get_hub_stats(
+    state: State<'_, AppState>,
+    account_id: Option<i64>,
+) -> AppResult<HubStats> {
+    stats_repo::hub_stats(&state.db, account_id)
 }
 
 #[tauri::command]

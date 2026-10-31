@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::domain::account::AccountPlatform;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncProgress {
@@ -14,6 +16,8 @@ pub struct SyncProgress {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SyncResult {
+    pub account_id: i64,
+    pub platform: AccountPlatform,
     pub username: String,
     pub archives_processed: u32,
     pub games_imported: u32,

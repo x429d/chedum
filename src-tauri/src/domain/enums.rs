@@ -70,6 +70,7 @@ impl UserColor {
 #[serde(rename_all = "lowercase")]
 pub enum GameSource {
     Chesscom,
+    Lichess,
     Manual,
 }
 
@@ -77,6 +78,7 @@ impl GameSource {
     pub fn as_str(self) -> &'static str {
         match self {
             GameSource::Chesscom => "chesscom",
+            GameSource::Lichess => "lichess",
             GameSource::Manual => "manual",
         }
     }
@@ -84,6 +86,7 @@ impl GameSource {
     pub fn from_str_opt(value: &str) -> Option<GameSource> {
         match value {
             "chesscom" => Some(GameSource::Chesscom),
+            "lichess" => Some(GameSource::Lichess),
             "manual" => Some(GameSource::Manual),
             _ => None,
         }
@@ -119,4 +122,3 @@ impl TimeClass {
         }
     }
 }
-

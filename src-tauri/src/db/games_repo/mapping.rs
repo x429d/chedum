@@ -5,9 +5,11 @@ use crate::domain::game::{Game, GameListItem, GameSource, TimeClass, UserColor};
 pub(super) const GAME_COLUMNS: &str = "g.id, g.external_id, g.source, g.pgn, g.initial_fen, g.white_username, \
     g.black_username, g.white_elo, g.black_elo, g.user_color, g.result, g.termination, \
     g.time_control, g.time_class, g.eco, g.opening_name, g.opening_ply, g.opening_source, \
-    g.played_at, g.total_plies, g.notes, g.is_favorite, g.analysis_attempts, g.last_analysis_error";
+    g.played_at, g.total_plies, g.notes, g.is_favorite, g.analysis_attempts, g.last_analysis_error, \
+    g.account_id";
 
-pub(super) const LIST_COLUMNS: &str = "g.id, g.white_username, g.black_username, g.white_elo, g.black_elo, \
+pub(super) const LIST_COLUMNS: &str = "g.id, g.source, g.account_id, acc.username AS account_username, \
+    acc.platform AS account_platform, g.white_username, g.black_username, g.white_elo, g.black_elo, \
     g.user_color, g.result, g.time_control, g.time_class, g.eco, g.opening_name, g.played_at, \
     g.total_plies, g.notes, g.is_favorite, g.analysis_attempts, g.last_analysis_error";
 
@@ -40,6 +42,7 @@ pub(super) fn map_game(row: &Row<'_>) -> rusqlite::Result<Game> {
         is_favorite: row.get::<_, i64>("is_favorite")? != 0,
         analysis_attempts: row.get::<_, i64>("analysis_attempts")? as u32,
         last_analysis_error: row.get("last_analysis_error")?,
+        account_id: row.get("account_id")?,
     })
 }
 
@@ -51,8 +54,16 @@ pub(super) fn map_game_list_item(row: &Row<'_>) -> rusqlite::Result<GameListItem
     let white_acpl = row.get::<_, Option<f64>>("white_acpl")?;
     let black_acpl = row.get::<_, Option<f64>>("black_acpl")?;
     let time_class = row.get::<_, Option<String>>("time_class")?;
+    let source = row.get::<_, String>("source")?;
+    let account_platform = row.get::<_, Option<String>>("account_platform")?;
     Ok(GameListItem {
         id: row.get("id")?,
+        source: GameSource::from_str_opt(&source).unwrap_or(GameSource::Manual),
+        account_id: row.get("account_id")?,
+        account_username: row.get("account_username")?,
+        account_platform: account_platform
+            .as_deref()
+            .and_then(crate::domain::account::AccountPlatform::from_str_opt),
         white_username: row.get("white_username")?,
         black_username: row.get("black_username")?,
         white_elo: row.get("white_elo")?,

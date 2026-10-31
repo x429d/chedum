@@ -1,7 +1,6 @@
 use rusqlite::{params, Connection};
 
 use crate::db::connection::Db;
-use crate::db::settings_repo;
 use crate::db::stats_extra::{time_stats, trend};
 use crate::domain::analysis::DEFAULT_ENGINE_VERSION;
 use crate::domain::error::AppResult;
@@ -20,27 +19,18 @@ struct ConfigSelection {
     view: AnalysisConfigView,
 }
 
-/// Партия принадлежит аккаунту, если ник совпадает со стороной, за которую
-/// игрок выступал при импорте (`user_color`). Регистр не важен, как и в
-/// `build_draft`. `?param = NULL` означает «аккаунт не задан, фильтра нет».
+/// Партии принадлежат аккаунту напрямую через `games.account_id`.
+/// `?param = NULL` означает «все аккаунты и ручные PGN».
 pub(crate) fn account_clause(alias: &str, param: usize) -> String {
-    format!(
-        "(?{param} IS NULL \
-         OR ({alias}.user_color='white' AND {alias}.white_username = ?{param} COLLATE NOCASE) \
-         OR ({alias}.user_color='black' AND {alias}.black_username = ?{param} COLLATE NOCASE))"
-    )
+    format!("(?{param} IS NULL OR {alias}.account_id = ?{param})")
 }
 
-/// Агрегаты хаба для аккаунта из настроек. Игры, импортированные под другим
-/// ником, не смешиваются с текущим профилем.
-pub fn hub_stats(db: &Db) -> AppResult<HubStats> {
-    let account = settings_repo::get_settings(db)?.player_username;
-    let account = account.trim().to_string();
-    let account = (!account.is_empty()).then_some(account);
-    hub_stats_for(db, account.as_deref())
+/// Агрегаты хаба для выбранного аккаунта или для всех аккаунтов.
+pub fn hub_stats(db: &Db, account: Option<i64>) -> AppResult<HubStats> {
+    hub_stats_for(db, account)
 }
 
-fn hub_stats_for(db: &Db, account: Option<&str>) -> AppResult<HubStats> {
+fn hub_stats_for(db: &Db, account: Option<i64>) -> AppResult<HubStats> {
     db.with(|conn| {
         let config = select_config(conn, account)?;
         let key = config.as_ref().map(|value| value.config_key.as_str());
@@ -57,7 +47,7 @@ fn hub_stats_for(db: &Db, account: Option<&str>) -> AppResult<HubStats> {
 
 /// Самая частая конфигурация среди разобранных партий аккаунта. Остальные
 /// анализы не удаляются, но в агрегаты хаба не попадают.
-fn select_config(conn: &Connection, account: Option<&str>) -> AppResult<Option<ConfigSelection>> {
+fn select_config(conn: &Connection, account: Option<i64>) -> AppResult<Option<ConfigSelection>> {
     let account_filter = account_clause("g", 1);
     let sql = format!(
         "SELECT a.engine_name, a.engine_version, a.depth, a.multipv, a.classifier_version,

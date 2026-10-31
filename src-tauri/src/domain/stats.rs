@@ -133,7 +133,10 @@ pub const PIECE_SETS: [&str; 6] = [
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppSettings {
+    /// Устаревший профиль для ручных PGN без выбранного аккаунта.
     pub player_username: String,
+    /// NULL — «все аккаунты»; иначе выбранный аккаунт.
+    pub active_account_id: Option<i64>,
     pub analysis_depth: u32,
     pub multipv: u32,
     pub board_theme: String,
@@ -151,6 +154,7 @@ impl Default for AppSettings {
     fn default() -> Self {
         AppSettings {
             player_username: String::new(),
+            active_account_id: None,
             analysis_depth: 14,
             multipv: 2,
             board_theme: "walnut".to_string(),

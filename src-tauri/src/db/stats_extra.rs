@@ -10,7 +10,7 @@ use crate::domain::stats::{AccuracyPoint, TimeStats};
 pub(crate) fn trend(
     conn: &Connection,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<Vec<AccuracyPoint>> {
     let account_filter = account_clause("g", 1);
     let sql = format!(
@@ -71,7 +71,7 @@ pub(crate) fn trend(
 pub(crate) fn time_stats(
     conn: &Connection,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<TimeStats> {
     let account_filter = account_clause("g", 1);
     let sql = format!(

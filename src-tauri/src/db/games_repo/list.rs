@@ -1,5 +1,5 @@
-use rusqlite::types::Value;
 use rusqlite::params_from_iter;
+use rusqlite::types::Value;
 
 use crate::db::connection::Db;
 use crate::db::games_repo::mapping::{map_game_list_item, LIST_COLUMNS};
@@ -22,6 +22,10 @@ pub(super) fn filter_clause(filter: &GameFilter) -> (String, Vec<Value>) {
         for _ in 0..4 {
             values.push(Value::Text(like.clone()));
         }
+    }
+    if let Some(account_id) = filter.account_id {
+        clauses.push("g.account_id = ?".to_string());
+        values.push(Value::Integer(account_id));
     }
     if let Some(color) = filter.color {
         clauses.push("g.user_color = ?".to_string());
@@ -76,7 +80,8 @@ pub fn list_games(db: &Db, filter: &GameFilter) -> AppResult<PagedGames> {
     db.with(|conn| {
         let (where_sql, values) = filter_clause(filter);
         let base = format!(
-            "FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id {where_sql}"
+            "FROM games g LEFT JOIN game_analyses a ON a.game_id = g.id
+             LEFT JOIN accounts acc ON acc.id = g.account_id {where_sql}"
         );
         // Счётчики считаются по всей выборке, а не по текущей странице.
         let (total, analyzed, favorites): (i64, i64, i64) = conn.query_row(
@@ -121,4 +126,3 @@ pub fn list_games(db: &Db, filter: &GameFilter) -> AppResult<PagedGames> {
         })
     })
 }
-

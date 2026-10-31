@@ -37,6 +37,7 @@ pub(super) fn draft(
         total_plies: 2,
         notes: String::new(),
         is_favorite: false,
+        account_id: None,
     }
 }
 

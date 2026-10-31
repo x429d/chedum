@@ -1,4 +1,5 @@
-use rusqlite::Connection;
+use chrono::Utc;
+use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::domain::error::AppResult;
 
@@ -194,6 +195,62 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         )?;
         conn.pragma_update(None, "user_version", 6)?;
     }
+    if version < 7 {
+        conn.execute_batch(
+            "CREATE TABLE IF NOT EXISTS accounts (
+                id INTEGER PRIMARY KEY,
+                platform TEXT NOT NULL,
+                username TEXT NOT NULL COLLATE NOCASE,
+                created_at TEXT NOT NULL,
+                last_synced_at TEXT,
+                UNIQUE(platform, username)
+            );",
+        )?;
+        add_column_if_missing(
+            conn,
+            "games",
+            "account_id",
+            "INTEGER REFERENCES accounts(id) ON DELETE SET NULL",
+        )?;
+        conn.execute_batch("CREATE INDEX IF NOT EXISTS idx_games_account ON games(account_id);")?;
+        backfill_legacy_account(conn)?;
+        conn.pragma_update(None, "user_version", 7)?;
+    }
+    Ok(())
+}
+
+/// Переносит старый одиночный профиль из настроек в таблицу аккаунтов:
+/// иначе после обновления партии потеряли бы привязку к игроку.
+fn backfill_legacy_account(conn: &Connection) -> AppResult<()> {
+    let legacy: Option<String> = conn
+        .query_row(
+            "SELECT value FROM app_settings
+             WHERE key = 'player_username' AND trim(value) <> ''",
+            [],
+            |row| row.get(0),
+        )
+        .optional()?;
+    let Some(username) = legacy else {
+        return Ok(());
+    };
+    let existing: Option<i64> = conn
+        .query_row("SELECT id FROM accounts LIMIT 1", [], |row| row.get(0))
+        .optional()?;
+    if existing.is_some() {
+        return Ok(());
+    }
+    conn.execute(
+        "INSERT INTO accounts (platform, username, created_at) VALUES ('chesscom', ?1, ?2)",
+        params![username, Utc::now().to_rfc3339()],
+    )?;
+    let id = conn.last_insert_rowid();
+    conn.execute(
+        "UPDATE games SET account_id = ?1
+         WHERE account_id IS NULL AND source = 'chesscom'
+           AND user_color IN ('white', 'black')
+           AND (white_username = ?2 COLLATE NOCASE OR black_username = ?2 COLLATE NOCASE)",
+        params![id, username],
+    )?;
     Ok(())
 }
 
@@ -207,7 +264,9 @@ pub fn add_column_if_missing(
     if column_exists(conn, table, column)? {
         return Ok(());
     }
-    conn.execute_batch(&format!("ALTER TABLE {table} ADD COLUMN {column} {definition}"))?;
+    conn.execute_batch(&format!(
+        "ALTER TABLE {table} ADD COLUMN {column} {definition}"
+    ))?;
     Ok(())
 }
 

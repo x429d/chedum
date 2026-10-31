@@ -1,76 +1,120 @@
-import { createSignal, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 
 import { t } from "../../i18n";
-import { libraryStore } from "../../stores/libraryStore";
-import { settingsStore } from "../../stores/settingsStore";
+import { accountsStore } from "../../stores/accountsStore";
+import { ui } from "../../stores/uiStore";
 import { Icon } from "../ui/Icon";
 
 export function SyncPanel() {
-  const [username, setUsername] = createSignal("");
   const [force, setForce] = createSignal(false);
-  const progress = () => libraryStore.syncProgress();
-  const result = () => libraryStore.syncResult();
+
   return (
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">{t("library.syncTitle")}</div>
+          <div class="card-title">{t("accounts.title")}</div>
         </div>
-        <Icon name="sync" size={16} />
+        <Icon name="user" size={16} />
       </div>
       <div class="card-pad" style={{ display: "flex", "flex-direction": "column", gap: "9px" }}>
-        <input
-          class="input"
-          placeholder={settingsStore.settings().playerUsername || t("library.syncPlaceholder")}
-          value={username()}
-          onInput={(event) => setUsername(event.currentTarget.value)}
-        />
-        <label class="chip" style={{ cursor: "pointer", "justify-content": "center" }}>
-          <input
-            type="checkbox"
-            checked={force()}
-            onChange={(event) => setForce(event.currentTarget.checked)}
-          />
-          {t("library.syncForce")}
-        </label>
-        <button
-          type="button"
-          class="btn"
-          disabled={libraryStore.syncing()}
-          onClick={() => void libraryStore.syncChesscom(username(), force())}
+        <Show
+          when={accountsStore.accounts().length > 0}
+          fallback={
+            <>
+              <div class="form-hint">{t("accounts.emptyHint")}</div>
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                onClick={() => ui.setView("accounts")}
+              >
+                <Icon name="plus" size={13} />
+                {t("accounts.addBtn")}
+              </button>
+            </>
+          }
         >
-          <Show when={libraryStore.syncing()} fallback={<Icon name="download" size={14} />}>
-            <span class="spinner" style={{ width: "13px", height: "13px" }} />
-          </Show>
-          {libraryStore.syncing() ? t("library.syncingBtn") : t("library.syncBtn")}
-        </button>
-        <Show when={progress()}>
-          {(state) => (
-            <div>
-              <div class="progress-track">
-                <div class="progress-fill" style={{ width: `${state().percent}%` }} />
-              </div>
-              <div class="sync-log">
-                {state().message}
-                <Show when={state().archivesTotal > 0}>
-                  <span>
-                    {" "}
-                    ({state().archivesDone}/{state().archivesTotal})
+          <div class="sync-account-list">
+            <For each={accountsStore.accounts()}>
+              {(account) => (
+                <div class="sync-account-row">
+                  <span
+                    class="sync-account-dot"
+                    title={accountsStore.platformName(account.platform)}
+                    classList={{
+                      active: accountsStore.activeAccountId() === account.id,
+                      lichess: account.platform === "lichess",
+                    }}
+                  />
+                  <span
+                    class="sync-account-name"
+                    title={`${accountsStore.platformName(account.platform)} · @${account.username}`}
+                  >
+                    @{account.username}
                   </span>
-                </Show>
+                  <span class="sync-account-count mono">{account.games}</span>
+                  <button
+                    type="button"
+                    class="btn btn-ghost btn-sm icon-btn"
+                    title={t("accounts.syncBtn")}
+                    aria-label={t("accounts.syncBtn")}
+                    disabled={accountsStore.busy()}
+                    onClick={() => void accountsStore.syncOne(account.id, force())}
+                  >
+                    <Show
+                      when={accountsStore.syncingAccountId() === account.id}
+                      fallback={<Icon name="sync" size={13} />}
+                    >
+                      <span class="spinner" style={{ width: "11px", height: "11px" }} />
+                    </Show>
+                  </button>
+                </div>
+              )}
+            </For>
+          </div>
+          <label class="chip" style={{ cursor: "pointer", "justify-content": "center" }}>
+            <input
+              type="checkbox"
+              checked={force()}
+              onChange={(event) => setForce(event.currentTarget.checked)}
+            />
+            {t("accounts.syncForce")}
+          </label>
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button
+              type="button"
+              class="btn btn-sm"
+              style={{ flex: "1" }}
+              disabled={accountsStore.busy()}
+              onClick={() => void accountsStore.syncAll(force())}
+            >
+              <Show
+                when={accountsStore.syncingAll()}
+                fallback={<Icon name="download" size={13} />}
+              >
+                <span class="spinner" style={{ width: "11px", height: "11px" }} />
+              </Show>
+              {accountsStore.syncingAll() ? t("accounts.syncAllBusy") : t("accounts.syncAll")}
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm"
+              title={t("accounts.manage")}
+              aria-label={t("accounts.manage")}
+              onClick={() => ui.setView("accounts")}
+            >
+              <Icon name="settings" size={14} />
+            </button>
+          </div>
+          <Show when={accountsStore.progress()}>
+            {(progress) => (
+              <div>
+                <div class="progress-track">
+                  <div class="progress-fill" style={{ width: `${progress().percent}%` }} />
+                </div>
+                <div class="sync-log">{progress().message}</div>
               </div>
-            </div>
-          )}
-        </Show>
-        <Show when={result()}>
-          {(summary) => (
-            <div class="sync-log" style={{ color: "var(--accent-bright)" }}>
-              {t("library.syncDone", {
-                imported: summary().gamesImported,
-                skipped: summary().gamesSkipped,
-              })}
-            </div>
-          )}
+            )}
+          </Show>
         </Show>
       </div>
     </div>

@@ -14,6 +14,7 @@ import { ui } from "./uiStore";
 
 export const DEFAULT_SETTINGS: AppSettings = {
   playerUsername: "",
+  activeAccountId: null,
   analysisDepth: 14,
   multipv: 2,
   boardTheme: "walnut",

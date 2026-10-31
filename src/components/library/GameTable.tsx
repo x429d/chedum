@@ -2,6 +2,7 @@ import { For, Show } from "solid-js";
 
 import { t } from "../../i18n";
 import { libraryStore } from "../../stores/libraryStore";
+import { ui } from "../../stores/uiStore";
 import type { GameListItem } from "../../types/models";
 import {
   formatDate,
@@ -26,6 +27,13 @@ function accuracyHint(game: GameListItem): string {
   return `${game.engineName} · depth ${game.analysisDepth ?? "—"}`;
 }
 
+function sourceLabel(game: GameListItem): string | null {
+  if (game.source === "manual") return null;
+  return t(
+    game.source === "chesscom" ? "accounts.platformChesscom" : "accounts.platformLichess",
+  );
+}
+
 function Row(props: { game: GameListItem }) {
   const selected = () => libraryStore.selected().includes(props.game.id);
   return (
@@ -41,6 +49,16 @@ function Row(props: { game: GameListItem }) {
         <div class="game-title">{formatDate(props.game.playedAt)}</div>
         <div class="game-meta">
           {timeClassLabel(props.game.timeClass)}
+          <Show when={sourceLabel(props.game)}>
+            {(label) => (
+              <span
+                class={`source-chip source-${props.game.source}`}
+                title={props.game.accountUsername ? `@${props.game.accountUsername}` : label()}
+              >
+                {label()}
+              </span>
+            )}
+          </Show>
           <Show when={props.game.analysisAttempts >= 3}>
             <span
               style={{ color: "var(--danger)", "margin-left": "5px" }}
@@ -213,6 +231,14 @@ export function GameTable() {
                         <button
                           type="button"
                           class="btn btn-primary btn-sm"
+                          onClick={() => ui.setView("accounts")}
+                        >
+                          <Icon name="user" size={13} />
+                          {t("accounts.addBtn")}
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-sm"
                           onClick={() => void libraryStore.importFiles()}
                         >
                           <Icon name="import" size={13} />

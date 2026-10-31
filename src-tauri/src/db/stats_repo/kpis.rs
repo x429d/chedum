@@ -8,7 +8,7 @@ const MIN_PERF_SAMPLE: u32 = 20;
 pub(super) fn kpis(
     conn: &Connection,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<HubKpis> {
     let account_filter = super::account_clause("g", 1);
     let sql = format!(
@@ -63,7 +63,7 @@ fn performance_summary(
     conn: &Connection,
     analyzed: u32,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<(Option<f64>, Option<f64>)> {
     if analyzed < MIN_PERF_SAMPLE {
         return Ok((None, None));
@@ -100,7 +100,7 @@ fn color_record(
     conn: &Connection,
     color: &str,
     key: Option<&str>,
-    account: Option<&str>,
+    account: Option<i64>,
 ) -> AppResult<ColorRecord> {
     let (win_result, loss_result, accuracy_column) = if color == "white" {
         ("1-0", "0-1", "white_accuracy")

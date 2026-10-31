@@ -6,8 +6,6 @@ import type {
   GameFilter,
   GameListItem,
   ImportSummary,
-  SyncProgress,
-  SyncResult,
 } from "../types/models";
 import { EMPTY_BATCH } from "../types/models";
 import { toErrorMessage } from "../utils/format";
@@ -24,9 +22,6 @@ const [loading, setLoading] = createSignal(false);
 const [filter, setFilter] = createSignal<GameFilter>({ limit: 25, offset: 0 });
 const [selected, setSelected] = createSignal<number[]>([]);
 const [selectedGameId, setSelectedGameId] = createSignal<number | null>(null);
-const [syncProgress, setSyncProgress] = createSignal<SyncProgress | null>(null);
-const [syncResult, setSyncResult] = createSignal<SyncResult | null>(null);
-const [syncing, setSyncing] = createSignal(false);
 const [importing, setImporting] = createSignal(false);
 const [batch, setBatch] = createSignal<BatchState>(EMPTY_BATCH);
 const [queuePending, setQueuePending] = createSignal(0);
@@ -74,7 +69,7 @@ async function startAutoResume(): Promise<void> {
   autoResumeHandled = true;
   if (!settingsStore.settings().autoResumeAnalysis) return;
   try {
-    const plan = await api.listPendingAnalysis({});
+    const plan = await api.listPendingAnalysis({ accountId: filter().accountId });
     if (plan.ids.length === 0) return;
     ui.notify(t("library.resumingAnalysis", { count: plan.ids.length }), "info");
     await batchController.analyzeIds(plan.ids, t("library.resumingBatch"), plan.positions);
@@ -97,7 +92,7 @@ function setSearch(value: string): void {
 
 function resetFilter(): void {
   cancelPendingSearch();
-  setFilter({ limit: pageSize(), offset: 0 });
+  setFilter({ limit: pageSize(), offset: 0, accountId: filter().accountId });
   void load();
 }
 
@@ -166,37 +161,10 @@ function openGame(id: number): void {
   ui.setView("analysis");
 }
 
-async function syncChesscom(username: string, force: boolean): Promise<void> {
-  if (syncing()) return;
-  setSyncing(true);
-  setSyncResult(null);
-  try {
-    const result = await api.syncChesscom(username, force, (progress) => setSyncProgress(progress));
-    setSyncResult(result);
-    ui.notify(
-      t("library.syncDone", {
-        imported: result.gamesImported,
-        skipped: result.gamesSkipped,
-      }),
-      "success",
-    );
-    if (result.username) {
-      await settingsStore.update({ playerUsername: result.username });
-    }
-    setFilter((current) => ({ ...current, offset: 0 }));
-    await load();
-    maybeAutoAnalyze(result.gamesImported);
-  } catch (error) {
-    ui.notify(toErrorMessage(error), "error");
-  } finally {
-    setSyncing(false);
-  }
-}
-
 async function importFiles(): Promise<void> {
   setImporting(true);
   try {
-    const result = await api.importPgnFiles();
+    const result = await api.importPgnFiles(filter().accountId ?? null);
     if (result) {
       notifyImport(result);
       setFilter((current) => ({ ...current, offset: 0 }));
@@ -213,7 +181,7 @@ async function importFiles(): Promise<void> {
 async function importText(text: string): Promise<void> {
   setImporting(true);
   try {
-    const result = await api.importPgnText(text);
+    const result = await api.importPgnText(text, filter().accountId ?? null);
     notifyImport(result);
     setFilter((current) => ({ ...current, offset: 0 }));
     await load();
@@ -223,6 +191,18 @@ async function importText(text: string): Promise<void> {
   } finally {
     setImporting(false);
   }
+}
+
+function setAccount(accountId: number | null): void {
+  cancelPendingSearch();
+  setSelected([]);
+  setFilter((current) => ({ ...current, accountId, offset: 0 }));
+}
+
+async function refreshAfterSync(imported: number): Promise<void> {
+  setFilter((current) => ({ ...current, offset: 0 }));
+  await load();
+  maybeAutoAnalyze(imported);
 }
 
 function maybeAutoAnalyze(imported: number): void {
@@ -255,9 +235,6 @@ export const libraryStore = {
   selected,
   selectedCount,
   selectedGameId,
-  syncProgress,
-  syncResult,
-  syncing,
   importing,
   batch,
   load,
@@ -275,7 +252,8 @@ export const libraryStore = {
   clearSelection,
   openGame,
   setSelectedGameId,
-  syncChesscom,
+  setAccount,
+  refreshAfterSync,
   importFiles,
   importText,
   exportSelection: actions.exportSelection,

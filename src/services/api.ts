@@ -3,10 +3,11 @@ import { confirm as confirmDialog, open, save } from "@tauri-apps/plugin-dialog"
 
 import { t } from "../i18n";
 import type {
+  Account,
+  AccountPlatform,
   AnalysisProgress,
   AppInfo,
   AppSettings,
-  ArchiveView,
   EngineStatus,
   EngineUpdate,
   GameDetail,
@@ -63,6 +64,15 @@ export const api = {
     });
   },
 
+  confirmDisconnect(message: string): Promise<boolean> {
+    return confirmDialog(message, {
+      title: "Chenal",
+      kind: "warning",
+      okLabel: t("accounts.remove"),
+      cancelLabel: t("library.cancel"),
+    });
+  },
+
   toggleFavorite(gameId: number, favorite: boolean): Promise<void> {
     return invoke<void>("toggle_favorite", { gameId, favorite });
   },
@@ -75,11 +85,11 @@ export const api = {
     return invoke<void>("save_user_comment", { gameId, ply, comment });
   },
 
-  importPgnText(text: string): Promise<ImportSummary> {
-    return invoke<ImportSummary>("import_pgn_text", { text });
+  importPgnText(text: string, accountId: number | null): Promise<ImportSummary> {
+    return invoke<ImportSummary>("import_pgn_text", { text, accountId });
   },
 
-  async importPgnFiles(): Promise<ImportSummary | null> {
+  async importPgnFiles(accountId: number | null): Promise<ImportSummary | null> {
     const selection = await open({
       title: `${t("library.importPgn")} PGN`,
       multiple: true,
@@ -88,7 +98,7 @@ export const api = {
     if (selection === null) return null;
     const paths: string[] = Array.isArray(selection) ? selection : [selection];
     if (paths.length === 0) return null;
-    return invoke<ImportSummary>("import_pgn_files", { paths });
+    return invoke<ImportSummary>("import_pgn_files", { paths, accountId });
   },
 
   async exportGames(ids: number[]): Promise<string | null> {
@@ -118,12 +128,20 @@ export const api = {
     return invoke<AppInfo>("get_app_info");
   },
 
-  getHubStats(): Promise<HubStats> {
-    return invoke<HubStats>("get_hub_stats");
+  getHubStats(accountId: number | null): Promise<HubStats> {
+    return invoke<HubStats>("get_hub_stats", { accountId });
   },
 
-  getSyncStatus(username: string): Promise<ArchiveView[]> {
-    return invoke<ArchiveView[]>("get_sync_status", { username });
+  listAccounts(): Promise<Account[]> {
+    return invoke<Account[]>("list_accounts");
+  },
+
+  addAccount(platform: AccountPlatform, username: string): Promise<Account> {
+    return invoke<Account>("add_account", { platform, username });
+  },
+
+  removeAccount(accountId: number): Promise<void> {
+    return invoke<void>("remove_account", { accountId });
   },
 
   searchOpenings(query: string, limit = 20): Promise<OpeningEntry[]> {
@@ -165,13 +183,13 @@ export const api = {
     return invoke<void>("stop_engine");
   },
 
-  syncChesscom(
-    username: string,
+  syncAccount(
+    accountId: number,
     force: boolean,
     onProgress: (progress: SyncProgress) => void,
   ): Promise<SyncResult> {
-    return invoke<SyncResult>("sync_chesscom", {
-      username,
+    return invoke<SyncResult>("sync_account", {
+      accountId,
       force,
       onProgress: channel(onProgress),
     });

@@ -1,7 +1,9 @@
 use super::support::draft;
+use crate::db::accounts_repo;
 use crate::db::connection::Db;
 use crate::db::games_repo::{count_games, get_game, insert_game, list_games};
-use crate::domain::game::{GameFilter, TimeClass, UserColor};
+use crate::domain::game::{GameFilter, GameSource, TimeClass, UserColor};
+use crate::domain::AccountPlatform;
 
 #[test]
 fn inserts_dedupes_and_filters_games() {
@@ -71,6 +73,55 @@ fn inserts_dedupes_and_filters_games() {
 }
 
 #[test]
+fn account_filter_and_source_are_visible_in_the_library() {
+    let db = Db::in_memory().unwrap();
+    let chess = accounts_repo::create(&db, AccountPlatform::Chesscom, "alice").unwrap();
+    let lichess = accounts_repo::create(&db, AccountPlatform::Lichess, "alice_li").unwrap();
+    let mut first = draft(
+        "g-account-1",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    first.source = GameSource::Chesscom;
+    first.account_id = Some(chess.id);
+    let mut second = draft(
+        "g-account-2",
+        "bob",
+        "alice_li",
+        UserColor::Black,
+        "1-0",
+        TimeClass::Blitz,
+        200,
+    );
+    second.source = GameSource::Lichess;
+    second.account_id = Some(lichess.id);
+    db.with_tx(|tx| insert_game(tx, &first)).unwrap().unwrap();
+    db.with_tx(|tx| insert_game(tx, &second)).unwrap().unwrap();
+
+    let page = list_games(
+        &db,
+        &GameFilter {
+            account_id: Some(lichess.id),
+            ..GameFilter::default()
+        },
+    )
+    .unwrap();
+    assert_eq!(page.total, 1);
+    let game = &page.games[0];
+    assert_eq!(game.account_id, Some(lichess.id));
+    assert_eq!(game.account_username.as_deref(), Some("alice_li"));
+    assert_eq!(game.account_platform, Some(AccountPlatform::Lichess));
+    assert_eq!(game.source, GameSource::Lichess);
+
+    let all = list_games(&db, &GameFilter::default()).unwrap();
+    assert_eq!(all.total, 2);
+}
+
+#[test]
 fn date_filters_limit_the_library() {
     let db = Db::in_memory().unwrap();
     let early = draft(
@@ -116,4 +167,3 @@ fn date_filters_limit_the_library() {
     assert_eq!(to.games.len(), 1);
     assert_eq!(to.games[0].played_at, 1_672_531_200);
 }
-

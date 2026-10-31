@@ -1,3 +1,4 @@
+pub mod account;
 pub mod analysis;
 pub mod enums;
 pub mod error;
@@ -8,6 +9,7 @@ pub mod position;
 pub mod stats;
 pub mod sync;
 
+pub use account::{normalize_username, Account, AccountPlatform};
 pub use analysis::{
     AnalysisDraft, AnalysisProgress, CategoryCounts, GameAnalysis, MoveCategory, MoveEvaluation,
     Phase, PvLine, TimeFlag,
