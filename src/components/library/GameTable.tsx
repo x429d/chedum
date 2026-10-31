@@ -1,4 +1,4 @@
-import { For, Show } from "solid-js";
+import { createEffect, For, Show } from "solid-js";
 
 import { t } from "../../i18n";
 import { libraryStore } from "../../stores/libraryStore";
@@ -40,6 +40,7 @@ function Row(props: { game: GameListItem }) {
   return (
     <tr
       tabIndex={0}
+      classList={{ selected: selected() }}
       aria-label={`${props.game.whiteUsername} — ${props.game.blackUsername}`}
       onClick={() => libraryStore.openGame(props.game.id)}
       onKeyDown={(event) => {
@@ -74,7 +75,12 @@ function Row(props: { game: GameListItem }) {
           </Show>
           <Show when={props.game.analysisAttempts >= 3}>
             <span
-              style={{ color: "var(--danger)", "margin-left": "5px" }}
+              style={{
+                color: "var(--danger)",
+                "margin-left": "5px",
+                display: "inline-flex",
+                "vertical-align": "-1px",
+              }}
               title={t("library.analysisFailedHint", {
                 count: props.game.analysisAttempts,
                 error: props.game.lastAnalysisError ?? "",
@@ -83,12 +89,12 @@ function Row(props: { game: GameListItem }) {
                 count: props.game.analysisAttempts,
               })}
             >
-              ⚠
+              <Icon name="alert" size={11} />
             </span>
           </Show>
         </div>
       </td>
-      <td>
+      <td class="players-cell">
         <div class="game-title">
           {props.game.whiteUsername}
           <span
@@ -180,9 +186,15 @@ function Row(props: { game: GameListItem }) {
 }
 
 export function GameTable() {
+  let selectAll: HTMLInputElement | undefined;
   const allSelected = () =>
     libraryStore.games().length > 0 &&
     libraryStore.games().every((game) => libraryStore.selected().includes(game.id));
+  const partialSelection = () => libraryStore.selectedCount() > 0 && !allSelected();
+
+  createEffect(() => {
+    if (selectAll) selectAll.indeterminate = partialSelection();
+  });
 
   return (
     <div class="card card-table" style={{ overflow: "hidden" }}>
@@ -223,6 +235,7 @@ export function GameTable() {
             <tr>
               <th>
                 <input
+                  ref={(element) => (selectAll = element)}
                   type="checkbox"
                   checked={allSelected()}
                   aria-label={t("library.selectAll")}

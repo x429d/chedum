@@ -223,7 +223,8 @@ export function AnalysisView() {
                   >
                     {t("studio.momentsTab")}
                   </button>
-                  <Show when={fullscreen()}>\n                    <button
+                  <Show when={fullscreen()}>
+                    <button
                       type="button"
                       class="btn btn-ghost btn-sm"
                       style={{ "flex": "none", "margin-left": "auto" }}

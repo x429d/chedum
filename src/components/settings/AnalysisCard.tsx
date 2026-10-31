@@ -40,6 +40,7 @@ export function AnalysisCard() {
           <div class="segmented">
             <button
               type="button"
+              aria-pressed={settingsStore.settings().analysisThreads === 0}
               classList={{ active: settingsStore.settings().analysisThreads === 0 }}
               onClick={() => void settingsStore.update({ analysisThreads: 0 })}
             >
@@ -54,6 +55,7 @@ export function AnalysisCard() {
               {(value) => (
                 <button
                   type="button"
+                  aria-pressed={settingsStore.settings().analysisThreads === value}
                   classList={{
                     active: settingsStore.settings().analysisThreads === value,
                   }}
@@ -72,6 +74,7 @@ export function AnalysisCard() {
               {(value) => (
                 <button
                   type="button"
+                  aria-pressed={settingsStore.settings().multipv === value}
                   classList={{ active: settingsStore.settings().multipv === value }}
                   onClick={() => void settingsStore.update({ multipv: value })}
                 >
@@ -90,6 +93,9 @@ export function AnalysisCard() {
           <button
             type="button"
             class="switch"
+            role="switch"
+            aria-checked={settingsStore.settings().autoResumeAnalysis}
+            aria-label={t("settings.autoResume")}
             classList={{ on: settingsStore.settings().autoResumeAnalysis }}
             onClick={() =>
               void settingsStore.update({
@@ -107,6 +113,9 @@ export function AnalysisCard() {
           <button
             type="button"
             class="switch"
+            role="switch"
+            aria-checked={settingsStore.settings().autoAnalyze}
+            aria-label={t("settings.autoAnalyze")}
             classList={{ on: settingsStore.settings().autoAnalyze }}
             onClick={() =>
               void settingsStore.update({

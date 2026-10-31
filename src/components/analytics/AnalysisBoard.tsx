@@ -164,6 +164,7 @@ export function AnalysisBoard(props: {
               <div class="card-title">{t("studio.dualChart")}</div>
               <select
                 class="select chart-scope-select"
+                aria-label={t("studio.chartLabel")}
                 value={chartScope()}
                 onChange={(event) =>
                   setChartScope(event.currentTarget.value as ChartScope)

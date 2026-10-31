@@ -37,6 +37,7 @@ export function AddAccountCard() {
               {(value) => (
                 <button
                   type="button"
+                  aria-pressed={platform() === value}
                   classList={{ active: platform() === value }}
                   onClick={() => setPlatform(value)}
                 >

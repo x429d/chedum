@@ -77,15 +77,6 @@ export function AnalysisHeader(props: {
           </Show>
           {props.analysis ? t("studio.reanalyze") : t("studio.analyze")}
         </button>
-        <button
-          type="button"
-          class="btn btn-ghost icon-btn"
-          title={t("nav.library")}
-          aria-label={t("nav.library")}
-          onClick={props.onBack}
-        >
-          <Icon name="library" size={15} />
-        </button>
       </div>
     </header>
   );

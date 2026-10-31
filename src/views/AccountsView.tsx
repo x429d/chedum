@@ -136,7 +136,7 @@ export function AccountsView() {
                 fallback={
                   <div class="form-hint">
                     {accountsStore.accounts().length === 0
-                      ? t("accounts.emptyHint")
+                      ? t("accounts.syncIdle")
                       : (lastResultLabel() ?? t("accounts.howStep2"))}
                   </div>
                 }

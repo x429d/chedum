@@ -110,6 +110,7 @@ export function MovesTab() {
             <div class="form-label">{t("studio.noteForMove", { ply: move().ply })}</div>
             <textarea
               class="textarea"
+              aria-label={t("studio.noteForMove", { ply: move().ply })}
               style={{ "min-height": "60px", "margin-top": "5px" }}
               value={draft()}
               placeholder={t("studio.noteMovePlaceholder")}
@@ -131,6 +132,7 @@ export function MovesTab() {
         <div class="form-label">{t("studio.gameNotes")}</div>
         <textarea
           class="textarea"
+          aria-label={t("studio.gameNotes")}
           style={{ "min-height": "56px", "margin-top": "5px" }}
           value={notes()}
           placeholder={t("studio.gameNotesPlaceholder")}

@@ -33,7 +33,13 @@ export function CoachCard(props: { move: MoveEvaluation | null; onPlayLine: () =
           return currentLanguage() === "ru" ? move().explanationText : null;
         };
         return (
-          <div class="coach-card">
+          <div
+            class="coach-card"
+            style={{
+              "border-color": `${meta().color}44`,
+              background: `${meta().color}0a`,
+            }}
+          >
             <div class="coach-head">
               <span class="badge" style={{ color: meta().color, "border-color": meta().color }}>
                 <CategoryGlyph category={move().classification} size={12} /> {tCategory(move().classification)}

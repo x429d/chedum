@@ -233,7 +233,6 @@ export type TranslationSchema = {
     openingCol: string;
     gamesCol: string;
     analyzedCol: string;
-    winsCol: string;
     accuracyCol: string;
     notEnoughData: string;
     vulnerablePhases: string;
@@ -314,6 +313,7 @@ export type TranslationSchema = {
     remove: string;
     confirmRemove: string;
     syncProgress: string;
+    syncIdle: string;
     cancelSync: string;
     syncCancelled: string;
     syncResult: string;

@@ -27,6 +27,7 @@ export function AppearanceCard() {
               {(lang) => (
                 <button
                   type="button"
+                  aria-pressed={currentLanguage() === lang.code}
                   classList={{ active: currentLanguage() === lang.code }}
                   onClick={() => void settingsStore.setLanguage(lang.code as Language)}
                 >
@@ -52,6 +53,7 @@ export function AppearanceCard() {
                 <button
                   type="button"
                   class="theme-preview"
+                  aria-pressed={settingsStore.settings().boardTheme === theme.value}
                   classList={{
                     selected: settingsStore.settings().boardTheme === theme.value,
                   }}
@@ -82,6 +84,9 @@ export function AppearanceCard() {
             <button
               type="button"
               class="switch"
+              role="switch"
+              aria-checked={settingsStore.settings().showArrows}
+              aria-label={t("settings.showArrows")}
               classList={{ on: settingsStore.settings().showArrows }}
               onClick={() =>
                 void settingsStore.update({

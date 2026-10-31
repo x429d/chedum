@@ -29,6 +29,7 @@ export function Filters() {
       <input
         class="input filter-search"
         type="search"
+        aria-label={t("library.searchPlaceholder")}
         placeholder={t("library.searchPlaceholder")}
         value={filter().search ?? ""}
         onInput={(event) => libraryStore.setSearch(event.currentTarget.value)}
@@ -37,6 +38,7 @@ export function Filters() {
       <div class="segmented">
         <button
           type="button"
+          aria-pressed={(filter().color ?? null) === null}
           classList={{ active: (filter().color ?? null) === null }}
           onClick={() => libraryStore.updateFilter({ color: null })}
         >
@@ -44,6 +46,7 @@ export function Filters() {
         </button>
         <button
           type="button"
+          aria-pressed={filter().color === "white"}
           classList={{ active: filter().color === "white" }}
           onClick={() => libraryStore.updateFilter({ color: "white" })}
         >
@@ -51,6 +54,7 @@ export function Filters() {
         </button>
         <button
           type="button"
+          aria-pressed={filter().color === "black"}
           classList={{ active: filter().color === "black" }}
           onClick={() => libraryStore.updateFilter({ color: "black" })}
         >
@@ -61,6 +65,7 @@ export function Filters() {
       <select
         class="select"
         style={{ width: "132px" }}
+        aria-label={t("library.result")}
         value={filter().result ?? ""}
         onChange={(event) =>
           libraryStore.updateFilter({ result: event.currentTarget.value || null })
@@ -75,6 +80,7 @@ export function Filters() {
       <select
         class="select"
         style={{ width: "120px" }}
+        aria-label={t("library.timeClass")}
         value={filter().timeClass ?? ""}
         onChange={(event) =>
           libraryStore.updateFilter({
@@ -91,6 +97,7 @@ export function Filters() {
       <input
         class="input"
         style={{ width: "84px" }}
+        aria-label={t("hub.eco")}
         placeholder="ECO"
         value={filter().eco ?? ""}
         onChange={(event) =>
@@ -118,7 +125,7 @@ export function Filters() {
             aria-label={t("library.clearStartDate")}
             onClick={() => libraryStore.updateFilter({ dateFrom: null })}
           >
-            ×
+            <Icon name="close" size={11} />
           </button>
         </Show>
       </div>
@@ -140,7 +147,7 @@ export function Filters() {
             aria-label={t("library.clearEndDate")}
             onClick={() => libraryStore.updateFilter({ dateTo: null })}
           >
-            ×
+            <Icon name="close" size={11} />
           </button>
         </Show>
       </div>

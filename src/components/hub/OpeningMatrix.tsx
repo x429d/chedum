@@ -26,6 +26,7 @@ export function OpeningMatrix(props: { openings: OpeningStat[] }) {
         <div class="segmented" style={{ "font-size": "10px" }}>
           <button
             type="button"
+            aria-pressed={sort() === "games"}
             classList={{ active: sort() === "games" }}
             onClick={() => setSort("games")}
           >
@@ -33,6 +34,7 @@ export function OpeningMatrix(props: { openings: OpeningStat[] }) {
           </button>
           <button
             type="button"
+            aria-pressed={sort() === "price"}
             classList={{ active: sort() === "price" }}
             onClick={() => setSort("price")}
           >
@@ -50,7 +52,7 @@ export function OpeningMatrix(props: { openings: OpeningStat[] }) {
             <span>{t("hub.openingCol")}</span>
             <span>{t("hub.gamesCol")}</span>
             <span>{t("hub.analyzedCol")}</span>
-            <span>{t("hub.winsCol")}</span>
+            <span>{t("hub.winRate")}</span>
             <span>{t("hub.accuracyCol")}</span>
           </div>
           <For each={ordered()}>

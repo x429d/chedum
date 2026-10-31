@@ -11,7 +11,7 @@ import { Board } from "../board/Board";
 import { CategoryGlyph } from "../ui/CategoryGlyph";
 import { Icon } from "../ui/Icon";
 
-type RetryStatus = "idle" | "correct" | "wrong";
+type RetryStatus = "idle" | "correct" | "wrong" | "revealed";
 
 export function RetryTrainer() {
   const [index, setIndex] = createSignal(0);
@@ -72,7 +72,7 @@ export function RetryTrainer() {
     if (!move) return;
     const best = move.bestUci ? applyUci(move.fenBefore, move.bestUci) : null;
     setResultFen(best?.fenAfter ?? null);
-    setStatus("wrong");
+    setStatus("revealed");
   };
 
   const handleMove = (from: string, to: string): void => {
@@ -169,18 +169,28 @@ export function RetryTrainer() {
                 {t("studio.wrongMove", { san: move().bestSan ?? "—" })}
               </span>
             </Show>
+            <Show when={status() === "revealed"}>
+              <span style={{ color: "var(--accent-bright)" }}>
+                {t("studio.bestMove", { san: move().bestSan ?? "—" })}
+              </span>
+            </Show>
           </div>
           <div style={{ display: "flex", gap: "6px", "margin-top": "8px", "flex-wrap": "wrap" }}>
             <button
               type="button"
               class="btn btn-sm"
               onClick={showSolution}
-              disabled={status() === "correct"}
+              disabled={status() === "correct" || status() === "revealed"}
             >
               <Icon name="eye" size={12} />
               {t("studio.showSolution")}
             </button>
-            <button type="button" class="btn btn-sm" onClick={retry}>
+            <button
+              type="button"
+              class="btn btn-sm"
+              disabled={status() === "idle"}
+              onClick={retry}
+            >
               <Icon name="retry" size={12} />
               {t("studio.retryBtn")}
             </button>
