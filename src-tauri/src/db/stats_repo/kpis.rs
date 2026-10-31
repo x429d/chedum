@@ -3,8 +3,6 @@ use rusqlite::{params, Connection};
 use crate::domain::error::AppResult;
 use crate::domain::stats::{ColorRecord, HubKpis};
 
-const MIN_PERF_SAMPLE: u32 = 20;
-
 pub(super) fn kpis(
     conn: &Connection,
     key: Option<&str>,
@@ -38,7 +36,6 @@ pub(super) fn kpis(
     let total = row.0 as u32;
     let analyzed = row.1 as u32;
     let wins = row.2 as u32;
-    let (avg_perf_elo, avg_perf_elo_spread) = performance_summary(conn, analyzed, key, account)?;
     Ok(HubKpis {
         total_games: total,
         analyzed_games: analyzed,
@@ -52,48 +49,12 @@ pub(super) fn kpis(
         },
         avg_accuracy: row.5,
         avg_acpl: row.6,
-        avg_perf_elo,
-        avg_perf_elo_spread,
+        // Заполняется в `hub_stats` из разбивки по аккаунтам/площадкам.
+        avg_perf_elo: None,
+        avg_perf_elo_spread: None,
         white: color_record(conn, "white", key, account)?,
         black: color_record(conn, "black", key, account)?,
     })
-}
-
-fn performance_summary(
-    conn: &Connection,
-    analyzed: u32,
-    key: Option<&str>,
-    account: Option<i64>,
-) -> AppResult<(Option<f64>, Option<f64>)> {
-    if analyzed < MIN_PERF_SAMPLE {
-        return Ok((None, None));
-    }
-    let account_filter = super::account_clause("g", 1);
-    let sql = format!(
-        "SELECT CASE WHEN g.user_color='white' THEN a.white_perf_elo ELSE a.black_perf_elo END
-         FROM game_analyses a JOIN games g ON g.id = a.game_id
-         WHERE g.user_color IN ('white', 'black') AND (?2 IS NULL OR a.config_key = ?2)
-           AND {account_filter}"
-    );
-    let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map(params![account, key], |row| row.get::<_, Option<i32>>(0))?;
-    let mut values = Vec::new();
-    for row in rows {
-        if let Some(value) = row? {
-            values.push(f64::from(value));
-        }
-    }
-    if values.len() < MIN_PERF_SAMPLE as usize {
-        return Ok((None, None));
-    }
-    let len = values.len() as f64;
-    let mean = values.iter().sum::<f64>() / len;
-    let variance = values
-        .iter()
-        .map(|value| (value - mean).powi(2))
-        .sum::<f64>()
-        / len;
-    Ok((Some(mean), Some(variance.sqrt())))
 }
 
 fn color_record(

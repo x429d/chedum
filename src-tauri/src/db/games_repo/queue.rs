@@ -10,16 +10,20 @@ pub fn pending_analysis(
     db: &Db,
     filter: &GameFilter,
     config_key: &str,
+    target_depth: u32,
+    target_multipv: u32,
 ) -> AppResult<PendingAnalysis> {
     db.with(|conn| {
         let mut filter = filter.clone();
         filter.analyzed_only = false;
         let (where_sql, values) = filter_clause(&filter);
-        // Записи старых сборок без config_key считаем разобранными: иначе они
-        // навсегда остаются «в очереди» и заново гоняются через движок.
+        // Партия разобрана, если есть точная целевая конфигурация, запись
+        // старой сборки без config_key или анализ не мельче текущих настроек.
+        // Последнее не даёт очереди понижать уже более глубокий разбор.
         let base = "FROM games g LEFT JOIN game_analyses a
                  ON a.game_id = g.id
-                AND (a.config_key = ?1 OR a.config_key IS NULL OR a.config_key = '')";
+                AND (a.config_key = ?1 OR a.config_key IS NULL OR a.config_key = ''
+                     OR a.depth > ?2 OR (a.depth = ?2 AND a.multipv >= ?3))";
         let condition = if where_sql.is_empty() {
             "WHERE a.id IS NULL".to_string()
         } else {
@@ -29,7 +33,11 @@ pub fn pending_analysis(
             "SELECT g.id, g.total_plies {base} {condition} AND g.analysis_attempts < 3
              ORDER BY g.played_at DESC"
         );
-        let mut params_vec = vec![Value::Text(config_key.to_string())];
+        let mut params_vec = vec![
+            Value::Text(config_key.to_string()),
+            Value::Integer(i64::from(target_depth)),
+            Value::Integer(i64::from(target_multipv)),
+        ];
         params_vec.extend(values.iter().cloned());
         let mut stmt = conn.prepare(&sql)?;
         let rows = stmt.query_map(params_from_iter(params_vec.iter()), |row| {

@@ -22,6 +22,11 @@ export function ReportTab(props: {
     props.game.userColor === "black" ? props.analysis.blackAcpl : props.analysis.whiteAcpl;
   const opponentElo = () =>
     props.game.userColor === "black" ? props.game.whiteElo : props.game.blackElo;
+  const platformLabel = () => {
+    if (props.game.source === "chesscom") return t("accounts.platformChesscom");
+    if (props.game.source === "lichess") return t("accounts.platformLichess");
+    return null;
+  };
   const resultPerf = () => {
     const elo = opponentElo();
     if (elo === null) return null;
@@ -80,6 +85,13 @@ export function ReportTab(props: {
         <div class="metric-tile">
           <div class="metric-label">{t("studio.perfRating")}</div>
           <div class="metric-value">{resultPerf() ?? "—"}</div>
+          <Show when={platformLabel()}>
+            {(platform) => (
+              <div class="stat-hint">
+                {t("studio.perfOnPlatform", { platform: platform() })}
+              </div>
+            )}
+          </Show>
         </div>
         <div class="metric-tile">
           <div class="metric-label">ACPL</div>

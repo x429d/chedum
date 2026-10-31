@@ -64,9 +64,10 @@ fn pending_queue_is_derived_from_the_target_configuration() {
     let deep_key = crate::db::analyses_repo::analysis_config_key(&deep_analysis.analysis);
     insert_analysis_draft(&db, &deep_analysis).unwrap();
 
-    let shallow_queue = pending_analysis(&db, &GameFilter::default(), &shallow_key).unwrap();
-    assert_eq!(shallow_queue.ids, vec![deep_id]);
-    let deep_queue = pending_analysis(&db, &GameFilter::default(), &deep_key).unwrap();
+    let shallow_queue =
+        pending_analysis(&db, &GameFilter::default(), &shallow_key, 14, 2).unwrap();
+    assert!(shallow_queue.ids.is_empty(), "более глубокий анализ не пересчитываем");
+    let deep_queue = pending_analysis(&db, &GameFilter::default(), &deep_key, 18, 2).unwrap();
     assert_eq!(deep_queue.ids, vec![shallow_id]);
 }
 
@@ -101,6 +102,8 @@ fn pending_queue_respects_library_filters() {
             ..GameFilter::default()
         },
         key,
+        14,
+        2,
     )
     .unwrap();
     assert_eq!(filtered.ids, vec![white_id]);
@@ -123,7 +126,7 @@ fn pending_queue_puts_new_games_first() {
         ids.push(db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap());
     }
     let key = "Stockfish 19|19|14|2|classifier-v1|lichess-v1";
-    let queue = pending_analysis(&db, &GameFilter::default(), key).unwrap();
+    let queue = pending_analysis(&db, &GameFilter::default(), key, 14, 2).unwrap();
     assert_eq!(queue.ids, vec![ids[1], ids[2], ids[0]]);
 }
 
@@ -165,7 +168,7 @@ fn legacy_analyses_without_config_key_do_not_break_the_queue() {
 
     let key = crate::service::queue::target_config_key(&db, &AppSettings::default()).unwrap();
     assert_eq!(key, "Stockfish 19|19|14|2|classifier-v1|lichess-v1");
-    let queue = pending_analysis(&db, &GameFilter::default(), &key).unwrap();
+    let queue = pending_analysis(&db, &GameFilter::default(), &key, 14, 2).unwrap();
     assert!(queue.ids.is_empty(), "старая запись не должна проситься заново");
 }
 
@@ -235,19 +238,21 @@ fn failed_analyses_leave_the_queue_after_three_attempts() {
     let id = db.with_tx(|tx| insert_game(tx, &game)).unwrap().unwrap();
     let key = "Stockfish 19|19|14|2|classifier-v1|lichess-v1";
     assert_eq!(
-        pending_analysis(&db, &GameFilter::default(), key).unwrap().ids,
+        pending_analysis(&db, &GameFilter::default(), key, 14, 2)
+            .unwrap()
+            .ids,
         vec![id]
     );
     for attempt in 1..=3 {
         record_analysis_failure(&db, id, &format!("сбой {attempt}")).unwrap();
     }
-    let queue = pending_analysis(&db, &GameFilter::default(), key).unwrap();
+    let queue = pending_analysis(&db, &GameFilter::default(), key, 14, 2).unwrap();
     assert!(queue.ids.is_empty());
     assert_eq!(queue.excluded, 1);
     let stored = get_game(&db, id).unwrap();
     assert_eq!(stored.analysis_attempts, 3);
     reset_analysis_attempts(&db, id).unwrap();
-    let queue = pending_analysis(&db, &GameFilter::default(), key).unwrap();
+    let queue = pending_analysis(&db, &GameFilter::default(), key, 14, 2).unwrap();
     assert_eq!(queue.ids, vec![id]);
     assert_eq!(queue.excluded, 0);
 }

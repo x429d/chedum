@@ -2101,7 +2101,7 @@ tr:hover .row-actions,
 
 .hub-kpis {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0;
   margin-bottom: 18px;
   border: 1px solid var(--border);
@@ -2149,6 +2149,111 @@ tr:hover .row-actions,
   gap: 16px;
   margin-bottom: 16px;
   align-items: start;
+}
+
+.rating-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.rating-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.9fr) minmax(0, 1.6fr) 112px;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.rating-row:last-child {
+  border-bottom: 0;
+}
+
+.rating-account {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.platform-badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.platform-badge.platform-chesscom {
+  color: var(--gold);
+  border-color: rgba(198, 161, 91, 0.35);
+}
+
+.platform-badge.platform-lichess {
+  color: #9ccf8f;
+  border-color: rgba(156, 207, 143, 0.3);
+}
+
+.platform-badge.platform-manual {
+  color: var(--dim);
+}
+
+.rating-username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rating-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.rating-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 70px;
+}
+
+.rating-metric span {
+  font-size: 9.5px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+.rating-metric strong {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-games {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 10px;
+  color: var(--muted);
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .rating-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rating-games {
+    align-items: flex-start;
+    text-align: left;
+  }
 }
 
 .opening-row {
@@ -2510,16 +2615,13 @@ tr:hover .row-actions,
     grid-template-columns: minmax(0, 1fr) 390px;
   }
   .hub-kpis {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .kpi-card:nth-child(3n + 1) {
+  .kpi-card:nth-child(2n + 1) {
     border-left: 0;
   }
-  .kpi-card:nth-child(n + 4) {
+  .kpi-card:nth-child(n + 3) {
     border-top: 1px solid var(--border);
-  }
-  .kpi-card:nth-child(5) {
-    grid-column: span 2;
   }
   .library-grid {
     grid-template-columns: minmax(0, 1fr) 292px;
@@ -2603,9 +2705,6 @@ tr:hover .row-actions,
   .kpi-card + .kpi-card {
     border-left: 0;
     border-top: 1px solid var(--border);
-  }
-  .kpi-card:nth-child(5) {
-    grid-column: auto;
   }
   .analysis-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -2906,8 +3005,14 @@ input[type="date"] {
   color: var(--dim);
 }
 
+.source-chip.source-chesscom {
+  color: var(--gold);
+  border-color: rgba(198, 161, 91, 0.35);
+}
+
 .source-chip.source-lichess {
-  color: var(--muted);
+  color: #9ccf8f;
+  border-color: rgba(156, 207, 143, 0.3);
 }
 
 @media (max-width: 1240px) {

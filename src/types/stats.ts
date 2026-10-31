@@ -1,4 +1,5 @@
 import type { BoardTheme, Color, Language, Phase, PieceSet } from "./chess";
+import type { GameSource } from "./game";
 
 export interface EngineStatus {
   available: boolean;
@@ -107,10 +108,25 @@ export interface AnalysisConfigView {
   included: number;
   total: number;
   mismatchedGameIds: number[];
+  upgradeGameIds: number[];
+}
+
+export interface PlatformRating {
+  accountId: number | null;
+  accountUsername: string | null;
+  platform: GameSource;
+  games: number;
+  analyzed: number;
+  avgUserElo: number | null;
+  avgOpponentElo: number | null;
+  perfElo: number | null;
+  perfEloSpread: number | null;
+  perfEloGames: number;
 }
 
 export interface HubStats {
   kpis: HubKpis;
+  ratings: PlatformRating[];
   openings: OpeningStat[];
   phases: PhaseStat[];
   trend: AccuracyPoint[];

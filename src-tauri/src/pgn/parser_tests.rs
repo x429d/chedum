@@ -91,6 +91,23 @@ fn supports_custom_start_position() {
 }
 
 #[test]
+fn detects_lichess_ai_games() {
+    let pgn = "[Event \"casual rapid game\"]\n[Site \"https://lichess.org/game/aiTest01\"]\n[White \"lichess AI level 4\"]\n[Black \"human\"]\n[Result \"1-0\"]\n[Variant \"Standard\"]\n\n1. e4 e5 1-0";
+    let parsed = parse_single(pgn).unwrap();
+    assert!(is_bot_game(&parsed));
+}
+
+#[test]
+fn detects_bot_title_but_not_bot_in_site_id() {
+    let titled = "[Event \"game\"]\n[Site \"https://lichess.org/game/human01\"]\n[White \"SomeBot\"]\n[WhiteTitle \"BOT\"]\n[Black \"human\"]\n[Result \"1-0\"]\n\n1. e4 e5 1-0";
+    assert!(is_bot_game(&parse_single(titled).unwrap()));
+
+    // "BOT" встречается в идентификаторе партии, но игроки — люди.
+    let human = "[Event \"game\"]\n[Site \"https://lichess.org/game/boTygf3H\"]\n[White \"human\"]\n[Black \"other\"]\n[Result \"1-0\"]\n\n1. e4 e5 1-0";
+    assert!(!is_bot_game(&parse_single(human).unwrap()));
+}
+
+#[test]
 fn reports_invalid_game_without_panicking() {
     let pgn = "[White \"A\"]\n[Black \"B\"]\n\n1. e4 e5 2. Ke3 *";
     let report = parse_pgn(pgn);

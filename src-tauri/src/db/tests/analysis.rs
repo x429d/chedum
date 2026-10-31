@@ -209,6 +209,16 @@ fn export_pgn_keeps_game_importable_and_adds_annotator() {
 }
 
 #[test]
+fn manual_import_skips_computer_games() {
+    let db = Db::in_memory().unwrap();
+    let pgn = "[Event \"human\"]\n[Site \"https://example.com/1\"]\n[White \"alice\"]\n[Black \"bob\"]\n[Result \"1-0\"]\n\n1. e4 e5 1-0\n\n[Event \"bot\"]\n[Site \"https://example.com/2\"]\n[White \"alice\"]\n[Black \"lichess AI level 4\"]\n[Result \"1-0\"]\n\n1. e4 e5 1-0";
+    let summary = crate::service::import::import_pgn_text(&db, pgn, None).unwrap();
+    assert_eq!(summary.imported, 1);
+    assert_eq!(summary.skipped, 1);
+    assert_eq!(list_games(&db, &GameFilter::default()).unwrap().total, 1);
+}
+
+#[test]
 fn summary_text_always_matches_accuracy_fields() {
     let db = Db::in_memory().unwrap();
     let game = draft(

@@ -101,7 +101,7 @@ fn counts_analyzed_and_favorites_for_whole_selection() {
     assert_eq!(page.favorites, 1);
 
     let key = "Stockfish 19|19|14|2|classifier-v1|lichess-v1";
-    let pending = pending_analysis(&db, &GameFilter::default(), key).unwrap();
+    let pending = pending_analysis(&db, &GameFilter::default(), key, 14, 2).unwrap();
     assert_eq!(pending.ids.len(), 2);
     assert!(!pending.ids.contains(&ids[1]));
     // По две партии по три позиции: стартовая + два полухода.

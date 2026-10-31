@@ -6,7 +6,7 @@ use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameDraft, GameSource};
 use crate::domain::{AccountPlatform, SyncProgress, SyncResult};
 use crate::lichess::client::LichessApi;
-use crate::pgn::{build_draft, parse_pgn, ParsedGame};
+use crate::pgn::{build_draft, is_bot_game, parse_pgn, ParsedGame};
 use crate::service::hashing::sha256_hex;
 
 /// Небольшой перехлёст, чтобы не потерять партию, завершившуюся в ту же
@@ -119,6 +119,9 @@ where
 }
 
 fn draft_for_game(parsed: &ParsedGame, username: &str, account_id: i64) -> Option<GameDraft> {
+    if is_bot_game(parsed) {
+        return None;
+    }
     let variant = parsed.tag("Variant").unwrap_or("Standard");
     if !matches!(variant, "Standard" | "From Position") || parsed.moves.is_empty() {
         return None;

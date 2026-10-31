@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::domain::analysis::Phase;
-use crate::domain::game::Color;
+use crate::domain::game::{Color, GameSource};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,6 +29,25 @@ pub struct HubKpis {
     pub avg_perf_elo_spread: Option<f64>,
     pub white: ColorRecord,
     pub black: ColorRecord,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlatformRating {
+    /// Аккаунт, к которому относятся партии; NULL — ручные PGN без аккаунта.
+    pub account_id: Option<i64>,
+    pub account_username: Option<String>,
+    /// Площадка аккаунта. Для партий без аккаунта — источник PGN.
+    pub platform: GameSource,
+    pub games: u32,
+    pub analyzed: u32,
+    pub avg_user_elo: Option<f64>,
+    pub avg_opponent_elo: Option<f64>,
+    /// Средний Performance Elo только внутри этой площадки/аккаунта.
+    pub perf_elo: Option<f64>,
+    pub perf_elo_spread: Option<f64>,
+    /// Сколько партий дали значение Performance Elo.
+    pub perf_elo_games: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,12 +118,16 @@ pub struct AnalysisConfigView {
     pub total: u32,
     /// Партии с анализом другой конфигурации — их можно пересчитать.
     pub mismatched_game_ids: Vec<i64>,
+    /// Подмножество `mismatched_game_ids`, которое мельче текущих настроек.
+    /// Только эти партии имеет смысл пересчитывать.
+    pub upgrade_game_ids: Vec<i64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HubStats {
     pub kpis: HubKpis,
+    pub ratings: Vec<PlatformRating>,
     pub openings: Vec<OpeningStat>,
     pub phases: Vec<PhaseStat>,
     pub trend: Vec<AccuracyPoint>,

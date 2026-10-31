@@ -36,6 +36,7 @@ function sourceLabel(game: GameListItem): string | null {
 
 function Row(props: { game: GameListItem }) {
   const selected = () => libraryStore.selected().includes(props.game.id);
+  const platform = () => sourceLabel(props.game);
   return (
     <tr onClick={() => libraryStore.openGame(props.game.id)}>
       <td style={{ width: "28px" }} onClick={(event) => event.stopPropagation()}>
@@ -73,14 +74,24 @@ function Row(props: { game: GameListItem }) {
       <td>
         <div class="game-title">
           {props.game.whiteUsername}
-          <span class="dim" style={{ "font-weight": "400" }}>
+          <span
+            class="dim"
+            style={{ "font-weight": "400" }}
+            title={platform() ? `${platform()} Elo` : undefined}
+          >
             {" "}
             {props.game.whiteElo ?? ""}
           </span>
         </div>
         <div class="game-meta">
           {props.game.blackUsername}
-          <span class="dim"> {props.game.blackElo ?? ""}</span>
+          <span
+            class="dim"
+            title={platform() ? `${platform()} Elo` : undefined}
+          >
+            {" "}
+            {props.game.blackElo ?? ""}
+          </span>
         </div>
       </td>
       <td>

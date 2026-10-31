@@ -4,7 +4,7 @@ use crate::db::analyses_repo::{
     backfill_fen_accuracy, backfill_summaries, get_analysis, insert_analysis_draft,
 };
 use crate::db::connection::Db;
-use crate::db::games_repo::insert_game;
+use crate::db::games_repo::{count_games, insert_game};
 use crate::db::migrations;
 use crate::db::settings_repo::set_setting;
 use crate::db::stats_repo::hub_stats;
@@ -123,6 +123,49 @@ fn migration_moves_single_profile_into_accounts() {
     assert_eq!(username, "alice");
     let stored = crate::db::games_repo::get_game(&db, id).unwrap();
     assert!(stored.account_id.is_some());
+}
+
+#[test]
+fn migration_purges_computer_games() {
+    let db = Db::in_memory().unwrap();
+    let human = draft(
+        "human",
+        "alice",
+        "bob",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        100,
+    );
+    let mut bot = draft(
+        "bot",
+        "alice",
+        "lichess AI level 4",
+        UserColor::White,
+        "1-0",
+        TimeClass::Rapid,
+        200,
+    );
+    bot.source = crate::domain::game::GameSource::Lichess;
+    db.with_tx(|tx| insert_game(tx, &human)).unwrap().unwrap();
+    db.with_tx(|tx| insert_game(tx, &bot)).unwrap().unwrap();
+    db.with(|conn| {
+        conn.pragma_update(None, "user_version", 7)?;
+        migrations::run(conn)?;
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(count_games(&db).unwrap(), 1);
+    let remaining = db
+        .with(|conn| {
+            Ok(
+                conn.query_row("SELECT white_username FROM games", [], |row| {
+                    row.get::<_, String>(0)
+                })?,
+            )
+        })
+        .unwrap();
+    assert_eq!(remaining, "alice");
 }
 
 #[test]

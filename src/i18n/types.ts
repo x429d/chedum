@@ -130,6 +130,7 @@ export type TranslationSchema = {
     keyMoments: string;
     yourAccuracy: string;
     perfRating: string;
+    perfOnPlatform: string;
     opponent: string;
     category: string;
     you: string;
@@ -205,6 +206,14 @@ export type TranslationSchema = {
     avgAcpl: string;
     perfElo: string;
     perfEloNeedMore: string;
+    reanalyzeNotNeeded: string;
+    ratingTitle: string;
+    ratingHint: string;
+    avgUserElo: string;
+    avgOpponentElo: string;
+    ratingSample: string;
+    ratingNoAccount: string;
+    platformManual: string;
     accuracyTrend: string;
     noTrendData: string;
     openingMatrix: string;

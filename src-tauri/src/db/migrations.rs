@@ -216,6 +216,21 @@ pub fn run(conn: &Connection) -> AppResult<()> {
         backfill_legacy_account(conn)?;
         conn.pragma_update(None, "user_version", 7)?;
     }
+    if version < 8 {
+        // Партии с компьютером не участвуют в личной аналитике и не должны
+        // занимать место в библиотеке. Удаляем уже синхронизированные.
+        conn.execute(
+            "DELETE FROM games
+             WHERE lower(white_username) LIKE 'lichess ai level %'
+                OR lower(black_username) LIKE 'lichess ai level %'
+                OR lower(white_username) = 'computer'
+                OR lower(black_username) = 'computer'
+                OR pgn LIKE '%[WhiteTitle \"BOT\"]%'
+                OR pgn LIKE '%[BlackTitle \"BOT\"]%'",
+            [],
+        )?;
+        conn.pragma_update(None, "user_version", 8)?;
+    }
     Ok(())
 }
 

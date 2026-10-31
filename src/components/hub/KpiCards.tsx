@@ -26,17 +26,6 @@ export function KpiCards(props: { kpis: HubKpis }) {
       value: formatNumber(props.kpis.avgAcpl, 1),
       hint: pluralGames(props.kpis.analyzedGames),
     },
-    {
-      label: t("hub.perfElo"),
-      value:
-        props.kpis.avgPerfElo === null
-          ? "—"
-          : `${Math.round(props.kpis.avgPerfElo)} ± ${Math.round(props.kpis.avgPerfEloSpread ?? 0)}`,
-      hint:
-        props.kpis.avgPerfElo === null
-          ? t("hub.perfEloNeedMore")
-          : pluralGames(props.kpis.analyzedGames),
-    },
   ];
   return (
     <div class="hub-kpis">

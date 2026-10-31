@@ -10,6 +10,8 @@ inspired dark interface.
 
 - **Accounts**: connect any number of Chess.com and Lichess profiles, sync incrementally, switch the
   active account or analyze all accounts together; each game keeps its source and account.
+- **Human games only**: Lichess AI, Computer and BOT-titled games are filtered out of sync and PGN
+  import, and existing engine games are purged by migration.
 - **Library**: import/export PGN, Chess.com PubAPI and Lichess export sync with rate limiting and
   incremental state, filters by account, opponent, color, result, time class, ECO, date, analysis,
   favorites and notes, pagination (25/50/100), batch analysis queue and batch deletion.
@@ -20,12 +22,16 @@ inspired dark interface.
   Cmd/Ctrl+Shift+Z redo.
 - **Deep analytics**: Win% area chart + synchronized move-time histogram, Lichess-style accuracy
   (win-probability loss with volatility windows and harmonic mean), ACPL,
-  performance Elo, 11 move categories, phase accuracy, time-management flags.
+  performance Elo split by account and platform, 11 move categories, phase accuracy,
+  time-management flags.
+- **No downgrades**: analyses deeper than current settings are treated as complete; re-analysis is
+  offered only for games whose analysis is shallower than the current depth/MultiPV.
 - **Move Coach**: Russian explanations for brilliant/great/inaccuracy/mistake/miss/blunder moves,
   MultiPV lines and animated main-line playback.
 - **Retry Mistake**: trainer for your own mistakes with instant verification against MultiPV 1.
-- **Player Hub**: KPI cards, opening repertoire matrix, vulnerable phases, accuracy trend, color
-  splits and time-management statistics for one account or all accounts.
+- **Player Hub**: KPI cards, separate Elo rows per account/platform, opening repertoire matrix,
+  vulnerable phases, accuracy trend, color splits and time-management statistics for one account
+  or all accounts.
 - **Embedded data**: 3,865 ECO opening lines and four pre-analyzed demo games (Stockfish depth 14).
 
 ## Data

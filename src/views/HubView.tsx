@@ -5,6 +5,7 @@ import { AccuracyTrend } from "../components/hub/AccuracyTrend";
 import { KpiCards } from "../components/hub/KpiCards";
 import { OpeningMatrix } from "../components/hub/OpeningMatrix";
 import { PhaseWeakness } from "../components/hub/PhaseWeakness";
+import { RatingPlatforms } from "../components/hub/RatingPlatforms";
 import { TimeStatsCard } from "../components/hub/TimeStatsCard";
 import { Icon } from "../components/ui/Icon";
 import { pluralGames, t, tSide } from "../i18n";
@@ -130,13 +131,13 @@ export function HubView() {
                       — {config().included} / {config().total}
                     </span>
                   </div>
-                  <Show when={config().mismatchedGameIds.length > 0}>
+                  <Show when={config().upgradeGameIds.length > 0}>
                     <button
                       type="button"
                       class="btn btn-sm"
                       disabled={reanalyzing() || libraryStore.batch().running}
                       onClick={() => {
-                        const ids = config().mismatchedGameIds;
+                        const ids = config().upgradeGameIds;
                         setReanalyzing(true);
                         void libraryStore
                           .analyzeIds(ids, "Recalculate")
@@ -149,15 +150,63 @@ export function HubView() {
                         ? t("hub.reanalyzing")
                         : t("hub.reanalyzeAtDepth", {
                             depth: settingsStore.settings().analysisDepth,
-                            count: config().mismatchedGameIds.length,
+                            count: config().upgradeGameIds.length,
                           })}
                     </button>
+                  </Show>
+                  <Show when={config().mismatchedGameIds.length > 0 && config().upgradeGameIds.length === 0}>
+                    <span class="dim" style={{ "font-size": "10.5px" }}>
+                      {t("hub.reanalyzeNotNeeded")}
+                    </span>
                   </Show>
                 </div>
               )}
             </Show>
 
             <KpiCards kpis={value().kpis} />
+
+            <div class="hub-grid">
+              <RatingPlatforms ratings={value().ratings} />
+
+              <div class="card">
+                <div class="card-header">
+                  <div>
+                    <div class="card-title">{t("hub.colorResults")}</div>
+                  </div>
+                </div>
+                <div class="card-pad">
+                  <For each={colorCards()}>
+                    {(item) => (
+                      <div
+                        style={{
+                          display: "grid",
+                          "grid-template-columns": "70px 1fr auto",
+                          gap: "12px",
+                          "align-items": "center",
+                          padding: "9px 0",
+                          "border-bottom": "1px solid var(--border)",
+                        }}
+                      >
+                        <span style={{ "font-weight": "600", "font-size": "12px" }}>{item.color}</span>
+                        <div style={{ display: "flex", gap: "8px", "align-items": "center" }}>
+                          <span class="badge outcome-win">{t("hub.winsCount", { n: item.record.wins })}</span>
+                          <span class="badge outcome-draw">{t("hub.drawsCount", { n: item.record.draws })}</span>
+                          <span class="badge outcome-loss">{t("hub.lossesCount", { n: item.record.losses })}</span>
+                          <span class="dim" style={{ "font-size": "10.5px" }}>
+                            {pluralGames(item.record.games)}
+                          </span>
+                        </div>
+                        <span class="mono" style={{ "font-size": "12px" }}>
+                          {item.record.accuracy === null
+                            ? "—"
+                            : `${formatNumber(item.record.accuracy, 1)}%`}
+                        </span>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </div>
+            </div>
 
             <div class="hub-grid">
               <OpeningMatrix openings={value().openings} />
@@ -167,45 +216,6 @@ export function HubView() {
             <div class="hub-grid">
               <AccuracyTrend points={value().trend} />
               <TimeStatsCard time={value().time} />
-            </div>
-
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <div class="card-title">{t("hub.colorResults")}</div>
-                </div>
-              </div>
-              <div class="card-pad">
-                <For each={colorCards()}>
-                  {(item) => (
-                    <div
-                      style={{
-                        display: "grid",
-                        "grid-template-columns": "70px 1fr auto",
-                        gap: "12px",
-                        "align-items": "center",
-                        padding: "9px 0",
-                        "border-bottom": "1px solid var(--border)",
-                      }}
-                    >
-                      <span style={{ "font-weight": "600", "font-size": "12px" }}>{item.color}</span>
-                      <div style={{ display: "flex", gap: "8px", "align-items": "center" }}>
-                        <span class="badge outcome-win">{t("hub.winsCount", { n: item.record.wins })}</span>
-                        <span class="badge outcome-draw">{t("hub.drawsCount", { n: item.record.draws })}</span>
-                        <span class="badge outcome-loss">{t("hub.lossesCount", { n: item.record.losses })}</span>
-                        <span class="dim" style={{ "font-size": "10.5px" }}>
-                          {pluralGames(item.record.games)}
-                        </span>
-                      </div>
-                      <span class="mono" style={{ "font-size": "12px" }}>
-                        {item.record.accuracy === null
-                          ? "—"
-                          : `${formatNumber(item.record.accuracy, 1)}%`}
-                      </span>
-                    </div>
-                  )}
-                </For>
-              </div>
             </div>
           </Show>
         )}

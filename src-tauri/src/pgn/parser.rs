@@ -221,6 +221,28 @@ fn normalized_result(value: Option<&str>) -> String {
     }
 }
 
+/// Партия против компьютерного соперника не нужна в личной аналитике.
+pub fn is_bot_game(game: &ParsedGame) -> bool {
+    let ai_name = |name: &str| {
+        name.trim()
+            .to_ascii_lowercase()
+            .starts_with("lichess ai level ")
+    };
+    let computer_name = |name: &str| name.trim().eq_ignore_ascii_case("computer");
+    let bot_title = |key: &str| {
+        game.tag(key)
+            .is_some_and(|value| value.trim().eq_ignore_ascii_case("BOT"))
+    };
+    let white = game.tag("White").unwrap_or("");
+    let black = game.tag("Black").unwrap_or("");
+    bot_title("WhiteTitle")
+        || bot_title("BlackTitle")
+        || ai_name(white)
+        || ai_name(black)
+        || computer_name(white)
+        || computer_name(black)
+}
+
 /// Собирает доменную модель партии из разобранного PGN.
 pub fn build_draft(
     parsed: &ParsedGame,

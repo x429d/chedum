@@ -7,7 +7,7 @@ use crate::db::games_repo::insert_game;
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameSource, TimeClass};
 use crate::domain::{SyncProgress, SyncResult};
-use crate::pgn::{build_draft, parse_single};
+use crate::pgn::{build_draft, is_bot_game, parse_single};
 use crate::service::hashing::sha256_hex;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -188,6 +188,9 @@ fn remote_to_draft(
         return None;
     }
     let parsed = parse_single(&remote.pgn).ok()?;
+    if is_bot_game(&parsed) {
+        return None;
+    }
     let external_id = if remote.url.trim().is_empty() {
         format!("chesscom-{}", sha256_hex(&remote.pgn))
     } else {

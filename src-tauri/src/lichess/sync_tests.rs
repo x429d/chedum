@@ -6,6 +6,7 @@ use crate::db::accounts_repo;
 use crate::db::games_repo::list_games;
 use crate::domain::game::{GameFilter, GameSource};
 use crate::domain::AccountPlatform;
+use crate::pgn::parse_single;
 
 const PGN: &str = r#"[Event "Rated rapid game"]
 [Site "https://lichess.org/game/abcd1234"]
@@ -70,6 +71,13 @@ fn parses_since_with_overlap() {
             .timestamp_millis()
             - OVERLAP_MS
     );
+}
+
+#[test]
+fn skips_games_against_lichess_ai() {
+    let pgn = "[Event \"casual rapid game\"]\n[Site \"https://lichess.org/game/aiTest01\"]\n[White \"lichess AI level 4\"]\n[Black \"chenal_player\"]\n[Result \"0-1\"]\n[Variant \"Standard\"]\n\n1. e4 e5 0-1";
+    let parsed = parse_single(pgn).unwrap();
+    assert!(draft_for_game(&parsed, "chenal_player", 1).is_none());
 }
 
 #[tokio::test]

@@ -312,3 +312,42 @@ All gates are green. The app is ready to run from the bundle above.
       привязываются, если подключить тот же ник.
 - **Gate 20:** `cargo test` (154 passed), `cargo clippy --all-targets -- -D warnings`,
       `npx tsc --noEmit`, `npm run build` — чистые.
+
+## Stage 21 — Elo по аккаунтам и площадкам
+
+- [x] Hub больше не усредняет Chess.com и Lichess в один Performance Elo: добавлена разбивка
+      `ratings` по аккаунтам (и площадкам для партий без аккаунта) с вашим средним рейтингом,
+      средним рейтингом соперников и Performance Elo ± разброс.
+- [x] Performance Elo внутри группы считается только при ≥ 20 разобранных партиях.
+      Общий `avgPerfElo` остаётся только когда в выборке ровно одна рейтинговая группа.
+- [x] В Hub вместо одной KPI-карточки Performance Elo появилась карточка «Elo по аккаунтам»
+      с площадкой, ником и покрытием анализа; Chess.com и Lichess визуально различаются.
+- [x] В отчёте партии под Performance Rating подписана площадка, в библиотеке — платформенные
+      цвета источника и подсказки «Chess.com Elo / Lichess Elo» у рейтингов.
+- **Gate 21:** `cargo test` (156 passed), `cargo clippy --all-targets -- -D warnings`,
+      `npx tsc --noEmit`, `npm run build` — чистые.
+
+## Stage 22 — Без партий с компьютером
+
+- [x] Общий фильтр `pgn::is_bot_game`: Lichess AI (`lichess AI level N`), точное имя
+      `Computer` и заголовки `WhiteTitle`/`BlackTitle` = `BOT`. Идентификаторы партий
+      со случайным `BOT` в URL не считаются ботами.
+- [x] Фильтр применяется в синхронизации Lichess, Chess.com и при ручном импорте PGN:
+      такие партии не попадают в библиотеку и очередь анализа.
+- [x] Миграция v8 удаляет уже сохранённые партии с компьютером вместе с их анализами;
+      в локальной базе удалена 61 такая партия, осталось 1387 реальных.
+- **Gate 22:** `cargo test` (161 passed), `cargo clippy --all-targets -- -D warnings`,
+      `npx tsc --noEmit`, `npm run build` — чистые.
+
+## Stage 23 — Пересчёт только в сторону углубления
+
+- [x] Очередь анализа больше не считает «неразобранными» партии, которые уже разобраны
+      глубже текущих настроек: при глубине 14 анализ на 16 закрывает партию, при 18 —
+      партии на 14 и 16 остаются в очереди.
+- [x] `AnalysisConfigView` получил `upgrade_game_ids`: кнопка пересчёта в Hub предлагает
+      только партии мельче текущих `analysis_depth`/`multipv`. Если все имеющиеся анализы
+      уже глубже, кнопка не показывается, вместо неё выводится пояснение.
+- [x] Более глубокая конфигурация больше не может быть случайно понижена ни из Hub, ни
+      из очереди «Resume».
+- **Gate 23:** `cargo test` (162 passed), `cargo clippy --all-targets -- -D warnings`,
+      `npx tsc --noEmit`, `npm run build` — чистые.

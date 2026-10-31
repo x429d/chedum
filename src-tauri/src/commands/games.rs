@@ -20,7 +20,13 @@ pub async fn list_pending_analysis(
 ) -> AppResult<PendingAnalysis> {
     let settings = settings_repo::get_settings(&state.db)?;
     let config_key = crate::service::queue::target_config_key(&state.db, &settings)?;
-    games_repo::pending_analysis(&state.db, &filter, &config_key)
+    games_repo::pending_analysis(
+        &state.db,
+        &filter,
+        &config_key,
+        settings.analysis_depth,
+        settings.multipv,
+    )
 }
 
 #[tauri::command]

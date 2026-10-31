@@ -9,4 +9,6 @@ pub use clocks::{
 };
 pub use export::export_games;
 pub use opening::{identify_opening, OpeningIdentification};
-pub use parser::{build_draft, parse_pgn, parse_single, ParseReport, ParsedGame, ParsedMove};
+pub use parser::{
+    build_draft, is_bot_game, parse_pgn, parse_single, ParseReport, ParsedGame, ParsedMove,
+};

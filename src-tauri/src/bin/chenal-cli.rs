@@ -132,6 +132,8 @@ async fn analyze(db: &Db, args: &[String]) -> AppResult<()> {
                 db,
                 &chenal_lib::domain::game::GameFilter::default(),
                 &key,
+                settings.analysis_depth,
+                settings.multipv,
             )?;
             plan.ids.truncate(limit);
             if plan.excluded > 0 {
@@ -282,6 +284,7 @@ fn hub(db: &Db) -> AppResult<()> {
             config.total
         );
         println!("mismatched: {:?}", config.mismatched_game_ids);
+        println!("upgrade: {:?}", config.upgrade_game_ids);
     }
     println!(
         "kpis: total={} analyzed={} accuracy={:?} acpl={:?} perf={:?}",
@@ -292,6 +295,19 @@ fn hub(db: &Db) -> AppResult<()> {
         stats.kpis.avg_perf_elo
     );
     println!("trend points: {}", stats.trend.len());
+    for rating in &stats.ratings {
+        println!(
+            "rating: {} {} games={} analyzed={} your={:?} opponent={:?} perf={:?}±{:?}",
+            rating.platform.as_str(),
+            rating.account_username.as_deref().unwrap_or("(no account)"),
+            rating.games,
+            rating.analyzed,
+            rating.avg_user_elo,
+            rating.avg_opponent_elo,
+            rating.perf_elo,
+            rating.perf_elo_spread
+        );
+    }
     if let (Some(first), Some(last)) = (stats.trend.first(), stats.trend.last()) {
         println!(
             "trend: first {} at {}, last {} at {}",

@@ -8,7 +8,7 @@ use crate::db::settings_repo;
 use crate::domain::error::{AppError, AppResult};
 use crate::domain::game::{GameSource, ImportSummary};
 use crate::pgn::export::export_games_with_annotations;
-use crate::pgn::{build_draft, parse_pgn};
+use crate::pgn::{build_draft, is_bot_game, parse_pgn};
 use crate::service::hashing::sha256_hex;
 
 pub fn import_pgn_text(db: &Db, text: &str, account_id: Option<i64>) -> AppResult<ImportSummary> {
@@ -33,6 +33,10 @@ pub fn import_pgn_text(db: &Db, text: &str, account_id: Option<i64>) -> AppResul
     let mut skipped = 0u32;
     db.with_tx(|tx| {
         for parsed in &report.games {
+            if is_bot_game(parsed) {
+                skipped += 1;
+                continue;
+            }
             let pgn = parsed.to_pgn();
             let external_id = format!("manual-{}", sha256_hex(&pgn));
             let mut draft = build_draft(
