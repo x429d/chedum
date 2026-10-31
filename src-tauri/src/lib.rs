@@ -42,7 +42,8 @@ fn init_logging(app: &tauri::AppHandle) -> Option<PathBuf> {
             tracing_subscriber::fmt::layer()
                 .with_writer(writer)
                 .with_ansi(false)
-                .with_target(false),
+                .with_target(false)
+                .with_filter(tracing_subscriber::filter::LevelFilter::INFO),
         )
         .try_init();
     Some(log_dir)
