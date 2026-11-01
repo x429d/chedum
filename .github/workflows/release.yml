@@ -21,7 +21,7 @@ jobs:
             target: aarch64-apple-darwin
             args: --target aarch64-apple-darwin --bundles app,dmg
           - label: macOS Intel
-            os: macos-15-intel
+            os: macos-14
             target: x86_64-apple-darwin
             args: --target x86_64-apple-darwin --bundles app,dmg
           - label: Linux x86_64
@@ -69,7 +69,7 @@ jobs:
           key: stockfish-sf_19-${{ runner.os }}-${{ runner.arch }}
 
       - name: Fetch Stockfish
-        run: npm run fetch:stockfish
+        run: npm run fetch:stockfish -- --target ${{ matrix.target }}
 
       # An empty APPLE_CERTIFICATE would still make Tauri attempt a PKCS#12
       # import and fail, so the signing variables are only exported when a

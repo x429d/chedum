@@ -69,8 +69,37 @@ if (!entry) {
   process.exit(1);
 }
 
-const [asset, sha256, executableName, target] = entry;
+const [asset, sha256, executableName, hostTarget] = entry;
+const target = requestedTarget(hostTarget);
 const isWindows = process.platform === "win32";
+
+// Cross-compiling (for example an Intel bundle built on Apple Silicon) needs the
+// binary for the target triple, which only works when the release asset is a
+// universal build for the same operating system.
+function requestedTarget(defaultTarget) {
+  const index = process.argv.indexOf("--target");
+  if (index === -1) {
+    return defaultTarget;
+  }
+  const value = process.argv[index + 1];
+  if (!value) {
+    console.error("Missing value for --target.");
+    process.exit(1);
+  }
+  if (value === defaultTarget) {
+    return value;
+  }
+  const suffix = defaultTarget.slice(defaultTarget.indexOf("-"));
+  const universal = asset.includes("-universal");
+  if (!universal || !value.endsWith(suffix)) {
+    console.error(
+      `Cannot use ${asset} for target ${value}; only universal builds for the same OS support cross-compilation.`,
+    );
+    process.exit(1);
+  }
+  return value;
+}
+
 const binaryDirectory = path.join(ROOT, "src-tauri", "binaries");
 const suffix = isWindows ? ".exe" : "";
 const destination = path.join(binaryDirectory, `chedum-stockfish-${target}${suffix}`);
