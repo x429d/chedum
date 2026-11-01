@@ -53,6 +53,8 @@ export function Board(props: BoardProps) {
   });
   const { selected, drag, hover, ownPieces, legal, userArrows, drawingArrow } = pointer;
   const [focused, setFocused] = createSignal("e4");
+  /** The keyboard cursor is only meaningful while the board is used from the keyboard. */
+  const [keyboardCursor, setKeyboardCursor] = createSignal(false);
 
   createEffect(() => {
     const current = selected();
@@ -169,12 +171,23 @@ export function Board(props: BoardProps) {
         aria-label={t("board.label")}
         tabIndex={props.interactive ? 0 : undefined}
         style={{ cursor: boardCursor() }}
-        onKeyDown={handleKeyDown}
+        onKeyDown={(event) => {
+          setKeyboardCursor(true);
+          handleKeyDown(event);
+        }}
         onFocus={() => {
           const current = selected();
           if (current) setFocused(current);
+          setKeyboardCursor(Boolean(boardRef?.matches(":focus-visible")));
         }}
-        onPointerDown={pointer.handleDown}
+        onBlur={() => {
+          setKeyboardCursor(false);
+          pointer.clearHover();
+        }}
+        onPointerDown={(event) => {
+          setKeyboardCursor(false);
+          pointer.handleDown(event);
+        }}
         onPointerMove={pointer.handleMove}
         onPointerUp={pointer.handleUp}
         onPointerCancel={pointer.handleCancel}
@@ -197,7 +210,7 @@ export function Board(props: BoardProps) {
           )}
         </For>
 
-        <Show when={props.interactive ? focusedCell() : null}>
+        <Show when={props.interactive && keyboardCursor() ? focusedCell() : null}>
           {(cell) => (
             <rect
               x={cell().col}
