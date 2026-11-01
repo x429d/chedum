@@ -14,7 +14,7 @@ import { EvalBar } from "../board/EvalBar";
 import { type ChartScope, EvalChart } from "./EvalChart";
 import { LivePanel } from "./LivePanel";
 
-const THEMES: BoardTheme[] = ["midnight", "walnut", "slate"];
+const THEMES: BoardTheme[] = ["walnut", "midnight", "slate"];
 
 export function AnalysisBoard(props: {
   fullscreen: boolean;
@@ -66,7 +66,7 @@ export function AnalysisBoard(props: {
   const cycleTheme = (): void => {
     const current = settingsStore.settings().boardTheme;
     const index = THEMES.indexOf(current);
-    const next = THEMES[(index + 1) % THEMES.length] ?? "midnight";
+    const next = THEMES[(index + 1) % THEMES.length] ?? "walnut";
     void settingsStore.update({ boardTheme: next });
   };
 

@@ -7,8 +7,8 @@ import { Icon } from "../ui/Icon";
 import { PieceSetPicker } from "./PieceSetPicker";
 
 const THEMES: { value: BoardTheme; label: string; className: string }[] = [
-  { value: "midnight", label: "Midnight", className: "theme-mini-midnight" },
   { value: "walnut", label: "Walnut", className: "theme-mini-walnut" },
+  { value: "midnight", label: "Midnight", className: "theme-mini-midnight" },
   { value: "slate", label: "Slate", className: "theme-mini-slate" },
 ];
 

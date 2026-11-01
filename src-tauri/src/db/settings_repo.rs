@@ -263,6 +263,19 @@ mod tests {
     }
 
     #[test]
+    fn new_install_defaults_to_walnut_board_theme() {
+        let db = Db::in_memory().unwrap();
+        assert_eq!(get_settings(&db).unwrap().board_theme, "walnut");
+    }
+
+    #[test]
+    fn unknown_stored_board_theme_falls_back_to_default() {
+        let mut map = HashMap::new();
+        map.insert("board_theme".to_string(), "unknown".to_string());
+        assert_eq!(settings_from_map(&map).board_theme, "walnut");
+    }
+
+    #[test]
     fn set_many_rejects_unknown_board_theme() {
         let db = Db::in_memory().unwrap();
         let settings = AppSettings {

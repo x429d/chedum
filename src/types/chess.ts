@@ -1,6 +1,6 @@
 export type Color = "white" | "black";
 export type UserColor = Color | "none";
-export type BoardTheme = "midnight" | "walnut" | "slate";
+export type BoardTheme = "walnut" | "midnight" | "slate";
 export type Language = "ru" | "en";
 export type PieceSet =
   | "cburnett"
