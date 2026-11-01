@@ -50,7 +50,7 @@ Pre-built binaries are available on the [**Releases**](https://github.com/x429d/
 
 | OS | Architectures / Requirements | Bundles |
 | --- | --- | --- |
-| **macOS** | 12+ (Apple Silicon & Intel) | `.dmg`, `.app` |
+| **macOS** | 12+ (Apple Silicon) | `.dmg`, `.app` |
 | **Windows** | 10 / 11 (x64, WebView2) | `.msi`, NSIS `.exe` |
 | **Linux** | x64 (WebKitGTK 4.1) | `.AppImage`, `.deb` |
 

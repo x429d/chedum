@@ -44,7 +44,6 @@ body:
       label: Operating system
       options:
         - macOS (Apple Silicon)
-        - macOS (Intel)
         - Windows
         - Linux
         - Other
