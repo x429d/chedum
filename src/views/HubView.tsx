@@ -7,6 +7,7 @@ import { OpeningMatrix } from "../components/hub/OpeningMatrix";
 import { PhaseWeakness } from "../components/hub/PhaseWeakness";
 import { RatingPlatforms } from "../components/hub/RatingPlatforms";
 import { TimeStatsCard } from "../components/hub/TimeStatsCard";
+import { Masonry } from "../components/layout/Masonry";
 import { Icon } from "../components/ui/Icon";
 import { pluralGames, t, tSide } from "../i18n";
 import { api } from "../services/api";
@@ -166,7 +167,7 @@ export function HubView() {
 
             <KpiCards kpis={value().kpis} />
 
-            <div class="hub-grid">
+            <Masonry>
               <RatingPlatforms ratings={value().ratings} />
 
               <div class="card">
@@ -207,17 +208,12 @@ export function HubView() {
                   </For>
                 </div>
               </div>
-            </div>
 
-            <div class="hub-grid">
+              <TimeStatsCard time={value().time} />
               <OpeningMatrix openings={value().openings} />
               <PhaseWeakness phases={value().phases} />
-            </div>
-
-            <div class="hub-grid">
               <AccuracyTrend points={value().trend} />
-              <TimeStatsCard time={value().time} />
-            </div>
+            </Masonry>
           </Show>
         )}
       </Show>

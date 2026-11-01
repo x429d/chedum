@@ -197,7 +197,7 @@ export const en: TranslationSchema = {
     fullscreen: "Fullscreen",
     exitFullscreen: "Exit fullscreen",
     label: "Chess board",
-    focusHint: "Use the arrow keys to move the cursor, Enter to select or move a piece, and Escape to clear the selection.",
+    focusHint: "Use the arrow keys to move the cursor, Enter to select or move a piece, and Escape to clear the selection. Right-click a square to mark it, drag to draw an arrow, and hold Shift, Alt or Ctrl to change the colour. A left click clears all marks and arrows.",
   },
   hub: {
     title: "Player Analytics",

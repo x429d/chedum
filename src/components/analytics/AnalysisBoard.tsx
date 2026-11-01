@@ -94,6 +94,9 @@ export function AnalysisBoard(props: {
           interactive={!gameStore.preview()}
           userArrows={gameStore.preview() ? [] : gameStore.userArrows()}
           onUserArrowsChange={gameStore.updateUserArrows}
+          userHighlights={gameStore.preview() ? [] : gameStore.userHighlights()}
+          onUserHighlightsChange={gameStore.updateUserHighlights}
+          onClearAnnotations={gameStore.clearAnnotations}
           onMove={(from, to) => {
             gameStore.enterVariation(from, to);
           }}

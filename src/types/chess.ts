@@ -74,6 +74,12 @@ export interface ArrowSpec {
   width?: number;
 }
 
+/** A square the user marked with the right mouse button. */
+export interface SquareHighlight {
+  square: string;
+  color: string;
+}
+
 export interface BoardBadge {
   square: string;
   category: MoveCategory;

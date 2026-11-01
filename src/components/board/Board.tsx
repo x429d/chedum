@@ -1,6 +1,6 @@
 import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js";
 import { t } from "../../i18n";
-import type { ArrowSpec, BoardBadge, BoardTheme, Color, PieceSet } from "../../types/models";
+import type { ArrowSpec, BoardBadge, BoardTheme, Color, PieceSet, SquareHighlight } from "../../types/models";
 import { positionFromFen } from "../../utils/chess";
 import { pieceImage } from "../../utils/pieceSets";
 import { Arrows } from "./Arrows";
@@ -24,6 +24,11 @@ export interface BoardProps {
   /** User arrows when their state lives outside the board (in the store). */
   userArrows?: ArrowSpec[];
   onUserArrowsChange?: (arrows: ArrowSpec[]) => void;
+  /** Squares the user marked with the right mouse button. */
+  userHighlights?: SquareHighlight[];
+  onUserHighlightsChange?: (highlights: SquareHighlight[]) => void;
+  /** Left-clicking the board clears arrows and marks through this callback. */
+  onClearAnnotations?: () => void;
   onMove?: (from: string, to: string) => void;
 }
 
@@ -37,6 +42,7 @@ export function Board(props: BoardProps) {
   });
   /** User arrows live in the store (analysis) or locally in the board (trainer). */
   const arrowsControlled = props.onUserArrowsChange !== undefined;
+  const highlightsControlled = props.onUserHighlightsChange !== undefined;
   const pointer = createBoardPointer({
     board: () => boardRef,
     position,
@@ -46,12 +52,18 @@ export function Board(props: BoardProps) {
     onArrowsChange: arrowsControlled
       ? (next) => props.onUserArrowsChange?.(next)
       : undefined,
+    highlights: highlightsControlled ? () => props.userHighlights ?? [] : undefined,
+    onHighlightsChange: highlightsControlled
+      ? (next) => props.onUserHighlightsChange?.(next)
+      : undefined,
+    onClearAnnotations: props.onClearAnnotations,
     onMove: (from, to, animate) => {
       if (!animate) motion.suppressNext();
       props.onMove?.(from, to);
     },
   });
-  const { selected, drag, hover, ownPieces, legal, userArrows, drawingArrow } = pointer;
+  const { selected, drag, hover, ownPieces, legal, userArrows, userHighlights, drawingArrow } =
+    pointer;
   const [focused, setFocused] = createSignal("e4");
   /** The keyboard cursor is only meaningful while the board is used from the keyboard. */
   const [keyboardCursor, setKeyboardCursor] = createSignal(false);
@@ -118,11 +130,16 @@ export function Board(props: BoardProps) {
    * squares never leave a hairline of the frame colour between them.
    */
   const highlights = createMemo(() => {
-    const list: { cell: Cell; classes: string }[] = [];
-    const add = (name: string | null | undefined, classes: string) => {
+    const list: { cell: Cell; classes: string; fill?: string; opacity?: number }[] = [];
+    const add = (
+      name: string | null | undefined,
+      classes: string,
+      fill?: string,
+      opacity?: number,
+    ) => {
       if (!name) return;
       const cell = cells().find((entry) => entry.name === name);
-      if (cell) list.push({ cell, classes });
+      if (cell) list.push({ cell, classes, fill, opacity });
     };
     if (props.lastMove) {
       add(props.lastMove.slice(0, 2), "board-sq-last");
@@ -130,6 +147,9 @@ export function Board(props: BoardProps) {
     }
     add(selected(), "board-sq-selected");
     add(props.checkSquare, "board-sq-check");
+    for (const mark of userHighlights()) {
+      add(mark.square, "board-sq-user", mark.color, 0.5);
+    }
     const hovered = hoverCell();
     if (hovered) {
       list.push({
@@ -206,7 +226,15 @@ export function Board(props: BoardProps) {
 
         <For each={highlights()}>
           {(item) => (
-            <rect x={item.cell.col} y={item.cell.row} width="1" height="1" class={item.classes} />
+            <rect
+              x={item.cell.col}
+              y={item.cell.row}
+              width="1"
+              height="1"
+              class={item.classes}
+              fill={item.fill}
+              fill-opacity={item.opacity}
+            />
           )}
         </For>
 

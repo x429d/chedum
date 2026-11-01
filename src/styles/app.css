@@ -1497,6 +1497,11 @@ tr:hover .row-actions,
   pointer-events: none;
 }
 
+/* Right-click marks: the colour comes from the annotation palette. */
+.board-sq-user {
+  pointer-events: none;
+}
+
 .board-svg:focus-visible {
   outline: 2px solid #e0bf7d;
   outline-offset: 2px;
@@ -2194,12 +2199,23 @@ tr:hover .row-actions,
   margin-top: 4px;
 }
 
-.hub-grid {
+/*
+ * Masonry rail: row height is 1px and JS gives every card an explicit row span
+ * based on its measured height, so cards pack into the shortest column instead
+ * of leaving a hole under a short neighbour.
+ */
+.masonry {
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
-  gap: 16px;
+  grid-auto-rows: 1px;
+  column-gap: 16px;
+  row-gap: 0;
   margin-bottom: 16px;
-  align-items: start;
+}
+
+.masonry-item {
+  min-width: 0;
+  align-self: start;
 }
 
 .rating-list {
@@ -2309,7 +2325,7 @@ tr:hover .row-actions,
 
 .opening-row {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) 46px 54px 52px 62px;
+  grid-template-columns: 46px minmax(0, 1fr) 46px 54px minmax(52px, 190px) 62px;
   gap: 8px;
   align-items: center;
   padding: 9px 4px;
@@ -2729,9 +2745,13 @@ tr:hover .row-actions,
   }
   .library-grid,
   .library-grid.side-collapsed,
-  .hub-grid,
+  .masonry,
   .settings-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .masonry {
+    grid-auto-rows: auto;
+    row-gap: 16px;
   }
   /* The side panels stack here, so the table has room to show the full opening. */
   .opening-cell,

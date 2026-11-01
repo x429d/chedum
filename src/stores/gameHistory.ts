@@ -1,4 +1,4 @@
-import type { ArrowSpec } from "../types/models";
+import type { ArrowSpec, SquareHighlight } from "../types/models";
 
 export interface VariationState {
   fens: string[];
@@ -12,15 +12,18 @@ export interface BoardSnapshot {
   variation: VariationState | null;
   ply: number;
   arrows: ArrowSpec[];
+  highlights: SquareHighlight[];
 }
 
 export interface HistoryDeps {
   variation: () => VariationState | null;
   ply: () => number;
   arrows: () => ArrowSpec[];
+  highlights: () => SquareHighlight[];
   setVariation: (value: VariationState | null) => void;
   setPly: (value: number) => void;
   setArrows: (value: ArrowSpec[]) => void;
+  setHighlights: (value: SquareHighlight[]) => void;
   stopPreview: () => void;
 }
 
@@ -33,7 +36,12 @@ export function createGameHistory(deps: HistoryDeps) {
   const redoHistory: BoardSnapshot[] = [];
 
   function snapshot(): BoardSnapshot {
-    return { variation: deps.variation(), ply: deps.ply(), arrows: deps.arrows() };
+    return {
+      variation: deps.variation(),
+      ply: deps.ply(),
+      arrows: deps.arrows(),
+      highlights: deps.highlights(),
+    };
   }
 
   function record(): void {
@@ -47,6 +55,7 @@ export function createGameHistory(deps: HistoryDeps) {
     deps.setVariation(state.variation);
     deps.setPly(state.ply);
     deps.setArrows(state.arrows);
+    deps.setHighlights(state.highlights);
   }
 
   function undo(): void {

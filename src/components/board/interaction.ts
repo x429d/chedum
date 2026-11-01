@@ -2,7 +2,7 @@ import type { Chess } from "chessops/chess";
 import { makeSquare, parseSquare } from "chessops/util";
 import { createMemo, createSignal } from "solid-js";
 
-import type { ArrowSpec, Color } from "../../types/models";
+import type { ArrowSpec, Color, SquareHighlight } from "../../types/models";
 import { boardPoint, squareAt } from "../../utils/boardGeometry";
 
 export interface DragState {
@@ -23,16 +23,21 @@ export interface BoardPointerOptions {
   /** User arrows supplied externally: when set, state lives in the store (needed for undo). */
   arrows?: () => ArrowSpec[];
   onArrowsChange?: (next: ArrowSpec[]) => void;
+  /** User square marks, same controlled/uncontrolled split as arrows. */
+  highlights?: () => SquareHighlight[];
+  onHighlightsChange?: (next: SquareHighlight[]) => void;
+  /** Clear both arrows and marks as one undoable action (analysis store). */
+  onClearAnnotations?: () => void;
 }
 
-/** Right button draws a yellow arrow; colors match Chess.com. */
+/** Right-button annotation colours; modifiers match Chess.com. */
 const ARROW_COLOR = "#FACC15";
 const ARROW_COLOR_SHIFT = "#22C55E";
 const ARROW_COLOR_ALT = "#3B82F6";
 const ARROW_COLOR_CTRL = "#EF4444";
 const ARROW_WIDTH = 0.14;
 
-function arrowColor(event: PointerEvent): string {
+function annotationColor(event: PointerEvent): string {
   if (event.ctrlKey || event.metaKey) return ARROW_COLOR_CTRL;
   if (event.altKey) return ARROW_COLOR_ALT;
   if (event.shiftKey) return ARROW_COLOR_SHIFT;
@@ -60,6 +65,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
   const [drag, setDrag] = createSignal<DragState | null>(null);
   const [hover, setHover] = createSignal<string | null>(null);
   const [localArrows, setLocalArrows] = createSignal<ArrowSpec[]>([]);
+  const [localHighlights, setLocalHighlights] = createSignal<SquareHighlight[]>([]);
   const [drawingArrow, setDrawingArrow] = createSignal<ArrowSpec | null>(null);
   /** Controlled mode: the caller (store) owns the arrows, which is what makes undo work. */
   const controlled = options.onArrowsChange !== undefined;
@@ -67,6 +73,21 @@ export function createBoardPointer(options: BoardPointerOptions) {
   const setUserArrows = (next: ArrowSpec[]): void => {
     if (options.onArrowsChange) options.onArrowsChange(next);
     else setLocalArrows(next);
+  };
+  const highlightsControlled = options.onHighlightsChange !== undefined;
+  const userHighlights = (): SquareHighlight[] => options.highlights?.() ?? localHighlights();
+  const setUserHighlights = (next: SquareHighlight[]): void => {
+    if (options.onHighlightsChange) options.onHighlightsChange(next);
+    else setLocalHighlights(next);
+  };
+
+  const clearAnnotations = (): void => {
+    if (options.onClearAnnotations) {
+      options.onClearAnnotations();
+      return;
+    }
+    if (localArrows().length > 0) setLocalArrows([]);
+    if (localHighlights().length > 0) setLocalHighlights([]);
   };
   let unblockMenu: (() => void) | null = null;
 
@@ -143,13 +164,15 @@ export function createBoardPointer(options: BoardPointerOptions) {
       setDrawingArrow({
         from: square,
         to: square,
-        color: arrowColor(event),
+        color: annotationColor(event),
         width: ARROW_WIDTH,
       });
       capture(event);
       return;
     }
     if (event.button !== 0 || drag() || drawingArrow()) return;
+    // A plain left click on the board clears user marks and arrows.
+    clearAnnotations();
     const from = selected();
     if (from && legal().has(square)) {
       attemptMove(from, square);
@@ -197,11 +220,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
 
   const finishArrow = (arrow: ArrowSpec, target: string | null): void => {
     const items = userArrows();
-    if (!target || target === arrow.from) {
-      // Right-click without dragging clears all arrows.
-      if (items.length > 0) setUserArrows([]);
-      return;
-    }
+    if (!target || target === arrow.from) return;
     const existing = items.find((item) => item.from === arrow.from && item.to === target);
     if (existing?.color === arrow.color) {
       setUserArrows(items.filter((item) => item !== existing));
@@ -211,11 +230,30 @@ export function createBoardPointer(options: BoardPointerOptions) {
     setUserArrows([...without, { ...arrow, to: target }]);
   };
 
+  /** A click without dragging marks the square instead of drawing an arrow. */
+  const toggleHighlight = (square: string, color: string): void => {
+    const items = userHighlights();
+    const existing = items.find((item) => item.square === square);
+    if (existing?.color === color) {
+      setUserHighlights(items.filter((item) => item !== existing));
+      return;
+    }
+    setUserHighlights([
+      ...items.filter((item) => item.square !== square),
+      { square, color },
+    ]);
+  };
+
   const handleUp = (event: PointerEvent): void => {
     const arrow = drawingArrow();
     if (arrow) {
       // If the button is released outside the board, keep the last highlighted square.
-      finishArrow(arrow, squareOf(event) ?? arrow.to);
+      const target = squareOf(event) ?? arrow.to;
+      if (target === arrow.from) {
+        toggleHighlight(arrow.from, arrow.color);
+      } else {
+        finishArrow(arrow, target);
+      }
       setDrawingArrow(null);
       stopBlockingMenu();
       release(event);
@@ -238,6 +276,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     setDrag(null);
     setDrawingArrow(null);
     if (!controlled) setLocalArrows([]);
+    if (!highlightsControlled) setLocalHighlights([]);
     stopBlockingMenu();
   };
 
@@ -248,6 +287,7 @@ export function createBoardPointer(options: BoardPointerOptions) {
     ownPieces,
     legal,
     userArrows,
+    userHighlights,
     drawingArrow,
     handleDown,
     handleMove,

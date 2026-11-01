@@ -8,6 +8,7 @@ import type {
   Color,
   GameDetail,
   MoveCategory,
+  SquareHighlight,
 } from "../types/models";
 import { checkSquare, playMove } from "../utils/chess";
 import { toErrorMessage } from "../utils/format";
@@ -36,6 +37,7 @@ const [categoryFilter, setCategoryFilter] = createSignal<MoveCategory | null>(nu
 const [variation, setVariation] = createSignal<VariationState | null>(null);
 const [preview, setPreview] = createSignal<PreviewState | null>(null);
 const [userArrows, setUserArrows] = createSignal<ArrowSpec[]>([]);
+const [userHighlights, setUserHighlights] = createSignal<SquareHighlight[]>([]);
 const [analyzing, setAnalyzing] = createSignal(false);
 const [progress, setProgress] = createSignal<AnalysisProgress | null>(null);
 let analysisCancelled = false;
@@ -47,9 +49,11 @@ const history = createGameHistory({
   variation,
   ply,
   arrows: userArrows,
+  highlights: userHighlights,
   setVariation,
   setPly,
   setArrows: setUserArrows,
+  setHighlights: setUserHighlights,
   stopPreview,
 });
 
@@ -86,6 +90,7 @@ async function load(id: number): Promise<void> {
     setPly(0);
     setVariation(null);
     setUserArrows([]);
+    setUserHighlights([]);
     history.reset();
     stopPreview();
     setCategoryFilter(null);
@@ -106,6 +111,7 @@ function goTo(index: number): void {
   setVariation(null);
   setPly(target);
   setUserArrows([]);
+  setUserHighlights([]);
 }
 
 function next(): void {
@@ -145,6 +151,7 @@ function enterVariation(from: string, to: string): boolean {
   const ucis = existing ? [...existing.ucis, played.uci] : [played.uci];
   setVariation({ fens, sans, ucis, basePly: ply() });
   setUserArrows([]);
+  setUserHighlights([]);
   return true;
 }
 
@@ -153,6 +160,7 @@ function clearVariation(): void {
   history.record();
   setVariation(null);
   setUserArrows([]);
+  setUserHighlights([]);
 }
 
 /** User arrows on the board are a regular action and are undone too. */
@@ -174,6 +182,30 @@ function updateUserArrows(next: ArrowSpec[]): void {
   }
   history.record();
   setUserArrows(next);
+}
+
+/** User square highlights are a regular action and are undone too. */
+function updateUserHighlights(next: SquareHighlight[]): void {
+  const current = userHighlights();
+  if (
+    current.length === next.length &&
+    current.every((mark, index) => {
+      const other = next[index];
+      return other !== undefined && mark.square === other.square && mark.color === other.color;
+    })
+  ) {
+    return;
+  }
+  history.record();
+  setUserHighlights(next);
+}
+
+/** A left click on the board removes every user arrow and square mark in one undo step. */
+function clearAnnotations(): void {
+  if (userArrows().length === 0 && userHighlights().length === 0) return;
+  history.record();
+  setUserArrows([]);
+  setUserHighlights([]);
 }
 
 function undo(): void {
@@ -229,6 +261,7 @@ async function runAnalysis(): Promise<void> {
     setPly(0);
     setVariation(null);
     setUserArrows([]);
+    setUserHighlights([]);
     history.reset();
     bumpDataVersion();
     ui.notify(t("library.analysisFinished"), "success");
@@ -256,6 +289,7 @@ export const gameStore = {
   variation,
   preview,
   userArrows,
+  userHighlights,
   analyzing,
   progress,
   moves,
@@ -288,6 +322,8 @@ export const gameStore = {
   enterVariation,
   clearVariation,
   updateUserArrows,
+  updateUserHighlights,
+  clearAnnotations,
   saveComment,
   saveNotes,
   runAnalysis,
