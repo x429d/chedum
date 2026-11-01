@@ -56,6 +56,34 @@ Pre-built binaries are available on the [**Releases**](https://github.com/x429d/
 
 Each release automatically bundles the pinned Stockfish 19 binary tailored for your target platform.
 
+### Unsigned builds
+
+Release bundles are not code-signed or notarized yet, so your operating system
+may warn you the first time you open Chedum. The binaries are built from this
+repository by GitHub Actions; only download them from the official
+[Releases](https://github.com/x429d/chedum/releases) page.
+
+**macOS** — open the `.dmg` and drag **Chedum** into **Applications**, then either:
+
+- right-click (or Control-click) **Chedum.app**, choose **Open**, and confirm
+  **Open** in the dialog;
+- or try to launch it once, then open **System Settings → Privacy & Security**,
+  scroll down, and click **Open Anyway** next to the Chedum notice.
+
+If macOS still refuses to launch the app, clear the quarantine flag from
+Terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Chedum.app
+```
+
+**Windows** — when SmartScreen shows "Windows protected your PC", click
+**More info → Run anyway**. The `.msi` and NSIS `.exe` installers are unsigned.
+
+**Linux** — AppImage builds need the executable bit
+(`chmod +x Chedum_*.AppImage`), then run the file; the `.deb` package installs
+with your package manager as usual.
+
 ---
 
 ## Tech Stack
@@ -106,6 +134,16 @@ Your data stays on your machine. Chedum stores your library and analysis in a si
 - **Windows**: `%APPDATA%\com.chedum.studio\chedum.db`
 
 Exact paths for the database and log file can be viewed inside the app under **Settings → Diagnostics**.
+
+---
+
+## Project Documents
+
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+- [Third-party notices](docs/THIRD-PARTY.md)
 
 ---
 

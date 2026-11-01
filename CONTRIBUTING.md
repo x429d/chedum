@@ -3,9 +3,10 @@
 Thanks for taking the time to contribute. Bug reports, feature ideas, docs and
 pull requests are all welcome.
 
-By participating you agree to keep discussions respectful and focused on the
-project. Security issues should follow [SECURITY.md](SECURITY.md) instead of a
-public issue.
+By participating you agree to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md) and to keep discussions respectful and
+focused on the project. Security issues should follow
+[SECURITY.md](SECURITY.md) instead of a public issue.
 
 ## Prerequisites
 

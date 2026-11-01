@@ -280,7 +280,7 @@ export const en: TranslationSchema = {
   },
   accounts: {
     title: "Accounts",
-    subtitle: "Sync games from chess.com and lichess. Analysis stays local on this Mac.",
+    subtitle: "Sync games from chess.com and lichess. Analysis stays local on your device.",
     addTitle: "Connect account",
     platform: "Platform",
     platformChesscom: "chess.com",

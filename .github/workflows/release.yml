@@ -86,7 +86,7 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "Chedum ${{ github.ref_name }}"
           releaseDraft: true
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
           releaseBody: |
             Chedum ${{ github.ref_name }}.
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.1.0] - 2026-11-01
 
 - Chedum now builds and runs on macOS (Apple Silicon and Intel), Windows and
   Linux. Stockfish is fetched as a per-platform Tauri sidecar, the database
@@ -23,3 +23,5 @@
 - Corrected the bundled font license (JetBrains Mono OFL), subset the fonts to WOFF2
   (13 MB → 316 KB), and removed the Stockfish binary from git in favor of a pinned
   fetch script.
+
+[0.1.0]: https://github.com/x429d/chedum/releases/tag/v0.1.0

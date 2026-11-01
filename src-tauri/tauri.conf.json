@@ -47,11 +47,13 @@
     "externalBin": [
       "binaries/chedum-stockfish"
     ],
-    "resources": [
-      "resources/STOCKFISH-COPYING.txt",
-      "resources/CHESS-PIECE-LICENSES.txt",
-      "resources/JETBRAINS-MONO-OFL.txt"
-    ],
+    "resources": {
+      "resources/STOCKFISH-COPYING.txt": "resources/STOCKFISH-COPYING.txt",
+      "resources/CHESS-PIECE-LICENSES.txt": "resources/CHESS-PIECE-LICENSES.txt",
+      "resources/JETBRAINS-MONO-OFL.txt": "resources/JETBRAINS-MONO-OFL.txt",
+      "../LICENSE": "LICENSE",
+      "../docs/THIRD-PARTY.md": "docs/THIRD-PARTY.md"
+    },
     "macOS": {
       "minimumSystemVersion": "12.0"
     }

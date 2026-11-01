@@ -12,6 +12,8 @@ vulnerability reporting:
 
 <https://github.com/x429d/chedum/security/advisories/new>
 
+If you cannot use GitHub, email the maintainer at <nikitas4478@gmail.com>.
+
 Include as much detail as you can:
 
 - Chedum version and operating system
