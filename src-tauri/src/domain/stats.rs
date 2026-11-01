@@ -154,7 +154,7 @@ pub const PIECE_SETS: [&str; 6] = [
     "kiwen-suwi",
 ];
 
-pub const BOARD_THEMES: [&str; 3] = ["midnight", "walnut", "slate"];
+pub const BOARD_THEMES: [&str; 3] = ["walnut", "midnight", "slate"];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

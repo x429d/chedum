@@ -1445,9 +1445,9 @@ tr:hover .row-actions,
   padding: 7px;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--board-border, #323b50);
+  border: 1px solid var(--board-border, #7c5a3c);
   box-shadow: 0 22px 46px -34px rgba(0, 0, 0, 0.95);
-  background: var(--board-frame, #10141d);
+  background: var(--board-frame, #4a3423);
   position: relative;
   flex: none;
 }
@@ -1471,11 +1471,11 @@ tr:hover .row-actions,
 }
 
 .board-sq-light {
-  fill: var(--sq-light, #3b4356);
+  fill: var(--sq-light, #e8d5b5);
 }
 
 .board-sq-dark {
-  fill: var(--sq-dark, #262c3b);
+  fill: var(--sq-dark, #a97b4f);
 }
 
 .board-sq-last {
@@ -1521,7 +1521,7 @@ tr:hover .row-actions,
 }
 
 .board-coord {
-  fill: var(--coord, #aab3c5);
+  fill: var(--coord, #f0dfc2);
   font-size: 0.19px;
   font-weight: 700;
   opacity: 0.92;
