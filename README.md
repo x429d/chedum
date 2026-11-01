@@ -1,171 +1,116 @@
-# Chedum — native chess analytics studio
+# Chedum
+
+> Fast, private, local-first chess analytics for your desktop.
 
 [![CI](https://github.com/x429d/chedum/actions/workflows/ci.yml/badge.svg)](https://github.com/x429d/chedum/actions/workflows/ci.yml)
+[![Release](https://github.com/x429d/chedum/actions/workflows/release.yml/badge.svg)](https://github.com/x429d/chedum/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Local-first chess analytics studio for macOS, Windows and Linux, built with
-Tauri v2, Rust, SolidJS and Stockfish. Games are stored in local SQLite,
-analyzed offline, and presented in a Linear/Raycast-inspired dark interface.
-No account, cloud service or telemetry is required.
+[English](README.md) • [Русский](README.ru.md)
 
-## Features
+**Chedum** is a desktop chess analytics studio built for players who want deep game review without subscriptions, cloud dependencies, or telemetry. Your games and database stay strictly on your machine.
 
-- **Accounts**: connect any number of Chess.com and Lichess profiles, sync incrementally, switch the
-  active account or analyze all accounts together; each game keeps its source and account.
-  Synchronization reports new, duplicate, filtered, and failed games separately, can be cancelled,
-  and its cursor history can be reset per account.
-- **Human games only**: Lichess AI, Computer and BOT-titled games are filtered out of sync and PGN
-  import, and existing engine games are purged by migration.
-- **Library**: import/export PGN, Chess.com PubAPI and Lichess export sync with rate limiting and
-  incremental state, filters by account, opponent, color, result, time class, ECO, date, analysis,
-  favorites and notes, pagination (25/50/100), batch analysis queue and batch deletion.
-- **Analysis Studio**: custom SVG board with three themes and six switchable open-source piece sets,
-  drag-and-drop and click-to-move, eval bar with live Stockfish score, multi-arrow layer,
-  right-drag user arrows (Shift/Alt/Ctrl change colour, knight moves bend «Г»), move-category badges,
-  variation exploration, fullscreen, live Stockfish panel, and ←/→ navigation plus Cmd/Ctrl+Z undo and
-  Cmd/Ctrl+Shift+Z redo.
-- **Deep analytics**: Win% area chart + synchronized move-time histogram, Lichess-style accuracy
-  (win-probability loss with volatility windows and harmonic mean), ACPL,
-  performance Elo split by account and platform, 11 move categories, phase accuracy,
-  time-management flags.
-- **No downgrades**: analyses deeper than current settings are treated as complete; re-analysis is
-  offered only for games whose analysis is shallower than the current depth/MultiPV.
-- **Move Coach**: localized explanations for brilliant/great/inaccuracy/mistake/miss/blunder moves,
-  MultiPV lines and animated main-line playback. Board, move list, evaluation chart, and dialogs
-  support keyboard navigation.
-- **Retry Mistake**: trainer for your own mistakes with instant verification against MultiPV 1.
-- **Player Hub**: KPI cards, separate Elo rows per account/platform, opening repertoire matrix,
-  vulnerable phases, accuracy trend, color splits and time-management statistics for one account
-  or all accounts.
-- **Embedded data**: 3,865 ECO opening lines and four pre-analyzed demo games (Stockfish depth 14).
+Built with **Tauri v2**, **Rust**, **SolidJS**, and **Stockfish 19**.
 
-## Platforms
+---
 
-| Platform | Requirements | Bundles |
+## Preview
+
+![Analysis Studio](docs/screenshots/analysis.png)
+
+<details>
+<summary><b>More Screenshots (Library & Player Hub)</b></summary>
+
+### Game Library
+![Library](docs/screenshots/library.png)
+
+### Player Hub & Openings
+![Player Hub](docs/screenshots/hub.png)
+
+</details>
+
+---
+
+## Highlights
+
+- **Private & Offline-first** — Games are stored in a local SQLite database. No account required, no tracking, and no internet needed after setup.
+- **Sync & PGN Library** — Connect Chess.com and Lichess accounts or import PGN files. Filter by opening, opponent, time control, color, or custom notes.
+- **Deep Stockfish Analysis** — Local engine evaluation with win-probability graphs, accuracy metrics (CAPS / ACPL), eval bars, and move classification from *Brilliant* to *Blunder*.
+- **Coach & Mistake Trainer** — Clear explanations for turning points and an interactive trainer to replay mistakes with immediate engine feedback.
+- **Player Hub & Openings** — Track your rating trends, explore your repertoire across 3,800+ ECO lines, and spot weaknesses across openings, middlegames, and endgames.
+- **Keyboard-Friendly Board** — Dark interface inspired by Linear and Raycast, multiple piece sets and board themes, move arrows, and full keyboard navigation.
+
+---
+
+## Automated Releases & Installation
+
+All release bundles are built and published automatically via **GitHub Actions** upon creating a release tag (`v*`).
+
+Pre-built binaries are available on the [**Releases**](https://github.com/x429d/chedum/releases) page:
+
+| OS | Architectures / Requirements | Bundles |
 | --- | --- | --- |
-| macOS 12+ | Apple Silicon or Intel | `.app`, `.dmg` |
-| Windows 10/11 | x64, WebView2 | `.msi`, NSIS `.exe` |
-| Linux | x64, WebKitGTK 4.1 | `.deb`, `.AppImage` |
+| **macOS** | 12+ (Apple Silicon & Intel) | `.dmg`, `.app` |
+| **Windows** | 10 / 11 (x64, WebView2) | `.msi`, NSIS `.exe` |
+| **Linux** | x64 (WebKitGTK 4.1) | `.AppImage`, `.deb` |
 
-Release builds are produced for all three platforms by
-[`.github/workflows/release.yml`](.github/workflows/release.yml). The codebase
-contains no platform-specific application logic beyond window chrome, menu
-setup and engine lookup.
+Each release automatically bundles the pinned Stockfish 19 binary tailored for your target platform.
 
-## Data
+---
 
-- ECO opening lines: [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings).
-- Chess piece sets: [lichess-org/lila](https://github.com/lichess-org/lila/tree/master/public/piece)
-  — cburnett and Merida (GPLv2+), Chessnut (Apache 2.0), Kiwen Suwi (CC BY 4.0),
-  Celtic (MIT), Rhosgfx (CC0). Full attributions and license texts live in
-  `src/assets/pieces/ATTRIBUTION.md` and `src-tauri/resources/CHESS-PIECE-LICENSES.txt`.
-- Demo games use classic games with fictional local handles and generated clock comments; all
-  evaluations are produced locally by Stockfish at depth 14.
-- Interface typeface: [JetBrains Mono Nerd Font](https://github.com/ryanoasis/nerd-fonts)
-  (SIL OFL 1.1), bundled locally with its license at `src/assets/fonts/OFL.txt`.
-- Third-party license texts shipped with the app live in `src-tauri/resources/`.
-  A summary and the Stockfish GPL note are in [`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md).
+## Tech Stack
 
-## Stack
+- **Desktop shell**: [Tauri v2](https://tauri.app/) (Rust backend)
+- **Frontend**: [SolidJS](https://www.solidjs.com/), TypeScript, Tailwind CSS v4
+- **Engine**: [Stockfish 19](https://stockfishchess.org/) (bundled sidecar)
+- **Database**: SQLite (`rusqlite` with WAL mode)
+- **Chess logic**: `shakmaty`, `chessops`, `pgn-reader`
+- **CI / CD**: GitHub Actions (automated tests, cross-compilation, and draft release publishing)
 
-- Tauri v2, Rust 2021
-- `rusqlite` (bundled SQLite, WAL), `shakmaty`, `pgn-reader`, `reqwest` (rustls), `tokio`, `sha2`
-- SolidJS, TypeScript strict, Tailwind CSS v4, `chessops`
-- Stockfish 19, downloaded as a per-platform sidecar by `npm run fetch:stockfish`
+---
 
-## Run
+## Getting Started (Development)
 
-Prerequisites: Node.js 22+, Rust stable (see `rust-toolchain.toml`) and the
-platform toolchain from [CONTRIBUTING.md](CONTRIBUTING.md). On Linux install
-`libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev` and
-`patchelf` first.
+### Prerequisites
+- **Node.js** 22+
+- **Rust** (stable toolchain)
+- Platform build dependencies (see [CONTRIBUTING.md](CONTRIBUTING.md))
+
+### Run locally
 
 ```bash
+# Install dependencies
 npm install
-npm run fetch:stockfish   # pinned Stockfish 19 for the current platform
-npm run tauri dev         # development app
-npm run tauri build       # native bundle for the host platform
+
+# Download the Stockfish 19 binary for your platform
+npm run fetch:stockfish
+
+# Launch in development mode
+npm run tauri dev
 ```
 
-The fetch script verifies the pinned SHA-256 and writes
-`src-tauri/binaries/chedum-stockfish-<target-triple>` (`.exe` on Windows), which is
-what Tauri's `externalBin` bundles. On macOS, `npm run install:app` copies the
-built `.app` to `/Applications`.
-
-Chedum looks for Stockfish in this order:
-
-1. `CHEDUM_STOCKFISH` environment variable
-2. the sidecar next to the application executable
-3. `src-tauri/binaries/` during development
-4. `stockfish` on `PATH`
-5. `/opt/homebrew/bin/stockfish` and `/usr/local/bin/stockfish` on macOS
-
-Stockfish is GPLv3; its license is bundled at
-`src-tauri/resources/STOCKFISH-COPYING.txt`.
-
-## Verification
+To build a standalone production bundle locally:
 
 ```bash
-cd src-tauri
-cargo fmt --all -- --check
-cargo test
-cargo clippy --all-targets -- -D warnings
-
-cd ..
-npm test
-npx tsc --noEmit
-npm run build
-npm audit --omit=dev
+npm run tauri build
 ```
 
-CI runs these gates on macOS, Ubuntu and Windows. Engine tests skip
-automatically when the Stockfish sidecar is absent.
+---
 
-The local database lives in the platform application-data directory:
+## Data & Storage
 
-- macOS: `~/Library/Application Support/com.chedum.studio/chedum.db`
-- Linux: `${XDG_DATA_HOME:-~/.local/share}/com.chedum.studio/chedum.db`
-- Windows: `%APPDATA%\com.chedum.studio\chedum.db`
+Your data stays on your machine. Chedum stores your library and analysis in a single SQLite database:
 
-The exact paths for the database and log file are shown in
-**Settings → Diagnostics**. The app is offline-first; the network is used only
-for the public Chess.com Published Data API and the public Lichess
-game-export API.
+- **macOS**: `~/Library/Application Support/com.chedum.studio/chedum.db`
+- **Linux**: `~/.local/share/com.chedum.studio/chedum.db`
+- **Windows**: `%APPDATA%\com.chedum.studio\chedum.db`
 
-## Architecture
+Exact paths for the database and log file can be viewed inside the app under **Settings → Diagnostics**.
 
-```text
-src-tauri/src/
-  domain/     pure models, AppError, FEN/material helpers
-  analytics/  Win%, CAPS, ACPL, Elo, 11-category classifier, phases, clocks, coach, summary
-  engine/     Stockfish process, UCI parser, 75 ms throttled channel, lazy EngineState
-  db/         SQLite migrations, repositories, analysis checkpoints, SQL aggregations, demo seed
-  chesscom/   PubAPI client, 1 req/s limiter, 429 backoff, incremental archive sync
-  lichess/    PGN export client, since-based incremental sync
-  pgn/        streaming PGN parser, [%clk] extraction, export writer
-  service/    evaluation collection, resumable analysis, PGN import/export
-  commands/   thin Tauri IPC handlers
+---
 
-src/
-  types/      strict DTO mirrors and category palette
-  services/   single typed Tauri IPC layer (no invoke in UI components)
-  stores/     account, library, game, analysis, settings and UI state
-  utils/      chess/board helpers, localized summary and progress formatters
-  components/ accounts, board, analytics, library, hub, layout, ui
-  views/      Library, Analysis Studio, Player Hub, Accounts, Settings
-```
+## License & Credits
 
-All new source files should stay under 300 lines. Business logic is not placed in `lib.rs`,
-`main.rs`, command handlers or `App.tsx`.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks and code guidelines.
-Security reports go through [SECURITY.md](SECURITY.md).
-
-## License
-
-Chedum's own source code is MIT-licensed, see [LICENSE](LICENSE). Bundled
-third-party works keep their licenses: Stockfish is GPLv3, the font is SIL OFL
-1.1, and the piece sets and opening data are attributed in
-[`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md).
+- Chedum source code is released under the [MIT License](LICENSE).
+- Stockfish is licensed under [GPLv3](src-tauri/resources/STOCKFISH-COPYING.txt).
+- Piece sets, font, and opening datasets are open-source works credited in [`docs/THIRD-PARTY.md`](docs/THIRD-PARTY.md).
