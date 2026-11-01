@@ -17,7 +17,7 @@ jobs:
       matrix:
         include:
           - label: macOS Apple Silicon
-            os: macos-14
+            os: macos-15
             target: aarch64-apple-darwin
             args: --target aarch64-apple-darwin --bundles app,dmg
           - label: Linux x86_64
