@@ -8,7 +8,7 @@ import urllib.request
 from common import ROOT, default_db
 
 DB = default_db()
-UA = {"User-Agent": "Chedum/0.1.0 (+https://github.com/x429d/chedum)"}
+UA = {"User-Agent": "Chedum/0.1.1 (+https://github.com/x429d/chedum)"}
 
 
 def fetch(url):

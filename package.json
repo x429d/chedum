@@ -1,7 +1,7 @@
 {
   "name": "chedum",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Chedum — native chess analytics studio for macOS, Linux and Windows",
   "license": "MIT",

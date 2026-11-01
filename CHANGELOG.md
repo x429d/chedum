@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.1] - 2026-11-01
+
+- Right-clicking a square on the board now highlights it, with modifier colours
+  matching the arrow palette (Shift green, Alt blue, Ctrl/Cmd red). A left click
+  clears all square marks and user arrows in one undoable step.
+- The Analytics dashboard uses a masonry layout: cards are packed into the
+  shortest column, so different account counts, opening lists, and sort orders
+  no longer leave holes between the columns. The opening table also gives the
+  win-rate bar the free horizontal space.
+- macOS builds are now Apple Silicon only; the Intel target was dropped from the
+  release matrix.
+
 ## [0.1.0] - 2026-11-01
 
 - Chedum now builds and runs on macOS (Apple Silicon and Intel), Windows and
@@ -24,4 +36,5 @@
   (13 MB → 316 KB), and removed the Stockfish binary from git in favor of a pinned
   fetch script.
 
+[0.1.1]: https://github.com/x429d/chedum/releases/tag/v0.1.1
 [0.1.0]: https://github.com/x429d/chedum/releases/tag/v0.1.0

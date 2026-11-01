@@ -1,6 +1,6 @@
 [package]
 name = "chedum"
-version = "0.1.0"
+version = "0.1.1"
 default-run = "chedum"
 description = "Chedum — native chess analytics studio"
 authors = ["Chedum contributors"]
