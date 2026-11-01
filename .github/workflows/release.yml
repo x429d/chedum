@@ -71,18 +71,32 @@ jobs:
       - name: Fetch Stockfish
         run: npm run fetch:stockfish
 
-      - name: Build and attach to draft release
+      # An empty APPLE_CERTIFICATE would still make Tauri attempt a PKCS#12
+      # import and fail, so the signing variables are only exported when a
+      # certificate secret is actually configured.
+      - name: Detect signing configuration
+        id: signing
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and attach to draft release (signed)
+        if: steps.signing.outputs.enabled == 'true'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Signing is optional: without these secrets the bundle is unsigned.
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        with:
+        with: &release
           tagName: ${{ github.ref_name }}
           releaseName: "Chedum ${{ github.ref_name }}"
           releaseDraft: true
@@ -94,3 +108,10 @@ jobs:
             https://github.com/official-stockfish/Stockfish/tree/sf_19
             Third-party notices: https://github.com/x429d/chedum/blob/master/docs/THIRD-PARTY.md
           args: ${{ matrix.args }}
+
+      - name: Build and attach to draft release (unsigned)
+        if: steps.signing.outputs.enabled == 'false'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with: *release
